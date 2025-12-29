@@ -1,0 +1,72 @@
+RUNWAY DNA - COMPLETE CODEBASE CONTEXT
+================================================================================
+Generated: 2025-12-29
+Purpose: AI Review & Understanding - Every line of code included below
+================================================================================
+
+EXECUTIVE SUMMARY
+================================================================================
+
+Runway DNA is an AI-powered Strategic Finance Suite for SaaS Founders built with:
+- React 18 + TypeScript + Vite
+- Tailwind CSS with custom Deep Charcoal glassmorphism theme
+- Framer Motion for animations
+- Recharts for data visualization
+- Zustand for state management
+- Supabase (PostgreSQL) for persistence
+
+CORE MODULES:
+1. DNA Lab (src/pages/DNALab.tsx) - CSV financial data upload and analysis
+2. Runway Simulator (src/pages/Simulator.tsx) - 24-month cash flow projections
+3. Growth Tracker (src/pages/GrowthTracker.tsx) - MRR/ARR forecasting
+4. Hiring Planner (src/pages/HiringPlanner.tsx) - Team growth impact modeling
+5. Archive (src/pages/Archive.tsx) - Historical snapshots and history
+
+FOUNDER TOOLKIT:
+- Valuation Tool (src/pages/Toolkit/Valuation.tsx) - SaaS valuation calculator
+- R&D Tax Credit (src/pages/Toolkit/TaxCredit.tsx) - ASC method estimator
+- Dilution Shaper (src/pages/Toolkit/Dilution.tsx) - Fundraising term sheet preview
+
+CORE SERVICES:
+- src/lib/simulator-engine.ts - Runway projection math
+- src/lib/dna-processor.ts - Financial data parsing and grading
+- src/lib/services/GrowthService.ts - MRR waterfall calculations
+- src/lib/services/BurnMonitor.ts - Health alerts and anomaly detection
+- src/lib/services/ValuationService.ts - SaaS valuation multiples
+- src/lib/services/TaxCreditService.ts - R&D tax credit ASC logic
+- src/lib/services/DilutionService.ts - Equity dilution math
+
+STATE MANAGEMENT:
+- src/lib/store.ts - Zustand store with currentAnalysis, simulatorParams, contextMode
+
+DATABASE SCHEMA (Supabase/PostgreSQL):
+- dna_snapshots - Financial analysis history
+- growth_scenarios - Saved growth projections  
+- alert_history - System health alerts
+
+DESIGN SYSTEM:
+- Deep Charcoal (#0D0D0D) background
+- Electric Cyan (#00D4FF) primary accent
+- Vivid Violet (#8B5CF6) secondary accent
+- Success Green (#00FF88), Warning Yellow (#FFB800), Danger Red (#FF4757)
+- Glassmorphism cards with backdrop-blur
+
+KEY FEATURES:
+- Real-time runway grade calculation (A/B/C/D/F)
+- CSV upload for financial data import
+- Scenario comparison (Conservative/Base/Optimistic)
+- First-time user onboarding overlay
+- Confetti celebration on first snapshot save
+- Mac-native page transitions
+
+ARCHITECTURE NOTES:
+- Modular service layer (services/*.ts) separate from UI components
+- All API calls go through src/lib/api.ts with try/catch and toast notifications
+- Zustand store enables cross-component state sync (DNA Lab -> Simulator)
+- All financial math is testable and isolated from React components
+
+================================================================================
+FULL SOURCE CODE FOLLOWS
+================================================================================
+
+

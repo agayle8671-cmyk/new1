@@ -1,0 +1,59 @@
+{
+  "name": "Runway DNA",
+  "short_name": "RunwayDNA",
+  "description": "The AI-Powered Strategic Finance Suite for SaaS Founders",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0D0D0D",
+  "theme_color": "#0D0D0D",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "categories": ["business", "finance", "productivity"],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/og-image.png",
+      "sizes": "1200x630",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Runway DNA Dashboard"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "DNA Lab",
+      "short_name": "Lab",
+      "description": "Analyze your financial DNA",
+      "url": "/dna-lab",
+      "icons": [{ "src": "/favicon.svg", "sizes": "96x96" }]
+    },
+    {
+      "name": "Simulator",
+      "short_name": "Sim",
+      "description": "Model runway scenarios",
+      "url": "/simulator",
+      "icons": [{ "src": "/favicon.svg", "sizes": "96x96" }]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
+}
+
+

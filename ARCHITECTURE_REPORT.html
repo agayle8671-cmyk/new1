@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Runway DNA — Full Architectural Summary</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+    
+    :root {
+      --primary: #4169E1;
+      --success: #00FF88;
+      --warning: #FFB800;
+      --danger: #E53935;
+      --purple: #8B5CF6;
+      --bg-dark: #0D0D0E;
+      --bg-card: #1A1A1C;
+      --text: #E5E5E5;
+      --text-muted: #888888;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, #0D0D0E 0%, #1a1a2e 50%, #0D0D0E 100%);
+      color: var(--text);
+      line-height: 1.7;
+      padding: 40px;
+      min-height: 100vh;
+    }
+    
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: rgba(26, 26, 28, 0.8);
+      border-radius: 24px;
+      padding: 60px;
+      border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 60px;
+      padding-bottom: 40px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    .logo {
+      font-size: 48px;
+      margin-bottom: 20px;
+    }
+    
+    h1 {
+      font-size: 42px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--primary), var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 10px;
+    }
+    
+    .subtitle {
+      font-size: 18px;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+    
+    .meta {
+      margin-top: 20px;
+      padding: 15px 25px;
+      background: rgba(65, 105, 225, 0.1);
+      border-radius: 12px;
+      display: inline-block;
+      font-size: 14px;
+      color: var(--primary);
+    }
+    
+    h2 {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--primary);
+      margin: 50px 0 25px 0;
+      padding-bottom: 15px;
+      border-bottom: 2px solid var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    h3 {
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--success);
+      margin: 35px 0 15px 0;
+    }
+    
+    h4 {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--warning);
+      margin: 25px 0 12px 0;
+    }
+    
+    p {
+      margin-bottom: 16px;
+      color: var(--text);
+    }
+    
+    .section {
+      margin-bottom: 40px;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      font-size: 14px;
+    }
+    
+    th {
+      background: rgba(65, 105, 225, 0.2);
+      color: var(--primary);
+      font-weight: 600;
+      text-align: left;
+      padding: 14px 16px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    td {
+      padding: 12px 16px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(0,0,0,0.2);
+    }
+    
+    tr:nth-child(even) td {
+      background: rgba(0,0,0,0.3);
+    }
+    
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      background: rgba(0,0,0,0.4);
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 13px;
+      color: var(--success);
+    }
+    
+    pre {
+      background: #0D0D0E;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 20px;
+      overflow-x: auto;
+      margin: 20px 0;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    
+    pre code {
+      background: transparent;
+      padding: 0;
+      color: var(--text);
+    }
+    
+    .code-comment {
+      color: #6A9955;
+    }
+    
+    .code-keyword {
+      color: #569CD6;
+    }
+    
+    .code-string {
+      color: #CE9178;
+    }
+    
+    .code-function {
+      color: #DCDCAA;
+    }
+    
+    .card {
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 25px;
+      margin: 20px 0;
+    }
+    
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 15px;
+    }
+    
+    .card-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+    
+    .card-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: white;
+    }
+    
+    .card-subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-right: 8px;
+      margin-bottom: 8px;
+    }
+    
+    .badge-primary { background: rgba(65, 105, 225, 0.2); color: var(--primary); }
+    .badge-success { background: rgba(0, 255, 136, 0.2); color: var(--success); }
+    .badge-warning { background: rgba(255, 184, 0, 0.2); color: var(--warning); }
+    .badge-danger { background: rgba(229, 57, 53, 0.2); color: var(--danger); }
+    .badge-purple { background: rgba(139, 92, 246, 0.2); color: var(--purple); }
+    
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    
+    .flow-diagram {
+      background: #0D0D0E;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 30px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      line-height: 1.4;
+      white-space: pre;
+      overflow-x: auto;
+      color: var(--text-muted);
+    }
+    
+    .highlight-box {
+      background: linear-gradient(135deg, rgba(65, 105, 225, 0.1), rgba(139, 92, 246, 0.1));
+      border-left: 4px solid var(--primary);
+      padding: 20px 25px;
+      border-radius: 0 12px 12px 0;
+      margin: 20px 0;
+    }
+    
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      margin: 25px 0;
+    }
+    
+    .stat-card {
+      background: rgba(0,0,0,0.4);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+    }
+    
+    .stat-value {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--success);
+    }
+    
+    .stat-label {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 5px;
+    }
+    
+    .toc {
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 30px;
+      margin: 30px 0;
+    }
+    
+    .toc-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 20px;
+    }
+    
+    .toc-list {
+      list-style: none;
+    }
+    
+    .toc-list li {
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      font-size: 14px;
+    }
+    
+    .toc-list li:last-child {
+      border-bottom: none;
+    }
+    
+    .toc-number {
+      color: var(--primary);
+      font-weight: 600;
+      margin-right: 10px;
+    }
+    
+    .page-break {
+      page-break-before: always;
+    }
+    
+    @media print {
+      body {
+        background: white;
+        color: #333;
+        padding: 20px;
+      }
+      
+      .container {
+        background: white;
+        box-shadow: none;
+        border: none;
+        padding: 30px;
+      }
+      
+      h1 {
+        color: #4169E1;
+        -webkit-text-fill-color: #4169E1;
+      }
+      
+      h2 { color: #4169E1; border-color: #4169E1; }
+      h3 { color: #00AA66; }
+      h4 { color: #CC9900; }
+      
+      code {
+        background: #f5f5f5;
+        color: #00AA66;
+      }
+      
+      pre {
+        background: #f8f8f8;
+        border-color: #ddd;
+      }
+      
+      .card, .toc, .stat-card {
+        background: #f8f8f8;
+        border-color: #ddd;
+      }
+      
+      td, th {
+        border-color: #ddd;
+      }
+      
+      th {
+        background: #e8e8e8;
+      }
+      
+      td {
+        background: white;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div class="logo">🧬</div>
+      <h1>Runway DNA</h1>
+      <p class="subtitle">Full Architectural Summary & Technical Documentation</p>
+      <div class="meta">
+        📅 Generated: December 28, 2025 &nbsp;|&nbsp; 📊 Version 1.0 &nbsp;|&nbsp; 📁 ~21,000 Lines of Code
+      </div>
+    </div>
+
+    <!-- Table of Contents -->
+    <div class="toc">
+      <div class="toc-title">📑 Table of Contents</div>
+      <ul class="toc-list">
+        <li><span class="toc-number">1.</span> Project Overview</li>
+        <li><span class="toc-number">2.</span> Project Structure</li>
+        <li><span class="toc-number">3.</span> Application Flow</li>
+        <li><span class="toc-number">4.</span> Core Pages (DNALab, Archive, Toolkit, ScaleHub)</li>
+        <li><span class="toc-number">5.</span> Toolkit Components Deep Dive</li>
+        <li><span class="toc-number">6.</span> UI/UX Architecture & Design System</li>
+        <li><span class="toc-number">7.</span> API Integration</li>
+        <li><span class="toc-number">8.</span> Global State Management</li>
+        <li><span class="toc-number">9.</span> Export Utilities</li>
+        <li><span class="toc-number">10.</span> Build & Deployment</li>
+      </ul>
+    </div>
+
+    <!-- Stats Overview -->
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-value">5</div>
+        <div class="stat-label">Pages</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">15+</div>
+        <div class="stat-label">Custom Components</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">50+</div>
+        <div class="stat-label">UI Components</div>
+      </div>
+    </div>
+
+    <!-- Section 1: Project Overview -->
+    <h2>📌 1. Project Overview</h2>
+    <div class="section">
+      <p><strong>Runway DNA</strong> is a financial intelligence platform for startup founders that analyzes financial data, calculates runway metrics, and provides actionable insights.</p>
+      
+      <div class="highlight-box">
+        <strong>Tech Stack:</strong> React 18 + TypeScript + Vite + Tailwind CSS + Framer Motion + Recharts + shadcn/ui
+      </div>
+
+      <h4>Key Capabilities</h4>
+      <ul style="list-style: none; padding-left: 0;">
+        <li style="padding: 8px 0;">✅ CSV file upload and financial analysis</li>
+        <li style="padding: 8px 0;">✅ Real-time runway calculation with A-F grading</li>
+        <li style="padding: 8px 0;">✅ 24-month cash flow simulation engine</li>
+        <li style="padding: 8px 0;">✅ Scenario comparison (A vs B)</li>
+        <li style="padding: 8px 0;">✅ Historical analysis archive with deep search</li>
+        <li style="padding: 8px 0;">✅ Investor report generation (Markdown, PDF, PNG)</li>
+        <li style="padding: 8px 0;">✅ Slack/Twitter integration for quick sharing</li>
+      </ul>
+    </div>
+
+    <!-- Section 2: Project Structure -->
+    <h2 class="page-break">📁 2. Project Structure</h2>
+    <div class="section">
+      <pre><code>src/
+├── App.tsx                    <span class="code-comment"># Root component, routing setup</span>
+├── main.tsx                   <span class="code-comment"># Entry point, React DOM render</span>
+├── index.css                  <span class="code-comment"># Global styles, Tailwind, custom variables</span>
+│
+├── <span class="code-keyword">contexts/</span>
+│   └── AppContext.tsx         <span class="code-comment"># Global state (user settings, dark mode)</span>
+│
+├── <span class="code-keyword">pages/</span>
+│   ├── DNALab.tsx             <span class="code-comment"># Main analysis page (~1,000 lines)</span>
+│   ├── DNAArchive.tsx         <span class="code-comment"># Historical analyses (~2,200 lines)</span>
+│   ├── FounderToolkit.tsx     <span class="code-comment"># Financial tools suite (~300 lines)</span>
+│   ├── ScaleHub.tsx           <span class="code-comment"># Settings hub (~300 lines)</span>
+│   └── NotFound.tsx           <span class="code-comment"># 404 page</span>
+│
+├── <span class="code-keyword">components/</span>
+│   ├── layout/
+│   │   ├── AppLayout.tsx      <span class="code-comment"># Main layout wrapper</span>
+│   │   ├── AppSidebar.tsx     <span class="code-comment"># Navigation with runway viz</span>
+│   │   └── FloatingOrbs.tsx   <span class="code-comment"># Animated background</span>
+│   │
+│   ├── toolkit/
+│   │   ├── RunwaySimulator.tsx    <span class="code-comment"># Simulation engine (~1,450 lines)</span>
+│   │   ├── BurnRateCalculator.tsx <span class="code-comment"># Expense calculator (~350 lines)</span>
+│   │   ├── GrowthTracker.tsx      <span class="code-comment"># MRR/ARR projections (~330 lines)</span>
+│   │   └── HiringPlanner.tsx      <span class="code-comment"># Team growth planner (~440 lines)</span>
+│   │
+│   ├── settings/
+│   │   └── SettingsPanel.tsx  <span class="code-comment"># Reusable settings modal (6 types)</span>
+│   │
+│   └── ui/                    <span class="code-comment"># 50+ shadcn/ui components</span>
+│
+├── <span class="code-keyword">lib/</span>
+│   ├── config.ts              <span class="code-comment"># API base URL</span>
+│   ├── exportUtils.ts         <span class="code-comment"># Export functions (PDF, PNG, etc.)</span>
+│   └── utils.ts               <span class="code-comment"># Utility functions</span>
+│
+└── <span class="code-keyword">hooks/</span>
+    ├── use-toast.ts           <span class="code-comment"># Toast notifications</span>
+    └── use-mobile.tsx         <span class="code-comment"># Mobile detection</span></code></pre>
+    </div>
+
+    <!-- Section 3: Application Flow -->
+    <h2>🔄 3. Application Flow</h2>
+    <div class="section">
+      <div class="flow-diagram">
+                         ┌─────────────────────────────────────────┐
+                         │              index.html                  │
+                         │   (Dark mode script prevents flash)      │
+                         └───────────────────┬─────────────────────┘
+                                             │
+                         ┌───────────────────▼─────────────────────┐
+                         │              main.tsx                    │
+                         │         React root render                │
+                         └───────────────────┬─────────────────────┘
+                                             │
+                         ┌───────────────────▼─────────────────────┐
+                         │              App.tsx                     │
+                         │  • QueryClientProvider                   │
+                         │  • AppProvider (global state)            │
+                         │  • BrowserRouter (routing)               │
+                         │  • Toasters                              │
+                         └───────────────────┬─────────────────────┘
+                                             │
+                 ┌───────────────────────────┼───────────────────────┐
+                 │                           │                       │
+         ┌───────▼───────┐           ┌───────▼───────┐       ┌───────▼───────┐
+         │   AppLayout   │           │   AppLayout   │       │   NotFound    │
+         │  + Sidebar    │           │  + Sidebar    │       │   (404)       │
+         └───────┬───────┘           └───────┬───────┘       └───────────────┘
+                 │                           │
+     ┌───────────┴───────────┐   ┌───────────┴───────────┐
+     │       Outlet          │   │       Page Routes     │
+     │  (renders page)       │   │  /          DNALab    │
+     │                       │   │  /archive   Archive   │
+     │                       │   │  /toolkit   Toolkit   │
+     │                       │   │  /settings  ScaleHub  │
+     └───────────────────────┘   └───────────────────────┘
+      </div>
+    </div>
+
+    <!-- Section 4: Core Pages -->
+    <h2 class="page-break">📄 4. Core Pages</h2>
+    
+    <!-- DNALab -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background: linear-gradient(135deg, #4169E1, #8B5CF6);">🧬</div>
+        <div>
+          <div class="card-title">DNALab.tsx — Financial DNA Analysis</div>
+          <div class="card-subtitle">Route: / &nbsp;|&nbsp; ~1,000 lines</div>
+        </div>
+      </div>
+      
+      <p>The main analysis engine where users upload CSV files to decode their financial DNA.</p>
+      
+      <h4>Processing Stages</h4>
+      <table>
+        <tr><th>Stage</th><th>Message Displayed</th></tr>
+        <tr><td><code>idle</code></td><td>(empty)</td></tr>
+        <tr><td><code>decoding</code></td><td>Parsing Financial DNA Strings...</td></tr>
+        <tr><td><code>mapping</code></td><td>Sequencing Revenue Genome...</td></tr>
+        <tr><td><code>simulating</code></td><td>Simulating Survival Horizon...</td></tr>
+        <tr><td><code>complete</code></td><td>Analysis Complete</td></tr>
+      </table>
+      
+      <h4>Core Functions</h4>
+      <table>
+        <tr><th>Function</th><th>Purpose</th></tr>
+        <tr><td><code>sanitizeFinancialData()</code></td><td>Validates API data, handles edge cases (zero burn, Infinity)</td></tr>
+        <tr><td><code>calculateGrade()</code></td><td>Computes A-F grade based on runway, margin, burn</td></tr>
+        <tr><td><code>generateInsight()</code></td><td>Creates contextual AI-like insights</td></tr>
+        <tr><td><code>processFile()</code></td><td>Uploads CSV to /api/parse-finances, handles response</td></tr>
+        <tr><td><code>handleExportInvestorReport()</code></td><td>Generates markdown investor report</td></tr>
+        <tr><td><code>handleCopySlackUpdate()</code></td><td>Creates emoji-rich Slack message</td></tr>
+      </table>
+
+      <h4>Grade Calculation Logic</h4>
+      <pre><code><span class="code-keyword">function</span> <span class="code-function">calculateGrade</span>(runwayMonths, profitMargin, monthlyBurn, cashOnHand): string {
+  <span class="code-comment">// Pre-revenue with cash = A</span>
+  <span class="code-keyword">if</span> (monthlyBurn === 0 && cashOnHand > 0) <span class="code-keyword">return</span> <span class="code-string">"A"</span>;
+  
+  <span class="code-comment">// Infinite runway = A/B</span>
+  <span class="code-keyword">if</span> (runwayMonths > 36) <span class="code-keyword">return</span> profitMargin >= 0 ? <span class="code-string">"A"</span> : <span class="code-string">"B"</span>;
+  
+  <span class="code-comment">// Standard grading</span>
+  <span class="code-keyword">if</span> (runwayMonths >= 18) <span class="code-keyword">return</span> profitMargin >= 10 ? <span class="code-string">"A"</span> : <span class="code-string">"B"</span>;
+  <span class="code-keyword">if</span> (runwayMonths >= 12) <span class="code-keyword">return</span> profitMargin >= 0 ? <span class="code-string">"B"</span> : <span class="code-string">"C"</span>;
+  <span class="code-keyword">if</span> (runwayMonths >= 6) <span class="code-keyword">return</span> <span class="code-string">"C"</span>;
+  <span class="code-keyword">if</span> (runwayMonths >= 3) <span class="code-keyword">return</span> <span class="code-string">"D"</span>;
+  <span class="code-keyword">return</span> <span class="code-string">"F"</span>;
+}</code></pre>
+    </div>
+
+    <!-- DNAArchive -->
+    <div class="card" style="margin-top: 30px;">
+      <div class="card-header">
+        <div class="card-icon" style="background: linear-gradient(135deg, #8B5CF6, #4169E1);">📚</div>
+        <div>
+          <div class="card-title">DNAArchive.tsx — Historical Analysis Archive</div>
+          <div class="card-subtitle">Route: /archive &nbsp;|&nbsp; ~2,200 lines</div>
+        </div>
+      </div>
+      
+      <p>View and search past financial analyses with deep filtering, sorting, and time-machine rehydration.</p>
+      
+      <h4>Key Features</h4>
+      <table>
+        <tr><th>Feature</th><th>Implementation</th></tr>
+        <tr><td>Deep Search</td><td>Case-insensitive search across date, grade, insight, runway</td></tr>
+        <tr><td>Grade Filter</td><td>Filter by A/B/C/D/F grades</td></tr>
+        <tr><td>Month Filter</td><td>Filter by specific months</td></tr>
+        <tr><td>Smart Sorting</td><td>Date, Runway (asc/desc), Burn Efficiency, Grade</td></tr>
+        <tr><td>Animated Transitions</td><td>Framer Motion staggered reveals</td></tr>
+        <tr><td>Clickable Stats Cards</td><td>Opens detailed modals with charts</td></tr>
+        <tr><td>Rehydration</td><td>Load historical analysis into DNA Lab</td></tr>
+      </table>
+
+      <h4>Filtering Logic</h4>
+      <pre><code><span class="code-keyword">const</span> filteredAnalyses = <span class="code-function">useMemo</span>(() => {
+  <span class="code-keyword">return</span> analyses.<span class="code-function">filter</span>(a => {
+    <span class="code-keyword">const</span> matchesSearch = searchableText.<span class="code-function">includes</span>(query);
+    <span class="code-keyword">const</span> matchesGrade = gradeFilter === <span class="code-string">"All"</span> || a.grade === gradeFilter;
+    <span class="code-keyword">const</span> matchesMonth = monthFilter === <span class="code-string">"All"</span> || analysisMonth === monthFilter;
+    <span class="code-keyword">return</span> matchesSearch && matchesGrade && matchesMonth;
+  });
+}, [analyses, searchQuery, gradeFilter, monthFilter]);</code></pre>
+
+      <h4>Rehydration Function</h4>
+      <pre><code><span class="code-keyword">const</span> <span class="code-function">rehydrateDNALab</span> = (analysis: Analysis) => {
+  sessionStorage.<span class="code-function">setItem</span>(<span class="code-string">"historical_analysis"</span>, JSON.<span class="code-function">stringify</span>(analysis));
+  <span class="code-function">navigate</span>(<span class="code-string">"/?historical=true"</span>);
+};</code></pre>
+    </div>
+
+    <!-- FounderToolkit -->
+    <div class="card page-break" style="margin-top: 30px;">
+      <div class="card-header">
+        <div class="card-icon" style="background: linear-gradient(135deg, #00FF88, #00AA66);">🛠️</div>
+        <div>
+          <div class="card-title">FounderToolkit.tsx — Financial Tools Suite</div>
+          <div class="card-subtitle">Route: /toolkit &nbsp;|&nbsp; ~300 lines</div>
+        </div>
+      </div>
+      
+      <p>Hub for financial planning tools with real-time simulations.</p>
+      
+      <h4>Available Tools</h4>
+      <table>
+        <tr><th>Tool</th><th>Component</th><th>Purpose</th></tr>
+        <tr><td>Burn Rate Calculator</td><td><code>BurnRateCalculator.tsx</code></td><td>Model expense scenarios, pie chart breakdown</td></tr>
+        <tr><td>Runway Simulator</td><td><code>RunwaySimulator.tsx</code></td><td>24-month cash projection with scenario comparison</td></tr>
+        <tr><td>Growth Tracker</td><td><code>GrowthTracker.tsx</code></td><td>MRR/ARR projection with churn modeling</td></tr>
+        <tr><td>Hiring Planner</td><td><code>HiringPlanner.tsx</code></td><td>Team growth impact on burn rate</td></tr>
+      </table>
+
+      <h4>External Resources Linked</h4>
+      <ul style="list-style: none; padding-left: 0;">
+        <li style="padding: 8px 0;">📖 Y Combinator: Founder's Guide to Runway</li>
+        <li style="padding: 8px 0;">🎥 Video: Decoding Your Financial DNA</li>
+        <li style="padding: 8px 0;">📄 Investor Update Template (Google Docs)</li>
+        <li style="padding: 8px 0;">💵 Visible.vc: Fundraising Metrics Cheatsheet</li>
+      </ul>
+    </div>
+
+    <!-- ScaleHub -->
+    <div class="card" style="margin-top: 30px;">
+      <div class="card-header">
+        <div class="card-icon" style="background: linear-gradient(135deg, #FFB800, #FF8800);">⚙️</div>
+        <div>
+          <div class="card-title">ScaleHub.tsx — Settings Hub</div>
+          <div class="card-subtitle">Route: /settings &nbsp;|&nbsp; ~300 lines</div>
+        </div>
+      </div>
+      
+      <p>User settings and preferences management with functional modals.</p>
+      
+      <h4>Settings Panels</h4>
+      <table>
+        <tr><th>Panel</th><th>Features</th></tr>
+        <tr><td>Profile</td><td>Name, email, company editing</td></tr>
+        <tr><td>Notifications</td><td>Push notifications, weekly reports toggle</td></tr>
+        <tr><td>Security</td><td>Password change, 2FA toggle</td></tr>
+        <tr><td>Appearance</td><td>Dark/Light/System theme, accent color</td></tr>
+        <tr><td>API Access</td><td>API key display, regeneration</td></tr>
+        <tr><td>Subscription</td><td>Pro plan status, billing management</td></tr>
+      </table>
+    </div>
+
+    <!-- Section 5: Toolkit Components -->
+    <h2 class="page-break">🧮 5. Toolkit Components Deep Dive</h2>
+    
+    <!-- RunwaySimulator -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background: linear-gradient(135deg, #00FF88, #4169E1);">📊</div>
+        <div>
+          <div class="card-title">RunwaySimulator.tsx</div>
+          <div class="card-subtitle">~1,450 lines &nbsp;|&nbsp; Most complex component</div>
+        </div>
+      </div>
+      
+      <p>A full simulation engine for 24-month cash flow projections with scenario comparison.</p>
+      
+      <h4>Simulation Formula</h4>
+      <div class="highlight-box" style="font-family: 'JetBrains Mono', monospace; font-size: 16px; text-align: center;">
+        Cash(t+1) = Cash(t) - (Expenses × (1 + ExpenseGrowth)^t) + (Revenue × (1 + RevenueGrowth)^t)
+      </div>
+
+      <h4>State Parameters (SimParams)</h4>
+      <table>
+        <tr><th>Parameter</th><th>Range</th><th>Description</th></tr>
+        <tr><td><code>cashOnHand</code></td><td>$0+</td><td>Current cash balance</td></tr>
+        <tr><td><code>monthlyExpenses</code></td><td>$0+</td><td>Monthly burn rate</td></tr>
+        <tr><td><code>monthlyRevenue</code></td><td>$0+</td><td>Monthly revenue</td></tr>
+        <tr><td><code>expenseGrowth</code></td><td>-10% to +50%</td><td>Annual expense growth rate</td></tr>
+        <tr><td><code>revenueGrowth</code></td><td>0% to +100%</td><td>Annual revenue growth rate</td></tr>
+      </table>
+
+      <h4>Quick Presets</h4>
+      <table>
+        <tr><th>Preset</th><th>Icon</th><th>Effect</th></tr>
+        <tr><td>The Big Hire</td><td>👔</td><td>+20% Burn, add key talent</td></tr>
+        <tr><td>Blitzscale</td><td>🚀</td><td>+30% Burn, +40% Growth</td></tr>
+        <tr><td>Winter Mode</td><td>❄️</td><td>-15% Burn, extend runway</td></tr>
+        <tr><td>Post-Raise</td><td>💰</td><td>+$500K Cash, +10% Burn</td></tr>
+      </table>
+
+      <h4>Scenario Comparison Features</h4>
+      <ul style="list-style: none; padding-left: 0;">
+        <li style="padding: 8px 0;">📈 <strong>Dual-Line Chart:</strong> Scenario A (Electric Cobalt) vs Scenario B (Emerald Green)</li>
+        <li style="padding: 8px 0;">⚡ <strong>Difference Engine:</strong> Shows runway delta (+/- months)</li>
+        <li style="padding: 8px 0;">📸 <strong>Snapshots:</strong> Save and compare multiple scenarios</li>
+        <li style="padding: 8px 0;">🎨 <strong>Dynamic Colors:</strong> Positive = Blue, Negative = Red</li>
+      </ul>
+    </div>
+
+    <!-- Other Toolkit Components -->
+    <div class="grid-2" style="margin-top: 30px;">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon" style="background: #4169E1;">🔥</div>
+          <div>
+            <div class="card-title">BurnRateCalculator</div>
+            <div class="card-subtitle">~350 lines</div>
+          </div>
+        </div>
+        <p><strong>Inputs:</strong> Revenue, Payroll, Marketing, Operations, Other</p>
+        <p><strong>Outputs:</strong></p>
+        <ul>
+          <li>Total expenses</li>
+          <li>Net burn (expenses - revenue)</li>
+          <li>Pie chart breakdown</li>
+          <li>Bar chart comparison</li>
+        </ul>
+      </div>
+      
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon" style="background: #8B5CF6;">📈</div>
+          <div>
+            <div class="card-title">GrowthTracker</div>
+            <div class="card-subtitle">~330 lines</div>
+          </div>
+        </div>
+        <p><strong>Inputs:</strong> MRR, Growth Rate, ARPU, Churn Rate</p>
+        <p><strong>Formula:</strong></p>
+        <code>MRR × (1 + growth) × (1 - churn)</code>
+        <p style="margin-top: 10px;"><strong>Outputs:</strong></p>
+        <ul>
+          <li>12-month ARR projection</li>
+          <li>Customer count projection</li>
+          <li>Net growth rate</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 20px;">
+      <div class="card-header">
+        <div class="card-icon" style="background: #FFB800;">👥</div>
+        <div>
+          <div class="card-title">HiringPlanner</div>
+          <div class="card-subtitle">~440 lines</div>
+        </div>
+      </div>
+      <h4>Roles Modeled</h4>
+      <table>
+        <tr><th>Role</th><th>Default Salary</th><th>Color</th></tr>
+        <tr><td>Engineers</td><td>$12,000/mo</td><td><span class="badge badge-primary">Blue</span></td></tr>
+        <tr><td>Sales</td><td>$8,000/mo</td><td><span class="badge badge-success">Green</span></td></tr>
+        <tr><td>Support</td><td>$5,000/mo</td><td><span class="badge badge-warning">Gold</span></td></tr>
+        <tr><td>Operations</td><td>$7,000/mo</td><td><span class="badge badge-purple">Purple</span></td></tr>
+      </table>
+      <p style="margin-top: 15px;"><strong>Features:</strong> Adjustable hire count, configurable start month, runway impact visualization, critical runway warnings</p>
+    </div>
+
+    <!-- Section 6: Design System -->
+    <h2 class="page-break">🎨 6. UI/UX Architecture & Design System</h2>
+    <div class="section">
+      <h4>Color Palette</h4>
+      <table>
+        <tr><th>Name</th><th>HSL Value</th><th>Usage</th></tr>
+        <tr><td><span style="color: #4169E1;">●</span> Electric Cobalt</td><td><code>hsl(226, 100%, 59%)</code></td><td>Primary, links, active states</td></tr>
+        <tr><td><span style="color: #00FF88;">●</span> Mint/Emerald</td><td><code>hsl(152, 100%, 50%)</code></td><td>Success, positive metrics</td></tr>
+        <tr><td><span style="color: #FFB800;">●</span> Gold</td><td><code>hsl(45, 90%, 55%)</code></td><td>Warnings, highlights</td></tr>
+        <tr><td><span style="color: #E53935;">●</span> Danger Red</td><td><code>hsl(0, 70%, 55%)</code></td><td>Errors, negative metrics</td></tr>
+        <tr><td><span style="color: #8B5CF6;">●</span> Purple</td><td><code>hsl(270, 60%, 55%)</code></td><td>Accent, special features</td></tr>
+        <tr><td><span style="color: #0D0D0E;">●</span> Dark BG</td><td><code>hsl(240, 15%, 8%)</code></td><td>Background</td></tr>
+      </table>
+
+      <h4>Glassmorphism Effect</h4>
+      <div class="highlight-box">
+        <code>backdrop-blur: 40px</code> &nbsp;|&nbsp; <code>opacity: 0.65</code> &nbsp;|&nbsp; <code>border: 1px solid rgba(255,255,255,0.1)</code>
+      </div>
+
+      <h4>Component Library</h4>
+      <div style="margin-top: 15px;">
+        <span class="badge badge-primary">shadcn/ui</span>
+        <span class="badge badge-success">Framer Motion</span>
+        <span class="badge badge-warning">Recharts</span>
+        <span class="badge badge-purple">Lucide Icons</span>
+        <span class="badge badge-danger">Tailwind CSS</span>
+      </div>
+
+      <h4>Animation Patterns</h4>
+      <table style="margin-top: 20px;">
+        <tr><th>Pattern</th><th>Implementation</th></tr>
+        <tr><td>Page Transitions</td><td><code>AnimatePresence</code> + <code>motion.div</code></td></tr>
+        <tr><td>Staggered Lists</td><td><code>staggerChildren: 0.1</code></td></tr>
+        <tr><td>Hover Effects</td><td><code>whileHover={{ scale: 1.02, y: -4 }}</code></td></tr>
+        <tr><td>Number Counting</td><td>Animated counter with setInterval</td></tr>
+        <tr><td>Chart Animations</td><td><code>animationDuration={1500}</code></td></tr>
+      </table>
+    </div>
+
+    <!-- Section 7: API Integration -->
+    <h2>🔗 7. API Integration</h2>
+    <div class="section">
+      <h4>Configuration</h4>
+      <pre><code><span class="code-comment">// src/lib/config.ts</span>
+<span class="code-keyword">export const</span> API_BASE_URL = <span class="code-string">"https://finance-core--agayle8671.replit.app"</span>;
+
+<span class="code-keyword">export function</span> <span class="code-function">apiUrl</span>(path: string): string {
+  <span class="code-keyword">return</span> API_BASE_URL ? <span class="code-string">`${API_BASE_URL}${path}`</span> : path;
+}</code></pre>
+
+      <h4>Endpoints</h4>
+      <table>
+        <tr><th>Endpoint</th><th>Method</th><th>Purpose</th></tr>
+        <tr><td><code>/api/parse-finances</code></td><td>POST</td><td>Upload CSV, receive analysis</td></tr>
+        <tr><td><code>/api/archive</code></td><td>GET</td><td>Fetch historical analyses</td></tr>
+      </table>
+
+      <h4>Data Format (snake_case)</h4>
+      <pre><code><span class="code-keyword">interface</span> FinancialData {
+  runway_months: number;
+  grade: string;
+  monthly_burn: number;
+  cash_on_hand: number;
+  profit_margin: number;
+  revenue_trend: number[];
+  expense_trend: number[];
+  insight: string;
+}</code></pre>
+    </div>
+
+    <!-- Section 8: Global State -->
+    <h2 class="page-break">🌐 8. Global State Management</h2>
+    <div class="section">
+      <h4>AppContext Structure</h4>
+      <pre><code><span class="code-keyword">interface</span> UserSettings {
+  isPro: boolean;           <span class="code-comment">// Pro/Admin status</span>
+  darkMode: boolean;        <span class="code-comment">// Theme toggle</span>
+  pushNotifications: boolean;
+  weeklyReports: boolean;
+}
+
+<span class="code-keyword">interface</span> AppContextType {
+  user: UserSettings;
+  <span class="code-function">updateSettings</span>: (settings: Partial&lt;UserSettings&gt;) => void;
+  <span class="code-function">toggleDarkMode</span>: () => void;
+  <span class="code-function">signOut</span>: () => void;
+}</code></pre>
+
+      <h4>Persistence</h4>
+      <ul>
+        <li>Settings stored in <code>localStorage</code> as <code>runwayDNA_settings</code></li>
+        <li>Dark mode class applied to <code>&lt;html&gt;</code> element</li>
+        <li>Flash prevention script in <code>index.html</code> head</li>
+      </ul>
+    </div>
+
+    <!-- Section 9: Export Utilities -->
+    <h2>📤 9. Export Utilities</h2>
+    <div class="section">
+      <table>
+        <tr><th>Function</th><th>Output</th></tr>
+        <tr><td><code>generateInvestorUpdate()</code></td><td>Full markdown investor report</td></tr>
+        <tr><td><code>generateSlackUpdate()</code></td><td>Emoji-rich Slack message</td></tr>
+        <tr><td><code>generateQuickStatus()</code></td><td>One-liner status</td></tr>
+        <tr><td><code>exportAsPNG()</code></td><td>PNG screenshot (html2canvas)</td></tr>
+        <tr><td><code>exportAsPDF()</code></td><td>PDF document (jsPDF)</td></tr>
+        <tr><td><code>shareToTwitter()</code></td><td>Opens Twitter intent</td></tr>
+        <tr><td><code>downloadAsFile()</code></td><td>Generic file download</td></tr>
+        <tr><td><code>copyToClipboard()</code></td><td>Clipboard copy with fallback</td></tr>
+      </table>
+    </div>
+
+    <!-- Section 10: Build & Deploy -->
+    <h2>🚀 10. Build & Deployment</h2>
+    <div class="section">
+      <h4>Package Scripts</h4>
+      <pre><code>{
+  <span class="code-string">"dev"</span>: <span class="code-string">"vite"</span>,           <span class="code-comment">// Development server</span>
+  <span class="code-string">"build"</span>: <span class="code-string">"vite build"</span>,   <span class="code-comment">// Production build → /dist</span>
+  <span class="code-string">"preview"</span>: <span class="code-string">"vite preview"</span> <span class="code-comment">// Preview production build</span>
+}</code></pre>
+
+      <h4>Key Dependencies</h4>
+      <div style="margin-top: 15px;">
+        <span class="badge badge-primary">React 18</span>
+        <span class="badge badge-success">Vite</span>
+        <span class="badge badge-warning">TypeScript</span>
+        <span class="badge badge-purple">Tailwind CSS</span>
+        <span class="badge badge-danger">Framer Motion</span>
+        <span class="badge badge-primary">Recharts</span>
+        <span class="badge badge-success">shadcn/ui</span>
+        <span class="badge badge-warning">html2canvas</span>
+        <span class="badge badge-purple">jsPDF</span>
+      </div>
+
+      <h4>GitHub Repository</h4>
+      <div class="highlight-box">
+        <a href="https://github.com/agayle8671-cmyk/lead-flow-studio-70" style="color: #4169E1;">
+          https://github.com/agayle8671-cmyk/lead-flow-studio-70
+        </a>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div style="margin-top: 60px; padding-top: 30px; border-top: 1px solid rgba(255,255,255,0.1); text-align: center; color: var(--text-muted);">
+      <p style="font-size: 14px;">
+        🧬 Runway DNA — Built for founders who move fast
+      </p>
+      <p style="font-size: 12px; margin-top: 10px;">
+        Generated December 28, 2025 • ~21,000 lines of code • 100+ files
+      </p>
+    </div>
+
+  </div>
+</body>
+</html>
+
+
