@@ -74,9 +74,12 @@ export interface RiskAssessment {
 // ============================================================================
 
 // Use the correct Gemini API endpoint
-// Google AI Studio REST API format
+// Google AI Studio REST API - use v1beta with models endpoint
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta';
-// Try the standard gemini-pro model (most compatible)
+// Model names that work with Google AI Studio API keys:
+// - gemini-pro (standard, most compatible)
+// - gemini-1.5-pro (if available with your API key)
+// - gemini-1.5-flash (faster, if available)
 const GEMINI_MODEL = 'gemini-pro';
 
 const getApiKey = (): string | null => {
