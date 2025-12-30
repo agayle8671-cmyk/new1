@@ -157,22 +157,46 @@ app.get('/api/health', (req, res) => {
 
 // Serve static files from Vite build
 const distPath = join(__dirname, 'dist');
+
+console.log('[Server] Checking for dist folder at:', distPath);
+console.log('[Server] Dist folder exists:', fs.existsSync(distPath));
+
 if (fs.existsSync(distPath)) {
-  app.use(express.static(distPath));
+  // Serve static files (CSS, JS, images, etc.)
+  app.use(express.static(distPath, {
+    maxAge: '1y',
+    etag: true,
+  }));
   
   // SPA fallback - serve index.html for all non-API routes
-  app.get('*', (req, res) => {
-    // Don't serve index.html for API routes
+  // This must be LAST, after all other routes
+  app.get('*', (req, res, next) => {
+    // Skip API routes
     if (req.path.startsWith('/api/')) {
-      return res.status(404).json({ error: 'API endpoint not found' });
+      return next();
     }
-    res.sendFile(join(distPath, 'index.html'));
+    
+    // Serve index.html for all other routes (React Router will handle routing)
+    const indexPath = join(distPath, 'index.html');
+    if (fs.existsSync(indexPath)) {
+      res.sendFile(indexPath);
+    } else {
+      res.status(404).json({ 
+        error: 'index.html not found',
+        distPath,
+        files: fs.readdirSync(distPath).slice(0, 10)
+      });
+    }
   });
 } else {
+  console.warn('[Server] ⚠️ Dist folder not found! Build may have failed.');
   app.get('/', (req, res) => {
     res.json({ 
       message: 'Build your app with: npm run build',
-      status: 'development mode - run npm run build to create dist folder'
+      status: 'development mode - run npm run build to create dist folder',
+      distPath,
+      cwd: process.cwd(),
+      files: fs.readdirSync(__dirname).slice(0, 10)
     });
   });
 }
