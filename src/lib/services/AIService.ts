@@ -215,58 +215,101 @@ async function callGemini(
 
   try {
     const startTime = Date.now();
+    
+    const requestBody = {
+      message: prompt, // Use 'message' for Edge function compatibility
+      context,
+      conversationHistory,
+    };
+    
+    console.log('[AI] Request body:', {
+      message: prompt.substring(0, 50) + '...',
+      hasContext: !!context,
+      historyLength: conversationHistory?.length || 0,
+    });
+
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        message: prompt, // Use 'message' for Edge function compatibility
-        context,
-        conversationHistory,
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     const latency = Date.now() - startTime;
     console.log('[AI] Response status:', response.status, `(${latency}ms)`);
+    console.log('[AI] Response headers:', Object.fromEntries(response.headers.entries()));
 
     if (!response.ok) {
-      const errorText = await response.text();
-      let errorData;
+      // Try to parse error response
+      let errorData: any = {};
+      let errorText = '';
+      
       try {
+        errorText = await response.text();
         errorData = JSON.parse(errorText);
-      } catch {
+      } catch (parseError) {
         errorData = { error: errorText || `HTTP ${response.status}` };
       }
       
       console.error('[AI] ❌ Error response:', errorData);
       console.error('[AI] Full error text:', errorText);
+      console.error('[AI] Response status:', response.status, response.statusText);
       
-      // Provide helpful error messages
-      if (response.status === 500 && errorData.error?.includes('API key not configured')) {
-        throw new Error('API key not configured in Vercel. Add GOOGLE_AI_KEY (not VITE_ prefix) in Vercel Settings → Environment Variables.');
+      // Provide helpful error messages based on status code
+      if (response.status === 500) {
+        if (errorData.error?.includes('API key not configured') || errorData.error?.includes('API key')) {
+          throw new Error('API key not configured in Vercel. Add GOOGLE_AI_KEY (not VITE_ prefix) in Vercel Settings → Environment Variables, then redeploy.');
+        }
+        if (errorData.details) {
+          throw new Error(`AI Service Error: ${errorData.error || 'Unknown error'}. Details: ${errorData.details}. ${errorData.hint || ''}`);
+        }
       }
       
-      throw new Error(errorData.error || errorData.message || `HTTP ${response.status}: ${errorText}`);
+      if (response.status === 404) {
+        throw new Error('API endpoint not found. Check that /api/chat exists and is deployed.');
+      }
+      
+      if (response.status === 401 || response.status === 403) {
+        throw new Error('API key authentication failed. Verify your GOOGLE_AI_KEY is valid at https://aistudio.google.com/');
+      }
+      
+      // Generic error with details
+      const errorMessage = errorData.error || errorData.message || `HTTP ${response.status}: ${errorText}`;
+      const hint = errorData.hint ? ` ${errorData.hint}` : '';
+      throw new Error(`AI Error: ${errorMessage}${hint}`);
     }
 
     const data = await response.json();
+    console.log('[AI] Response data:', {
+      hasResponse: !!data.response,
+      hasText: !!data.text,
+      responseLength: data.response?.length || data.text?.length || 0,
+    });
+    
     // Support both 'response' and 'text' fields for compatibility
     const aiResponse = data.response || data.text;
     
-    console.log('[AI] ✅ Success, response length:', aiResponse?.length || 0);
-    console.log('[AI] ========================================');
-    
     if (!aiResponse) {
-      throw new Error('No response from AI - empty response');
+      console.error('[AI] ❌ No response text in data:', data);
+      throw new Error('No response from AI - empty response. Check Vercel function logs for details.');
     }
 
+    console.log('[AI] ✅ Success, response length:', aiResponse.length);
+    console.log('[AI] ========================================');
+    
     return aiResponse;
   } catch (err) {
     console.error('[AI] ❌ Fetch error:', err);
     console.error('[AI] Error type:', err instanceof Error ? err.constructor.name : typeof err);
+    console.error('[AI] Error message:', err instanceof Error ? err.message : String(err));
     console.error('[AI] ========================================');
-    throw err;
+    
+    // Re-throw with better error message
+    if (err instanceof Error) {
+      throw err;
+    }
+    throw new Error(`AI Error: ${String(err)}`);
   }
 }
 
