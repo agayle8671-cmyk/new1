@@ -54,7 +54,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     // Build conversation history for REST API
-    const contents: Array<{ role: 'user' | 'model'; parts: Array<{ text: string }> }> = [];
+    // Start with Strategic CFO persona as the first system message
+    const contents: Array<{ role: 'user' | 'model'; parts: Array<{ text: string }> }> = [
+      {
+        role: 'user',
+        parts: [{ text: STRATEGIC_CFO_PERSONA }]
+      },
+      {
+        role: 'model',
+        parts: [{ text: 'I understand. I am the Runway DNA Strategic CFO. I will analyze financial genomes and provide actionable survival and growth strategies using Founder-to-Founder logic. How can I help?' }]
+      }
+    ];
 
     // Add financial context if provided
     if (context) {
@@ -127,12 +137,9 @@ SIMULATOR PARAMETERS:
     
     console.log('[Chat API] API URL:', apiUrl.replace(apiKey, 'API_KEY_HIDDEN'));
 
-    // Build request body with Strategic CFO persona as systemInstruction
+    // Build request body (Strategic CFO persona is embedded in conversation history)
     const requestBody: any = {
       contents,
-      systemInstruction: {
-        parts: [{ text: STRATEGIC_CFO_PERSONA }]
-      },
       generationConfig: {
         temperature: 0.7,
         topK: 40,
