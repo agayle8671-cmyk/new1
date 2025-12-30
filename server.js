@@ -21,6 +21,12 @@ const port = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Request logging middleware
+app.use((req, res, next) => {
+  console.log(`[Request] ${req.method} ${req.path} - ${new Date().toISOString()}`);
+  next();
+});
+
 // CORS middleware
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
@@ -183,6 +189,22 @@ if (fs.existsSync(distPath)) {
   
   console.log('[Server] ✅ Static files configured');
   
+  // Explicit root route handler
+  app.get('/', (req, res) => {
+    const indexPath = join(distPath, 'index.html');
+    console.log('[Server] Serving root route, index.html path:', indexPath);
+    if (fs.existsSync(indexPath)) {
+      res.sendFile(indexPath);
+    } else {
+      console.error('[Server] ❌ index.html not found');
+      res.status(404).json({ 
+        error: 'index.html not found',
+        distPath,
+        files: distFiles
+      });
+    }
+  });
+  
   // SPA fallback - serve index.html for all non-API routes
   // This must be LAST, after all other routes
   app.get('*', (req, res, next) => {
@@ -191,8 +213,14 @@ if (fs.existsSync(distPath)) {
       return next();
     }
     
+    // Skip root route (already handled above)
+    if (req.path === '/') {
+      return next();
+    }
+    
     // Serve index.html for all other routes (React Router will handle routing)
     const indexPath = join(distPath, 'index.html');
+    console.log('[Server] Serving SPA route:', req.path, '-> index.html');
     if (fs.existsSync(indexPath)) {
       res.sendFile(indexPath);
     } else {
