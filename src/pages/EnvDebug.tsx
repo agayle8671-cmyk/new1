@@ -21,10 +21,7 @@ export default function EnvDebug() {
               <div key={key} className="flex items-center gap-4 p-3 bg-white/5 rounded-lg">
                 <code className="text-cyan-electric font-mono text-sm">{key}</code>
                 <span className="text-gray-400">
-                  {key === 'VITE_GOOGLE_AI_KEY' 
-                    ? (allEnvVars[key] ? `✅ Set (${String(allEnvVars[key]).substring(0, 12)}...)` : '❌ NOT SET')
-                    : allEnvVars[key] ? '✅ Set' : '❌ Not set'
-                  }
+                  {allEnvVars[key] ? '✅ Set' : '❌ Not set'}
                 </span>
               </div>
             ))
@@ -67,9 +64,10 @@ export default function EnvDebug() {
             <p className="font-medium mb-2">Step 2: Add the Variable</p>
             <ol className="list-decimal list-inside space-y-1 text-gray-300 ml-2">
               <li>Click <strong>"Add New"</strong> button</li>
-              <li><strong>Key:</strong> <code className="bg-white/10 px-1 rounded">VITE_GOOGLE_AI_KEY</code> (exact match, case-sensitive)</li>
+              <li><strong>Key:</strong> <code className="bg-white/10 px-1 rounded">GOOGLE_AI_KEY</code> (exact match, case-sensitive, NO VITE_ prefix)</li>
               <li><strong>Value:</strong> Your API key from Google AI Studio</li>
               <li><strong>Environments:</strong> Check <strong>✅ Production</strong> (and Preview/Development if you want)</li>
+              <li><strong>⚠️ Important:</strong> Use <code>GOOGLE_AI_KEY</code> (not <code>VITE_GOOGLE_AI_KEY</code>) because the API key is stored server-side in the Vercel serverless function, not exposed to the browser.</li>
               <li>Click <strong>"Save"</strong></li>
             </ol>
           </div>

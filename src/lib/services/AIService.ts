@@ -82,9 +82,10 @@ const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1';
 // Note: gemini-pro is deprecated
 const GEMINI_MODEL = 'gemini-1.5-flash';
 
-// NOTE: We use a Vercel serverless function (/api/gemini) to proxy requests
+// NOTE: We use a Vercel serverless function (/api/chat) to proxy requests
 // The API key is stored server-side as GOOGLE_AI_KEY (not VITE_GOOGLE_AI_KEY)
 // The client doesn't need the key - it just calls our API endpoint
+// Uses @google/generative-ai SDK server-side to avoid browser CORS issues
 export const isAIConfigured = (): boolean => {
   // Always return true - the serverless function will handle API key validation
   // If the key is missing, the server will return an error that we'll display
@@ -99,7 +100,7 @@ export const getDebugInfo = () => {
     clientSideKey: 'not required (using serverless proxy)',
     allViteVars: Object.keys(import.meta.env).filter(k => k.startsWith('VITE_')),
     supabaseConfigured: Boolean(import.meta.env.VITE_SUPABASE_URL),
-    apiEndpoint: '/api/gemini',
+    apiEndpoint: '/api/chat',
   };
 };
 
@@ -118,7 +119,7 @@ export async function testConnection(): Promise<ConnectionStatus> {
   const startTime = Date.now();
 
   try {
-    const response = await fetch('/api/gemini', {
+    const response = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -198,13 +199,14 @@ async function callGemini(
   context?: AIContext,
   conversationHistory?: AIMessage[]
 ): Promise<string> {
-  // Call our Vercel serverless function instead of Gemini directly
-  // This keeps the API key secure (server-side) and avoids CORS issues
-  const apiUrl = '/api/gemini';
+  // Call our Vercel serverless function using Google Generative AI SDK
+  // This keeps the API key secure (server-side) and avoids browser CORS issues
+  const apiUrl = '/api/chat';
   
   console.log('[AI] ========================================');
   console.log('[AI] Calling Vercel serverless function:', apiUrl);
   console.log('[AI] Setup: Server-side API key (GOOGLE_AI_KEY in Vercel)');
+  console.log('[AI] SDK: @google/generative-ai with gemini-1.5-flash (v1beta)');
   console.log('[AI] Request payload:', { 
     prompt: prompt.substring(0, 50) + '...', 
     hasContext: !!context, 
