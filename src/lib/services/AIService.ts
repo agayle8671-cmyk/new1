@@ -85,7 +85,7 @@ const GEMINI_MODEL = 'gemini-1.5-flash';
 // NOTE: We use a Vercel serverless function (/api/chat) to proxy requests
 // The API key is stored server-side as GOOGLE_AI_KEY (not VITE_GOOGLE_AI_KEY)
 // The client doesn't need the key - it just calls our API endpoint
-// Uses @google/generative-ai SDK server-side to avoid browser CORS issues
+// Uses @google/generative-ai SDK server-side with Strategic CFO persona
 export const isAIConfigured = (): boolean => {
   // Always return true - the serverless function will handle API key validation
   // If the key is missing, the server will return an error that we'll display
@@ -206,7 +206,7 @@ async function callGemini(
   console.log('[AI] ========================================');
   console.log('[AI] Calling Vercel serverless function:', apiUrl);
   console.log('[AI] Setup: Server-side API key (GOOGLE_AI_KEY in Vercel)');
-  console.log('[AI] SDK: @google/generative-ai with gemini-1.5-flash (v1beta)');
+  console.log('[AI] Model: gemini-2.0-flash (2025 standard) with Strategic CFO persona');
   console.log('[AI] Request payload:', { 
     prompt: prompt.substring(0, 50) + '...', 
     hasContext: !!context, 

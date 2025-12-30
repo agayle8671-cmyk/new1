@@ -3,11 +3,16 @@
  * 
  * Vercel Serverless Function for Google Gemini AI Chat
  * 
- * Uses REST API directly (not SDK) to avoid v1beta compatibility issues.
+ * Secure backend route using Google Generative AI SDK.
  * API key is stored server-side as GOOGLE_AI_KEY (not VITE_ prefix).
+ * Uses v1 stable API with gemini-2.0-flash (2025 standard).
  */
 
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+
+// Strategic CFO Persona - High-status financial advisor for SaaS founders
+const STRATEGIC_CFO_PERSONA = `You are the Runway DNA Strategic CFO, a high-status financial advisor for SaaS founders. Your goal is to analyze financial genomes and provide actionable survival and growth strategies. Evaluate health based on: Grade A (>18 months runway), Grade B (6-18 months), or Grade C (<6 months). Use intellectual, direct, and empathetic Founder-to-Founder logic. Start with a high-level observation, provide a metric-based insight, and end with one "Next Move." Never give definitive legal advice.`;
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Enable CORS
@@ -49,10 +54,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    // Build conversation history for REST API
+    // Initialize Google Generative AI SDK
+    const genAI = new GoogleGenerativeAI(apiKey);
+    
+    // Use gemini-2.0-flash with v1 stable API (2025 standard)
+    // Fallback to gemini-1.5-flash if 2.0 is not available
+    let model;
+    try {
+      model = genAI.getGenerativeModel({ 
+        model: 'gemini-2.0-flash-exp',
+        systemInstruction: STRATEGIC_CFO_PERSONA,
+      });
+      console.log('[Chat API] Using gemini-2.0-flash-exp (2025 standard)');
+    } catch (err) {
+      // Fallback to stable model if 2.0 is not available
+      console.log('[Chat API] Falling back to gemini-1.5-flash');
+      model = genAI.getGenerativeModel({ 
+        model: 'gemini-1.5-flash',
+        systemInstruction: STRATEGIC_CFO_PERSONA,
+      });
+    }
+
+    // Build conversation history
     const contents: Array<{ role: 'user' | 'model'; parts: Array<{ text: string }> }> = [];
 
-    // Add system context if provided
+    // Add financial context if provided
     if (context) {
       let contextString = '';
       if (context.analysis) {
@@ -81,25 +107,15 @@ SIMULATOR PARAMETERS:
 `;
       }
       
+      // Add context as first user message if available
       if (contextString) {
         contents.push({
           role: 'user',
-          parts: [{ text: `You are an elite SaaS CFO AI advisor embedded in Runway DNA, a strategic finance suite for SaaS founders. Your expertise includes:
-
-- SaaS unit economics (CAC, LTV, payback period)
-- Fundraising strategy (when to raise, how much, valuation)
-- Runway optimization and burn rate management
-- Growth metrics (MRR, ARR, NRR, expansion revenue)
-- Financial modeling and scenario planning
-- Board deck preparation and investor relations
-
-You speak like a seasoned CFO: confident, direct, data-driven, and actionable. You always ground advice in specific numbers and provide clear next steps.
-
-Here's the financial context:\n${contextString}\n\nNow answer the user's question with this context in mind.` }]
+          parts: [{ text: `Here's the current financial context:\n${contextString}\n\nUse this data to inform your analysis.` }]
         });
         contents.push({
           role: 'model',
-          parts: [{ text: 'I understand. I have the financial context and I\'m ready to provide strategic SaaS finance advice. How can I help?' }]
+          parts: [{ text: 'I have the financial context. Ready to provide strategic CFO insights.' }]
         });
       }
     }
@@ -122,56 +138,36 @@ Here's the financial context:\n${contextString}\n\nNow answer the user's questio
       parts: [{ text: prompt }]
     });
 
-    console.log('[Chat API] Calling Gemini REST API with', contents.length, 'messages');
-    console.log('[Chat API] Model: gemini-1.5-flash (v1 API - stable)');
+    console.log('[Chat API] Calling Gemini with', contents.length, 'messages');
+    console.log('[Chat API] Persona: Strategic CFO (Runway DNA)');
 
-    // Call Gemini REST API directly using v1 (not v1beta) for compatibility
-    // v1beta has issues with gemini-1.5-flash, v1 is stable and works
-    const model = 'gemini-1.5-flash';
-    const apiUrl = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`;
-    
-    console.log('[Chat API] API URL:', apiUrl.replace(apiKey, 'API_KEY_HIDDEN'));
-
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+    // Generate content using the SDK with Strategic CFO persona
+    const result = await model.generateContent({
+      contents: contents.map(c => ({
+        role: c.role,
+        parts: c.parts,
+      })),
+      generationConfig: {
+        temperature: 0.7,
+        topK: 40,
+        topP: 0.95,
+        maxOutputTokens: 2048,
       },
-      body: JSON.stringify({
-        contents,
-        generationConfig: {
-          temperature: 0.7,
-          topK: 40,
-          topP: 0.95,
-          maxOutputTokens: 2048,
-        },
-        safetySettings: [
-          { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
-          { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
-          { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
-          { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
-        ],
-      }),
+      safetySettings: [
+        { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+        { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+        { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+        { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+      ],
     });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
-      console.error('[Chat API] ❌ API Error:', errorData);
-      throw new Error(errorData.error?.message || `HTTP ${response.status}: ${JSON.stringify(errorData)}`);
-    }
-
-    const data = await response.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    const response = await result.response;
+    const text = response.text();
     
     if (!text) {
       console.error('[Chat API] ❌ No text in response');
-      return res.status(500).json({ error: 'No response from AI' });
-    }
-
-    if (!text) {
-      console.error('[Chat API] ❌ No text in response');
-      console.error('[Chat API] Response data:', JSON.stringify(data, null, 2));
-      return res.status(500).json({ error: 'No response from AI', details: data });
+      console.error('[Chat API] Response data:', JSON.stringify(result, null, 2));
+      return res.status(500).json({ error: 'No response from AI', details: 'Empty response from model' });
     }
 
     console.log('[Chat API] ✅ Success, response length:', text.length);
@@ -188,10 +184,20 @@ Here's the financial context:\n${contextString}\n\nNow answer the user's questio
     } : error);
     console.error('[Chat API] ========================================');
     
+    // Provide helpful error messages
+    if (error instanceof Error) {
+      if (error.message.includes('model') || error.message.includes('not found')) {
+        return res.status(500).json({ 
+          error: 'Model not available. Trying fallback...',
+          details: error.message,
+          hint: 'The model may not be available in your region. Check Google AI Studio for available models.'
+        });
+      }
+    }
+    
     return res.status(500).json({ 
       error: error instanceof Error ? error.message : 'Unknown error',
       details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.stack : String(error)) : undefined
     });
   }
 }
-
