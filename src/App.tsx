@@ -9,6 +9,7 @@ import GrowthTracker from './pages/GrowthTracker';
 import Valuation from './pages/Toolkit/Valuation';
 import TaxCredit from './pages/Toolkit/TaxCredit';
 import Dilution from './pages/Toolkit/Dilution';
+import AIAdvisor from './pages/AIAdvisor';
 import { WelcomeOverlay } from './components/ui/WelcomeOverlay';
 
 export default function App() {
@@ -36,6 +37,7 @@ export default function App() {
           <Route path="/valuation" element={<Valuation />} />
           <Route path="/tax-credit" element={<TaxCredit />} />
           <Route path="/dilution" element={<Dilution />} />
+          <Route path="/ai-advisor" element={<AIAdvisor />} />
           <Route path="/archive" element={<Archive />} />
           <Route path="/" element={<Navigate to="/dna-lab" replace />} />
           <Route path="*" element={<Navigate to="/dna-lab" replace />} />

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import FloatingOrbs from './FloatingOrbs';
 import FloatingSidebar from './FloatingSidebar';
 import { OnboardingOverlay } from '../ui/OnboardingOverlay';
+import { AIChat } from '../ui/AIChat';
 
 // Page transition variants for mac-native feel
 const pageVariants = {
@@ -41,6 +42,9 @@ export default function AppLayout() {
       
       {/* First-time user onboarding */}
       <OnboardingOverlay />
+      
+      {/* Floating AI Chat Bubble */}
+      <AIChat />
       
       <main className="ml-72 p-4 min-h-screen relative z-10">
         <div className="max-w-7xl mx-auto">

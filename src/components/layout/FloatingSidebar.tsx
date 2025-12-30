@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { NavLink } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Dna, Activity, Archive, ChevronLeft, ChevronRight, Zap, TrendingUp, Users, BarChart3, AlertTriangle, DollarSign, Calculator, PieChart } from 'lucide-react';
+import { Dna, Activity, Archive, ChevronLeft, ChevronRight, Zap, TrendingUp, Users, BarChart3, AlertTriangle, DollarSign, Calculator, PieChart, Sparkles } from 'lucide-react';
 import { useAppStore } from '../../lib/store';
 import BurnMonitor, { type HealthGrade } from '../../lib/services/BurnMonitor';
 import { DEFAULT_PARAMS } from '../../lib/simulator-engine';
@@ -14,6 +14,7 @@ const navItems = [
   { to: '/valuation', icon: DollarSign, label: 'Valuation', description: 'SaaS valuation' },
   { to: '/tax-credit', icon: Calculator, label: 'R&D Credit', description: 'Tax credit estimator' },
   { to: '/dilution', icon: PieChart, label: 'Dilution', description: 'Fundraising shaper' },
+  { to: '/ai-advisor', icon: Sparkles, label: 'AI Advisor', description: 'AI financial coach' },
   { to: '/archive', icon: Archive, label: 'Archive', description: 'View history' },
 ];
 
