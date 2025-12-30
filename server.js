@@ -198,8 +198,8 @@ if (fs.existsSync(distPath)) {
     console.log('[Server] Index exists:', fs.existsSync(indexPath));
     
     if (fs.existsSync(indexPath)) {
-      // Use absolute path for sendFile
-      res.sendFile(indexPath, { root: '/' }, (err) => {
+      // Use absolute path for sendFile (no root option needed)
+      res.sendFile(indexPath, (err) => {
         if (err) {
           console.error('[Server] ❌ Error sending index.html:', err);
           res.status(500).json({ 
@@ -240,7 +240,7 @@ if (fs.existsSync(distPath)) {
     const indexPath = join(__dirname, 'dist', 'index.html');
     console.log('[Server] Serving SPA route:', req.path, '-> index.html');
     if (fs.existsSync(indexPath)) {
-      res.sendFile(indexPath, { root: '/' }, (err) => {
+      res.sendFile(indexPath, (err) => {
         if (err) {
           console.error('[Server] ❌ Error sending index.html for SPA route:', err);
           res.status(500).json({ error: 'Failed to serve index.html' });
