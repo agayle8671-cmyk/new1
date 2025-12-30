@@ -3,12 +3,11 @@
  * 
  * Vercel Serverless Function for Google Gemini AI Chat
  * 
- * Secure backend route using Google Generative AI SDK.
+ * Secure backend route using REST API directly for maximum compatibility.
  * API key is stored server-side as GOOGLE_AI_KEY (not VITE_ prefix).
- * Uses v1 stable API with gemini-2.0-flash (2025 standard).
+ * Uses v1 stable API with gemini-1.5-flash and Strategic CFO persona.
  */
 
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 // Strategic CFO Persona - High-status financial advisor for SaaS founders
@@ -54,35 +53,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    // Initialize Google Generative AI SDK
-    const genAI = new GoogleGenerativeAI(apiKey);
-    
-    // Use gemini-2.0-flash with v1 stable API (2025 standard)
-    // Try gemini-2.0-flash first, fallback to gemini-1.5-flash if not available
-    let model;
-    const modelNames = ['gemini-2.0-flash', 'gemini-2.0-flash-exp', 'gemini-1.5-flash'];
-    let modelUsed = '';
-    
-    for (const modelName of modelNames) {
-      try {
-        model = genAI.getGenerativeModel({ 
-          model: modelName,
-          systemInstruction: STRATEGIC_CFO_PERSONA,
-        });
-        modelUsed = modelName;
-        console.log(`[Chat API] Using ${modelName} (2025 standard)`);
-        break;
-      } catch (err) {
-        console.log(`[Chat API] ${modelName} not available, trying next...`);
-        continue;
-      }
-    }
-    
-    if (!model) {
-      throw new Error('No compatible Gemini model available');
-    }
-
-    // Build conversation history
+    // Build conversation history for REST API
     const contents: Array<{ role: 'user' | 'model'; parts: Array<{ text: string }> }> = [];
 
     // Add financial context if provided
@@ -145,15 +116,23 @@ SIMULATOR PARAMETERS:
       parts: [{ text: prompt }]
     });
 
-    console.log('[Chat API] Calling Gemini with', contents.length, 'messages');
+    console.log('[Chat API] Calling Gemini REST API with', contents.length, 'messages');
+    console.log('[Chat API] Model: gemini-1.5-flash (v1 API - stable)');
     console.log('[Chat API] Persona: Strategic CFO (Runway DNA)');
 
-    // Generate content using the SDK with Strategic CFO persona
-    const result = await model.generateContent({
-      contents: contents.map(c => ({
-        role: c.role,
-        parts: c.parts,
-      })),
+    // Call Gemini REST API directly using v1 (stable, proven to work)
+    // Use gemini-1.5-flash which is stable and widely available
+    const model = 'gemini-1.5-flash';
+    const apiUrl = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`;
+    
+    console.log('[Chat API] API URL:', apiUrl.replace(apiKey, 'API_KEY_HIDDEN'));
+
+    // Build request body with Strategic CFO persona as systemInstruction
+    const requestBody: any = {
+      contents,
+      systemInstruction: {
+        parts: [{ text: STRATEGIC_CFO_PERSONA }]
+      },
       generationConfig: {
         temperature: 0.7,
         topK: 40,
@@ -166,15 +145,34 @@ SIMULATOR PARAMETERS:
         { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
         { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
       ],
+    };
+
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
     });
 
-    const response = await result.response;
-    const text = response.text();
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+      console.error('[Chat API] ❌ API Error:', errorData);
+      console.error('[Chat API] Status:', response.status, response.statusText);
+      throw new Error(errorData.error?.message || `HTTP ${response.status}: ${JSON.stringify(errorData)}`);
+    }
+
+    const data = await response.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
     
     if (!text) {
       console.error('[Chat API] ❌ No text in response');
-      console.error('[Chat API] Response data:', JSON.stringify(result, null, 2));
-      return res.status(500).json({ error: 'No response from AI', details: 'Empty response from model' });
+      console.error('[Chat API] Response data:', JSON.stringify(data, null, 2));
+      return res.status(500).json({ 
+        error: 'No response from AI', 
+        details: data,
+        hint: 'Check Vercel function logs for more details'
+      });
     }
 
     console.log('[Chat API] ✅ Success, response length:', text.length);
@@ -190,17 +188,6 @@ SIMULATOR PARAMETERS:
       name: error.name
     } : error);
     console.error('[Chat API] ========================================');
-    
-    // Provide helpful error messages
-    if (error instanceof Error) {
-      if (error.message.includes('model') || error.message.includes('not found')) {
-        return res.status(500).json({ 
-          error: 'Model not available. Trying fallback...',
-          details: error.message,
-          hint: 'The model may not be available in your region. Check Google AI Studio for available models.'
-        });
-      }
-    }
     
     return res.status(500).json({ 
       error: error instanceof Error ? error.message : 'Unknown error',
