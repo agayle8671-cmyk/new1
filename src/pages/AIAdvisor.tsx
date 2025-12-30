@@ -282,24 +282,8 @@ export default function AIAdvisor() {
           <Sparkles className="w-16 h-16 text-gray-600 mx-auto mb-4" />
           <h2 className="text-xl font-bold mb-2">AI Advisor Not Configured</h2>
           <p className="text-gray-400 mb-4">
-            Add your Google AI API key to enable AI-powered financial insights.
+            Add your Google AI API key to Vercel (server-side) to enable AI-powered financial insights.
           </p>
-          <code className="block bg-white/5 p-3 rounded-lg text-sm text-cyan-electric mb-4">
-            VITE_GOOGLE_AI_KEY=your-api-key
-          </code>
-          <p className="text-xs text-gray-500 mb-4">
-            Get your key at{' '}
-            <a href="https://aistudio.google.com/apikey" target="_blank" className="text-cyan-electric hover:underline">
-              aistudio.google.com
-            </a>
-          </p>
-          
-          <a
-            href="/env-debug"
-            className="block w-full text-center py-3 bg-cyan-electric/20 hover:bg-cyan-electric/30 text-cyan-electric rounded-lg font-medium transition-colors mb-4"
-          >
-            🔧 Open Debug Page
-          </a>
           
           {/* Debug Info */}
           <div className="mt-6 p-4 bg-white/5 rounded-lg text-left border border-white/10 space-y-4">
@@ -309,16 +293,19 @@ export default function AIAdvisor() {
             </pre>
             
             <div className="border-t border-white/10 pt-4">
-              <h4 className="text-xs font-bold mb-2">📍 How to Add API Key in Vercel:</h4>
+              <h4 className="text-xs font-bold mb-2">📍 How to Add API Key in Vercel (Server-Side):</h4>
               <ol className="list-decimal list-inside space-y-1 text-xs text-gray-300">
                 <li>Go to <a href="https://vercel.com/dashboard" target="_blank" className="text-cyan-electric hover:underline">vercel.com/dashboard</a></li>
                 <li>Click project <strong>new1</strong> → <strong>Settings</strong> → <strong>Environment Variables</strong></li>
                 <li>Click <strong>"Add New"</strong></li>
-                <li><strong>Key:</strong> <code className="bg-white/10 px-1 rounded">VITE_GOOGLE_AI_KEY</code></li>
+                <li><strong>Key:</strong> <code className="bg-white/10 px-1 rounded">GOOGLE_AI_KEY</code> <span className="text-warning">(NO VITE_ prefix!)</span></li>
                 <li><strong>Value:</strong> Your API key from <a href="https://aistudio.google.com/apikey" target="_blank" className="text-cyan-electric hover:underline">Google AI Studio</a></li>
-                <li><strong>Environments:</strong> Check <strong>✅ Production</strong></li>
+                <li><strong>Environments:</strong> Check <strong>✅ Production</strong> (and Preview if needed)</li>
                 <li>Click <strong>"Save"</strong>, then go to <strong>Deployments</strong> → Click <strong>⋮</strong> → <strong>Redeploy</strong></li>
               </ol>
+              <div className="mt-3 p-2 bg-warning/10 border border-warning/30 rounded text-xs text-warning">
+                <strong>⚠️ Important:</strong> Use <code>GOOGLE_AI_KEY</code> (not <code>VITE_GOOGLE_AI_KEY</code>) because the API key is stored server-side in the Vercel serverless function, not exposed to the browser.
+              </div>
             </div>
           </div>
         </MotionCard>

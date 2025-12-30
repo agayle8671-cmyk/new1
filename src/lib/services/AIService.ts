@@ -82,30 +82,24 @@ const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1';
 // Note: gemini-pro is deprecated
 const GEMINI_MODEL = 'gemini-1.5-flash';
 
-const getApiKey = (): string | null => {
-  const key = import.meta.env.VITE_GOOGLE_AI_KEY || null;
-  // Debug logging (safe - only shows if key exists, not the actual key)
-  if (typeof window !== 'undefined') {
-    console.log('[AI Debug] API Key configured:', key ? `Yes (${key.substring(0, 8)}...)` : 'No');
-    console.log('[AI Debug] All VITE_ env vars:', Object.keys(import.meta.env).filter(k => k.startsWith('VITE_')));
-  }
-  return key;
-};
-
+// NOTE: We use a Vercel serverless function (/api/gemini) to proxy requests
+// The API key is stored server-side as GOOGLE_AI_KEY (not VITE_GOOGLE_AI_KEY)
+// The client doesn't need the key - it just calls our API endpoint
 export const isAIConfigured = (): boolean => {
-  // For serverless functions, we don't need to check client-side
-  // The API key is on the server. Just return true - the server will handle errors.
+  // Always return true - the serverless function will handle API key validation
+  // If the key is missing, the server will return an error that we'll display
   return true;
 };
 
 // Expose debug info for troubleshooting
 export const getDebugInfo = () => {
-  const key = import.meta.env.VITE_GOOGLE_AI_KEY;
   return {
-    keyConfigured: Boolean(key),
-    keyPrefix: key ? key.substring(0, 8) + '...' : 'none',
+    setup: 'serverless',
+    note: 'API key is stored server-side in Vercel as GOOGLE_AI_KEY (not VITE_ prefix)',
+    clientSideKey: 'not required (using serverless proxy)',
     allViteVars: Object.keys(import.meta.env).filter(k => k.startsWith('VITE_')),
     supabaseConfigured: Boolean(import.meta.env.VITE_SUPABASE_URL),
+    apiEndpoint: '/api/gemini',
   };
 };
 

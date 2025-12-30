@@ -133,13 +133,16 @@ export function AIChat() {
             >
               <div className="space-y-3">
                 <p className="text-sm text-gray-400">
-                  AI Advisor requires a Google AI API key. Add <code className="text-cyan-electric">VITE_GOOGLE_AI_KEY</code> to your environment variables.
+                  AI Advisor requires a Google AI API key configured server-side in Vercel.
+                </p>
+                <p className="text-xs text-gray-500">
+                  Add <code className="text-cyan-electric">GOOGLE_AI_KEY</code> (not VITE_ prefix) in Vercel Settings → Environment Variables.
                 </p>
                 <a
-                  href="/env-debug"
+                  href="/ai-advisor"
                   className="block text-center text-xs text-cyan-electric hover:text-cyan-glow underline"
                 >
-                  🔧 Open Debug Page
+                  🔧 Open AI Advisor Page
                 </a>
               </div>
             </motion.div>
