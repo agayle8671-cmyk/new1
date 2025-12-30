@@ -74,8 +74,8 @@ export interface RiskAssessment {
 // ============================================================================
 
 // Use the correct Gemini API endpoint
-const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta';
-// Try gemini-pro first (most stable), fallback to gemini-1.5-pro if needed
+// Try v1 API first (more stable), fallback to v1beta if needed
+const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1';
 const GEMINI_MODEL = 'gemini-pro';
 
 const getApiKey = (): string | null => {
