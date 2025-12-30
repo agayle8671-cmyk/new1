@@ -58,21 +58,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const genAI = new GoogleGenerativeAI(apiKey);
     
     // Use gemini-2.0-flash with v1 stable API (2025 standard)
-    // Fallback to gemini-1.5-flash if 2.0 is not available
+    // Try gemini-2.0-flash first, fallback to gemini-1.5-flash if not available
     let model;
-    try {
-      model = genAI.getGenerativeModel({ 
-        model: 'gemini-2.0-flash-exp',
-        systemInstruction: STRATEGIC_CFO_PERSONA,
-      });
-      console.log('[Chat API] Using gemini-2.0-flash-exp (2025 standard)');
-    } catch (err) {
-      // Fallback to stable model if 2.0 is not available
-      console.log('[Chat API] Falling back to gemini-1.5-flash');
-      model = genAI.getGenerativeModel({ 
-        model: 'gemini-1.5-flash',
-        systemInstruction: STRATEGIC_CFO_PERSONA,
-      });
+    const modelNames = ['gemini-2.0-flash', 'gemini-2.0-flash-exp', 'gemini-1.5-flash'];
+    let modelUsed = '';
+    
+    for (const modelName of modelNames) {
+      try {
+        model = genAI.getGenerativeModel({ 
+          model: modelName,
+          systemInstruction: STRATEGIC_CFO_PERSONA,
+        });
+        modelUsed = modelName;
+        console.log(`[Chat API] Using ${modelName} (2025 standard)`);
+        break;
+      } catch (err) {
+        console.log(`[Chat API] ${modelName} not available, trying next...`);
+        continue;
+      }
+    }
+    
+    if (!model) {
+      throw new Error('No compatible Gemini model available');
     }
 
     // Build conversation history
