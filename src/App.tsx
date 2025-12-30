@@ -11,6 +11,7 @@ import TaxCredit from './pages/Toolkit/TaxCredit';
 import Dilution from './pages/Toolkit/Dilution';
 import AIAdvisor from './pages/AIAdvisor';
 import EnvDebug from './pages/EnvDebug';
+import APITest from './pages/APITest';
 import { WelcomeOverlay } from './components/ui/WelcomeOverlay';
 
 export default function App() {
@@ -40,6 +41,7 @@ export default function App() {
           <Route path="/dilution" element={<Dilution />} />
           <Route path="/ai-advisor" element={<AIAdvisor />} />
           <Route path="/env-debug" element={<EnvDebug />} />
+          <Route path="/api-test" element={<APITest />} />
           <Route path="/archive" element={<Archive />} />
           <Route path="/" element={<Navigate to="/dna-lab" replace />} />
           <Route path="*" element={<Navigate to="/dna-lab" replace />} />
