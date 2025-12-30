@@ -1,7 +1,6 @@
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { readFileSync, existsSync } from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -9,29 +8,8 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
-// Disable caching for now
-app.use((req, res, next) => {
-  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
-  next();
-});
-
-// CORS middleware
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type');
-  
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(200);
-  }
-  next();
-});
-
-// API Routes
 app.post('/api/chat', async (req, res) => {
   try {
     const { message, prompt, context, conversationHistory } = req.body;
@@ -47,25 +25,17 @@ app.post('/api/chat', async (req, res) => {
       return res.status(500).json({ error: 'API key not configured' });
     }
 
-    // Build prompt
     const systemPrompt = 'You are the Runway DNA Strategic CFO. Give short, actionable strategic insights under 3 sentences.';
-    let fullPrompt = `${systemPrompt}\n\n`;
-    if (context) {
-      fullPrompt += `Context: ${JSON.stringify(context)}\n\n`;
-    }
-    fullPrompt += `User: ${userMessage}`;
+    let fullPrompt = `${systemPrompt}\n\nContext: ${JSON.stringify(context || {})}\n\nUser: ${userMessage}`;
 
-    // Build contents for API
     const contents = [];
     
     if (conversationHistory && conversationHistory.length > 0) {
       for (const msg of conversationHistory) {
-        if (msg.role === 'user' || msg.role === 'assistant') {
-          contents.push({
-            role: msg.role === 'assistant' ? 'model' : 'user',
-            parts: [{ text: msg.content }]
-          });
-        }
+        contents.push({
+          role: msg.role === 'assistant' ? 'model' : 'user',
+          parts: [{ text: msg.content }]
+        });
       }
     }
     
@@ -74,12 +44,9 @@ app.post('/api/chat', async (req, res) => {
       parts: [{ text: fullPrompt }]
     });
 
-    // Use v1beta endpoint with gemini-1.5-flash (supports latest models)
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
     
-    console.log('[Chat API] Calling Gemini v1beta REST API');
-    console.log('[Chat API] Model: gemini-1.5-flash');
-    console.log('[Chat API] Contents length:', contents.length);
+    console.log('[Chat] Calling Gemini API');
     
     const geminiResponse = await fetch(apiUrl, {
       method: 'POST',
@@ -88,8 +55,6 @@ app.post('/api/chat', async (req, res) => {
         contents,
         generationConfig: {
           temperature: 0.7,
-          topK: 40,
-          topP: 0.95,
           maxOutputTokens: 2048,
         }
       })
@@ -97,97 +62,34 @@ app.post('/api/chat', async (req, res) => {
 
     if (!geminiResponse.ok) {
       const errorText = await geminiResponse.text();
-      console.error('[Chat API] Gemini API error:', errorText);
-      let errorData;
-      try {
-        errorData = JSON.parse(errorText);
-      } catch {
-        errorData = { error: errorText };
-      }
+      console.error('[Chat] API error:', errorText);
       return res.status(500).json({ 
         error: 'Failed to get AI response',
-        details: errorData.error || errorText 
+        details: errorText 
       });
     }
 
     const data = await geminiResponse.json();
     const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response';
 
-    console.log('[Chat API] ✅ Success, response length:', responseText.length);
+    console.log('[Chat] Success');
     return res.json({ response: responseText, text: responseText });
   } catch (error) {
-    console.error('[Chat API] ❌ Error:', error);
-    return res.status(500).json({ 
-      error: 'Failed to get AI response',
-      message: error.message 
-    });
+    console.error('[Chat] Error:', error);
+    return res.status(500).json({ error: error.message });
   }
 });
 
 app.get('/api/health', (req, res) => {
-  const distPath = path.join(__dirname, 'dist');
-  const indexExists = existsSync(path.join(distPath, 'index.html'));
-  
-  res.json({ 
-    status: 'ok', 
-    timestamp: new Date().toISOString(),
-    service: 'Runway DNA API',
-    port: PORT.toString(),
-    distExists: existsSync(distPath),
-    indexExists,
-    distPath,
-    nodeVersion: process.version,
-    uptime: process.uptime(),
-  });
+  res.json({ status: 'ok', time: new Date().toISOString() });
 });
 
-// Serve static files
-const distPath = path.join(__dirname, 'dist');
+app.use(express.static(path.join(__dirname, 'dist')));
 
-// Serve assets with proper headers
-app.use('/assets', express.static(path.join(distPath, 'assets'), {
-  maxAge: 0,
-  etag: false
-}));
-
-// Serve other static files
-app.use(express.static(distPath, {
-  maxAge: 0,
-  etag: false,
-  index: false
-}));
-
-// Handle all routes - serve index.html
 app.get('*', (req, res) => {
-  // Skip API routes
-  if (req.path.startsWith('/api/')) {
-    return res.status(404).json({ error: 'API endpoint not found' });
-  }
-  
-  const indexPath = path.join(distPath, 'index.html');
-  
-  console.log(`Request: ${req.method} ${req.path}`);
-  console.log(`Serving index from: ${indexPath}`);
-  console.log(`Index exists: ${existsSync(indexPath)}`);
-  
-  if (!existsSync(indexPath)) {
-    console.error('index.html not found!');
-    return res.status(404).send('Application not found');
-  }
-
-  try {
-    const content = readFileSync(indexPath, 'utf8');
-    res.type('html').send(content);
-  } catch (error) {
-    console.error('Error reading index.html:', error);
-    res.status(500).send('Error loading application');
-  }
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📊 Runway DNA API ready`);
-  console.log(`🌐 Listening on 0.0.0.0:${PORT}`);
-  console.log(`📁 Dist path: ${distPath}`);
-  console.log(`📄 Index exists: ${existsSync(path.join(distPath, 'index.html'))}`);
+  console.log(`Server running on port ${PORT}`);
 });
