@@ -5,13 +5,21 @@ WORKDIR /app
 # Copy package files
 COPY package.json ./
 
-# Install all dependencies (including devDependencies for build)
+# Install dependencies
 RUN npm install
 
-# Copy source code
+# Copy source
 COPY . .
 
-# Build Vite app
+# Accept build arguments for Vite
+ARG VITE_SUPABASE_URL
+ARG VITE_SUPABASE_ANON_KEY
+
+# Set as environment variables for build
+ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
+ENV VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY
+
+# Build with environment variables
 RUN npm run build
 
 # Production stage
@@ -22,18 +30,15 @@ WORKDIR /app
 # Copy package files
 COPY package.json ./
 
-# Install only production dependencies
+# Install production dependencies
 RUN npm install --omit=dev
 
 # Copy built app from builder
 COPY --from=builder /app/dist ./dist
 
-# Copy server file
+# Copy server
 COPY server.js ./
 
-# Expose port
 EXPOSE 3000
 
-# Start the server
 CMD ["node", "server.js"]
-
