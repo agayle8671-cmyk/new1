@@ -1,6 +1,25 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+  // Safelist ensures these classes are never purged (for dynamic usage)
+  safelist: [
+    // Grade colors
+    'text-success', 'text-warning', 'text-danger', 'text-cyan-electric', 'text-violet-vivid',
+    'bg-success', 'bg-warning', 'bg-danger', 'bg-cyan-electric', 'bg-violet-vivid',
+    'border-success', 'border-warning', 'border-danger', 'border-cyan-electric', 'border-violet-vivid',
+    // Opacity variants
+    'bg-success/10', 'bg-success/20', 'bg-warning/10', 'bg-warning/20', 'bg-danger/10', 'bg-danger/20',
+    'bg-cyan-electric/10', 'bg-cyan-electric/20', 'bg-cyan-electric/30',
+    'bg-violet-vivid/10', 'bg-violet-vivid/20', 'bg-violet-vivid/30',
+    'border-success/30', 'border-warning/30', 'border-danger/30',
+    'border-cyan-electric/30', 'border-violet-vivid/30',
+    // Gradients
+    'from-cyan-electric', 'to-cyan-electric', 'from-violet-vivid', 'to-violet-vivid',
+    'from-cyan-electric/30', 'to-cyan-electric/10', 'from-violet-vivid/30', 'to-violet-vivid/10',
+    'from-success', 'to-success', 'from-warning', 'to-warning', 'from-danger', 'to-danger',
+    // Badges
+    'badge-success', 'badge-warning', 'badge-danger', 'badge-cyan', 'badge-violet',
+  ],
   theme: {
     extend: {
       colors: {
