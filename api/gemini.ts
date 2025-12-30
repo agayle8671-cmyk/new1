@@ -10,6 +10,17 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Enable CORS
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
+
+  // Handle preflight
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   // Only allow POST requests
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -18,10 +29,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Get API key from environment variable
   const apiKey = process.env.GOOGLE_AI_KEY;
   
+  console.log('[Gemini API] Request received');
+  console.log('[Gemini API] API key configured:', apiKey ? 'Yes' : 'No');
+  
   if (!apiKey) {
     console.error('[Gemini API] GOOGLE_AI_KEY not configured');
     return res.status(500).json({ 
-      error: 'API key not configured. Add GOOGLE_AI_KEY to Vercel environment variables.' 
+      error: 'API key not configured. Add GOOGLE_AI_KEY to Vercel environment variables.',
+      hint: 'Check Vercel Settings → Environment Variables → Add GOOGLE_AI_KEY'
     });
   }
 

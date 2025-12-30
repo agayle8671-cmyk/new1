@@ -209,31 +209,41 @@ async function callGemini(
   const apiUrl = '/api/gemini';
   
   console.log('[AI] Calling Vercel serverless function:', apiUrl);
+  console.log('[AI] Request payload:', { prompt: prompt.substring(0, 50) + '...', hasContext: !!context, historyLength: conversationHistory?.length || 0 });
 
-  const response = await fetch(apiUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      prompt,
-      context,
-      conversationHistory,
-    }),
-  });
+  try {
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        prompt,
+        context,
+        conversationHistory,
+      }),
+    });
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Failed to get AI response');
+    console.log('[AI] Response status:', response.status);
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+      console.error('[AI] Error response:', error);
+      throw new Error(error.error || error.message || `HTTP ${response.status}: Failed to get AI response`);
+    }
+
+    const data = await response.json();
+    console.log('[AI] Success, response length:', data.text?.length || 0);
+    
+    if (!data.text) {
+      throw new Error('No response from AI - empty response');
+    }
+
+    return data.text;
+  } catch (err) {
+    console.error('[AI] Fetch error:', err);
+    throw err;
   }
-
-  const data = await response.json();
-  
-  if (!data.text) {
-    throw new Error('No response from AI');
-  }
-
-  return data.text;
 }
 
 // ============================================================================
