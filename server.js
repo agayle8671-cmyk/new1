@@ -189,17 +189,35 @@ if (fs.existsSync(distPath)) {
   
   console.log('[Server] ✅ Static files configured');
   
-  // Explicit root route handler
+  // Explicit root route handler - MUST use absolute path
   app.get('/', (req, res) => {
-    const indexPath = join(distPath, 'index.html');
-    console.log('[Server] Serving root route, index.html path:', indexPath);
+    const indexPath = join(__dirname, 'dist', 'index.html');
+    console.log('[Server] Serving root route');
+    console.log('[Server] Request path:', req.path);
+    console.log('[Server] Index path:', indexPath);
+    console.log('[Server] Index exists:', fs.existsSync(indexPath));
+    
     if (fs.existsSync(indexPath)) {
-      res.sendFile(indexPath);
+      // Use absolute path for sendFile
+      res.sendFile(indexPath, { root: '/' }, (err) => {
+        if (err) {
+          console.error('[Server] ❌ Error sending index.html:', err);
+          res.status(500).json({ 
+            error: 'Failed to serve index.html',
+            message: err.message,
+            indexPath
+          });
+        } else {
+          console.log('[Server] ✅ Successfully sent index.html');
+        }
+      });
     } else {
-      console.error('[Server] ❌ index.html not found');
+      console.error('[Server] ❌ index.html not found at:', indexPath);
       res.status(404).json({ 
         error: 'index.html not found',
         distPath,
+        indexPath,
+        __dirname,
         files: distFiles
       });
     }
@@ -219,16 +237,21 @@ if (fs.existsSync(distPath)) {
     }
     
     // Serve index.html for all other routes (React Router will handle routing)
-    const indexPath = join(distPath, 'index.html');
+    const indexPath = join(__dirname, 'dist', 'index.html');
     console.log('[Server] Serving SPA route:', req.path, '-> index.html');
     if (fs.existsSync(indexPath)) {
-      res.sendFile(indexPath);
+      res.sendFile(indexPath, { root: '/' }, (err) => {
+        if (err) {
+          console.error('[Server] ❌ Error sending index.html for SPA route:', err);
+          res.status(500).json({ error: 'Failed to serve index.html' });
+        }
+      });
     } else {
       console.error('[Server] ❌ index.html not found in dist folder');
       res.status(404).json({ 
         error: 'index.html not found',
         distPath,
-        files: distFiles
+        indexPath
       });
     }
   });
