@@ -274,11 +274,24 @@ export default function AIAdvisor() {
           </a>
           
           {/* Debug Info */}
-          <div className="mt-6 p-4 bg-white/5 rounded-lg text-left border border-white/10">
+          <div className="mt-6 p-4 bg-white/5 rounded-lg text-left border border-white/10 space-y-4">
             <h3 className="text-xs font-bold text-warning mb-2">🔧 Debug Info</h3>
-            <pre className="text-xs text-gray-400 overflow-x-auto">
+            <pre className="text-xs text-gray-400 overflow-x-auto mb-4">
 {JSON.stringify(getDebugInfo(), null, 2)}
             </pre>
+            
+            <div className="border-t border-white/10 pt-4">
+              <h4 className="text-xs font-bold mb-2">📍 How to Add API Key in Vercel:</h4>
+              <ol className="list-decimal list-inside space-y-1 text-xs text-gray-300">
+                <li>Go to <a href="https://vercel.com/dashboard" target="_blank" className="text-cyan-electric hover:underline">vercel.com/dashboard</a></li>
+                <li>Click project <strong>new1</strong> → <strong>Settings</strong> → <strong>Environment Variables</strong></li>
+                <li>Click <strong>"Add New"</strong></li>
+                <li><strong>Key:</strong> <code className="bg-white/10 px-1 rounded">VITE_GOOGLE_AI_KEY</code></li>
+                <li><strong>Value:</strong> Your API key from <a href="https://aistudio.google.com/apikey" target="_blank" className="text-cyan-electric hover:underline">Google AI Studio</a></li>
+                <li><strong>Environments:</strong> Check <strong>✅ Production</strong></li>
+                <li>Click <strong>"Save"</strong>, then go to <strong>Deployments</strong> → Click <strong>⋮</strong> → <strong>Redeploy</strong></li>
+              </ol>
+            </div>
           </div>
         </MotionCard>
       </motion.div>
