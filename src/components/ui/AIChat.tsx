@@ -131,9 +131,17 @@ export function AIChat() {
               exit={{ opacity: 0, y: 10, scale: 0.9 }}
               className="absolute bottom-16 right-0 w-72 glass-card p-4"
             >
-              <p className="text-sm text-gray-400">
-                AI Advisor requires a Google AI API key. Add <code className="text-cyan-electric">VITE_GOOGLE_AI_KEY</code> to your environment variables.
-              </p>
+              <div className="space-y-3">
+                <p className="text-sm text-gray-400">
+                  AI Advisor requires a Google AI API key. Add <code className="text-cyan-electric">VITE_GOOGLE_AI_KEY</code> to your environment variables.
+                </p>
+                <a
+                  href="/env-debug"
+                  className="block text-center text-xs text-cyan-electric hover:text-cyan-glow underline"
+                >
+                  🔧 Open Debug Page
+                </a>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>

@@ -266,6 +266,13 @@ export default function AIAdvisor() {
             </a>
           </p>
           
+          <a
+            href="/env-debug"
+            className="block w-full text-center py-3 bg-cyan-electric/20 hover:bg-cyan-electric/30 text-cyan-electric rounded-lg font-medium transition-colors mb-4"
+          >
+            🔧 Open Debug Page
+          </a>
+          
           {/* Debug Info */}
           <div className="mt-6 p-4 bg-white/5 rounded-lg text-left border border-white/10">
             <h3 className="text-xs font-bold text-warning mb-2">🔧 Debug Info</h3>

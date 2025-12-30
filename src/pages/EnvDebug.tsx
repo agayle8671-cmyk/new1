@@ -51,16 +51,53 @@ export default function EnvDebug() {
       </div>
 
       <div className="glass-card p-6 bg-warning/10 border border-warning/30">
-        <h2 className="text-lg font-semibold mb-2 text-warning">Vercel Checklist</h2>
-        <ol className="list-decimal list-inside space-y-2 text-sm">
-          <li>Go to Vercel Dashboard → Your Project → <strong>Settings</strong> → <strong>Environment Variables</strong></li>
-          <li>Verify <code className="bg-white/10 px-1 rounded">VITE_GOOGLE_AI_KEY</code> exists</li>
-          <li>Check it's enabled for <strong>Production</strong> (not just Preview/Development)</li>
-          <li>After adding/updating, go to <strong>Deployments</strong> tab</li>
-          <li>Click <strong>⋮</strong> on latest deployment → <strong>Redeploy</strong></li>
-          <li>Wait 1-2 minutes for rebuild</li>
-          <li>Hard refresh browser (<code className="bg-white/10 px-1 rounded">Ctrl + Shift + R</code>)</li>
-        </ol>
+        <h2 className="text-lg font-semibold mb-2 text-warning">📍 How to Add API Key in Vercel</h2>
+        <div className="space-y-4 text-sm">
+          <div>
+            <p className="font-medium mb-2">Step 1: Find Environment Variables</p>
+            <ol className="list-decimal list-inside space-y-1 text-gray-300 ml-2">
+              <li>Go to <a href="https://vercel.com/dashboard" target="_blank" className="text-cyan-electric hover:underline">vercel.com/dashboard</a></li>
+              <li>Click on your project: <strong>new1</strong></li>
+              <li>Click <strong>"Settings"</strong> (top navigation bar)</li>
+              <li>Click <strong>"Environment Variables"</strong> (left sidebar)</li>
+            </ol>
+          </div>
+          
+          <div>
+            <p className="font-medium mb-2">Step 2: Add the Variable</p>
+            <ol className="list-decimal list-inside space-y-1 text-gray-300 ml-2">
+              <li>Click <strong>"Add New"</strong> button</li>
+              <li><strong>Key:</strong> <code className="bg-white/10 px-1 rounded">VITE_GOOGLE_AI_KEY</code> (exact match, case-sensitive)</li>
+              <li><strong>Value:</strong> Your API key from Google AI Studio</li>
+              <li><strong>Environments:</strong> Check <strong>✅ Production</strong> (and Preview/Development if you want)</li>
+              <li>Click <strong>"Save"</strong></li>
+            </ol>
+          </div>
+          
+          <div>
+            <p className="font-medium mb-2">Step 3: Redeploy</p>
+            <ol className="list-decimal list-inside space-y-1 text-gray-300 ml-2">
+              <li>Go to <strong>"Deployments"</strong> tab (top navigation)</li>
+              <li>Find the latest deployment</li>
+              <li>Click the <strong>⋮</strong> (three dots) menu</li>
+              <li>Click <strong>"Redeploy"</strong></li>
+              <li>Wait 1-2 minutes for rebuild</li>
+              <li>Hard refresh this page: <code className="bg-white/10 px-1 rounded">Ctrl + Shift + R</code></li>
+            </ol>
+          </div>
+          
+          <div className="mt-4 p-3 bg-cyan-electric/10 rounded-lg border border-cyan-electric/30">
+            <p className="text-xs text-cyan-electric font-medium">💡 Direct Links:</p>
+            <div className="mt-2 space-y-1">
+              <a href="https://vercel.com/dashboard" target="_blank" className="block text-xs text-cyan-electric hover:underline">
+                → Vercel Dashboard
+              </a>
+              <a href="https://aistudio.google.com/apikey" target="_blank" className="block text-xs text-cyan-electric hover:underline">
+                → Get Google AI API Key
+              </a>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
