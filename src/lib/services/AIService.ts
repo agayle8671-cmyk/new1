@@ -82,12 +82,11 @@ const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1';
 // Note: gemini-pro is deprecated
 const GEMINI_MODEL = 'gemini-1.5-flash';
 
-// NOTE: We use a Vercel Edge serverless function (/api/chat) to proxy requests
+// NOTE: We use an Express server on Railway (/api/chat) to proxy requests
 // The API key is stored server-side as GOOGLE_AI_KEY (not VITE_GOOGLE_AI_KEY)
 // The client doesn't need the key - it just calls our API endpoint
-// Server uses direct REST API (not SDK) for Edge runtime compatibility
 export const isAIConfigured = (): boolean => {
-  // Always return true - the serverless function will handle API key validation
+  // Always return true - the Express server will handle API key validation
   // If the key is missing, the server will return an error that we'll display
   return true;
 };
@@ -95,9 +94,9 @@ export const isAIConfigured = (): boolean => {
 // Expose debug info for troubleshooting
 export const getDebugInfo = () => {
   return {
-    setup: 'serverless',
-    note: 'API key is stored server-side in Vercel as GOOGLE_AI_KEY (not VITE_ prefix)',
-    clientSideKey: 'not required (using serverless proxy)',
+    setup: 'Railway Express Server',
+    note: 'API key is stored server-side in Railway as GOOGLE_AI_KEY (not VITE_ prefix)',
+    clientSideKey: 'not required (using server-side proxy)',
     allViteVars: Object.keys(import.meta.env).filter(k => k.startsWith('VITE_')),
     supabaseConfigured: Boolean(import.meta.env.VITE_SUPABASE_URL),
     apiEndpoint: '/api/chat',
@@ -115,7 +114,7 @@ export interface ConnectionStatus {
  * Test the AI connection and return status
  */
 export async function testConnection(): Promise<ConnectionStatus> {
-  console.log('[AI] Testing connection via serverless function...');
+  console.log('[AI] Testing connection via Express server...');
   const startTime = Date.now();
 
   try {
@@ -123,7 +122,7 @@ export async function testConnection(): Promise<ConnectionStatus> {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        prompt: 'Say "connected" in one word.',
+        message: 'Say "connected" in one word.',
         context: null,
         conversationHistory: [],
       }),
@@ -199,14 +198,14 @@ async function callGemini(
   context?: AIContext,
   conversationHistory?: AIMessage[]
 ): Promise<string> {
-  // Call our Vercel Edge serverless function
+  // Call our Express server on Railway
   // API key is stored server-side as GOOGLE_AI_KEY (not VITE_ prefix)
   // No SDK usage in browser - all AI logic is server-side
   const apiUrl = '/api/chat';
   
   console.log('[AI] ========================================');
-  console.log('[AI] Calling Vercel Edge serverless function:', apiUrl);
-  console.log('[AI] Setup: Server-side API key (GOOGLE_AI_KEY in Vercel)');
+  console.log('[AI] Calling Express server endpoint:', apiUrl);
+  console.log('[AI] Setup: Server-side API key (GOOGLE_AI_KEY in Railway)');
   console.log('[AI] Request payload:', { 
     prompt: prompt.substring(0, 50) + '...', 
     hasContext: !!context, 
@@ -259,7 +258,7 @@ async function callGemini(
       // Provide helpful error messages based on status code
       if (response.status === 500) {
         if (errorData.error?.includes('API key not configured') || errorData.error?.includes('API key')) {
-          throw new Error('API key not configured in Vercel. Add GOOGLE_AI_KEY (not VITE_ prefix) in Vercel Settings → Environment Variables, then redeploy.');
+          throw new Error('API key not configured in Railway. Add GOOGLE_AI_KEY (not VITE_ prefix) in Railway Settings → Variables, then redeploy.');
         }
         if (errorData.details) {
           throw new Error(`AI Service Error: ${errorData.error || 'Unknown error'}. Details: ${errorData.details}. ${errorData.hint || ''}`);
@@ -292,7 +291,7 @@ async function callGemini(
     
     if (!aiResponse) {
       console.error('[AI] ❌ No response text in data:', data);
-      throw new Error('No response from AI - empty response. Check Vercel function logs for details.');
+      throw new Error('No response from AI - empty response. Check Railway logs for details.');
     }
 
     console.log('[AI] ✅ Success, response length:', aiResponse.length);
