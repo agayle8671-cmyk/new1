@@ -148,44 +148,39 @@ app.get('/api/test', (req, res) => {
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
+  const distPath = join(__dirname, 'dist');
   res.json({ 
     status: 'ok', 
     timestamp: new Date().toISOString(),
     service: 'Runway DNA API',
     port: process.env.PORT || 3000,
-    distExists: fs.existsSync(distPath)
+    distExists: fs.existsSync(distPath),
+    distPath
   });
-});
-
-// Root route - helpful for debugging
-app.get('/', (req, res) => {
-  const distPath = join(__dirname, 'dist');
-  if (fs.existsSync(distPath)) {
-    // Serve index.html
-    res.sendFile(join(distPath, 'index.html'));
-  } else {
-    res.json({ 
-      message: 'Dist folder not found',
-      hint: 'Check Railway build logs to ensure npm run build completed successfully',
-      distPath,
-      cwd: process.cwd(),
-      __dirname
-    });
-  }
 });
 
 // Serve static files from Vite build
 const distPath = join(__dirname, 'dist');
 
-console.log('[Server] Checking for dist folder at:', distPath);
-console.log('[Server] Dist folder exists:', fs.existsSync(distPath));
+console.log('[Server] ========================================');
+console.log('[Server] Starting Runway DNA Server');
+console.log('[Server] Port:', port);
+console.log('[Server] Dist path:', distPath);
+console.log('[Server] Dist exists:', fs.existsSync(distPath));
+console.log('[Server] Current directory:', __dirname);
+console.log('[Server] Files in current dir:', fs.readdirSync(__dirname).slice(0, 10));
 
 if (fs.existsSync(distPath)) {
+  const distFiles = fs.readdirSync(distPath);
+  console.log('[Server] Dist folder contents:', distFiles.slice(0, 10));
+  
   // Serve static files (CSS, JS, images, etc.)
   app.use(express.static(distPath, {
     maxAge: '1y',
     etag: true,
   }));
+  
+  console.log('[Server] ✅ Static files configured');
   
   // SPA fallback - serve index.html for all non-API routes
   // This must be LAST, after all other routes
@@ -200,30 +195,38 @@ if (fs.existsSync(distPath)) {
     if (fs.existsSync(indexPath)) {
       res.sendFile(indexPath);
     } else {
+      console.error('[Server] ❌ index.html not found in dist folder');
       res.status(404).json({ 
         error: 'index.html not found',
         distPath,
-        files: fs.readdirSync(distPath).slice(0, 10)
+        files: distFiles
       });
     }
   });
+  
+  console.log('[Server] ✅ SPA fallback configured');
 } else {
   console.warn('[Server] ⚠️ Dist folder not found! Build may have failed.');
+  console.warn('[Server] Current directory contents:', fs.readdirSync(__dirname).slice(0, 10));
+  
+  // Fallback route if dist doesn't exist
   app.get('/', (req, res) => {
     res.json({ 
-      message: 'Build your app with: npm run build',
-      status: 'development mode - run npm run build to create dist folder',
+      message: 'Dist folder not found',
+      hint: 'Check Railway build logs to ensure npm run build completed successfully',
       distPath,
       cwd: process.cwd(),
+      __dirname,
       files: fs.readdirSync(__dirname).slice(0, 10)
     });
   });
 }
 
 app.listen(port, '0.0.0.0', () => {
+  console.log(`[Server] ========================================`);
   console.log(`🚀 Server running on port ${port}`);
   console.log(`📊 Runway DNA API ready`);
   console.log(`🌐 Health check: http://localhost:${port}/api/health`);
   console.log(`🤖 Chat API: http://localhost:${port}/api/chat`);
+  console.log(`[Server] ========================================`);
 });
-
