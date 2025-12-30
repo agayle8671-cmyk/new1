@@ -75,7 +75,8 @@ export interface RiskAssessment {
 
 // Use the correct Gemini API endpoint
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta';
-const GEMINI_MODEL = 'gemini-1.5-flash'; // Using flash for faster responses, can switch to 'gemini-1.5-pro' if needed
+// Try gemini-pro first (most stable), fallback to gemini-1.5-pro if needed
+const GEMINI_MODEL = 'gemini-pro';
 
 const getApiKey = (): string | null => {
   const key = import.meta.env.VITE_GOOGLE_AI_KEY || null;
