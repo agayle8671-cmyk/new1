@@ -199,14 +199,14 @@ async function callGemini(
   context?: AIContext,
   conversationHistory?: AIMessage[]
 ): Promise<string> {
-  // Call our Vercel serverless function using Google Generative AI SDK
-  // This keeps the API key secure (server-side) and avoids browser CORS issues
+  // Call our Vercel Edge serverless function
+  // API key is stored server-side as GOOGLE_AI_KEY (not VITE_ prefix)
+  // No SDK usage in browser - all AI logic is server-side
   const apiUrl = '/api/chat';
   
   console.log('[AI] ========================================');
-  console.log('[AI] Calling Vercel serverless function:', apiUrl);
+  console.log('[AI] Calling Vercel Edge serverless function:', apiUrl);
   console.log('[AI] Setup: Server-side API key (GOOGLE_AI_KEY in Vercel)');
-  console.log('[AI] Model: gemini-2.0-flash (2025 standard) with Strategic CFO persona');
   console.log('[AI] Request payload:', { 
     prompt: prompt.substring(0, 50) + '...', 
     hasContext: !!context, 
@@ -221,7 +221,7 @@ async function callGemini(
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        prompt,
+        message: prompt, // Use 'message' for Edge function compatibility
         context,
         conversationHistory,
       }),
@@ -251,14 +251,17 @@ async function callGemini(
     }
 
     const data = await response.json();
-    console.log('[AI] ✅ Success, response length:', data.text?.length || 0);
+    // Support both 'response' and 'text' fields for compatibility
+    const aiResponse = data.response || data.text;
+    
+    console.log('[AI] ✅ Success, response length:', aiResponse?.length || 0);
     console.log('[AI] ========================================');
     
-    if (!data.text) {
+    if (!aiResponse) {
       throw new Error('No response from AI - empty response');
     }
 
-    return data.text;
+    return aiResponse;
   } catch (err) {
     console.error('[AI] ❌ Fetch error:', err);
     console.error('[AI] Error type:', err instanceof Error ? err.constructor.name : typeof err);
