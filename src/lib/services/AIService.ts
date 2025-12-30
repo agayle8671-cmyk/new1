@@ -74,12 +74,12 @@ export interface RiskAssessment {
 // ============================================================================
 
 // Use the correct Gemini API endpoint
-// Google AI Studio REST API - use v1beta with models endpoint
-const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta';
-// Model names that work with Google AI Studio API keys (v1beta):
+// Google AI Studio REST API - using stable v1 (not v1beta)
+const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1';
+// Model names that work with Google AI Studio API keys (v1):
 // - gemini-1.5-flash (recommended: fastest, most reliable)
 // - gemini-1.5-pro (for deeper reasoning, slower)
-// Note: gemini-pro is deprecated and not available in v1beta
+// Note: gemini-pro is deprecated
 const GEMINI_MODEL = 'gemini-1.5-flash';
 
 const getApiKey = (): string | null => {

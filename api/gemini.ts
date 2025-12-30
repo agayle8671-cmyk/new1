@@ -122,11 +122,11 @@ Here's the financial context:\n${contextString}\n\nNow answer the user's questio
     });
 
     // Call Gemini API
-    // Available models in v1beta: gemini-1.5-pro, gemini-1.5-flash
-    // gemini-pro is NOT available in v1beta, only in v1
-    // Using gemini-1.5-flash for speed and reliability
-    const model = 'gemini-1.5-flash'; // Fast, reliable, v1beta-compatible
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    // Using stable v1 API (not v1beta) for better compatibility
+    // Available models: gemini-1.5-flash (fast), gemini-1.5-pro (deeper reasoning)
+    // Note: gemini-pro is deprecated
+    const model = 'gemini-1.5-flash'; // Fast, reliable, v1-compatible
+    const apiUrl = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`;
     
     console.log('[Gemini API] Calling:', apiUrl.replace(apiKey, 'API_KEY_HIDDEN'));
 
