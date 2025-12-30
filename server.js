@@ -21,7 +21,6 @@ app.post('/api/chat', async (req, res) => {
 
     const apiKey = process.env.GOOGLE_AI_KEY || process.env.GOOGLE_API_KEY;
     if (!apiKey) {
-      console.error('API key not configured');
       return res.status(500).json({ error: 'API key not configured' });
     }
 
@@ -44,44 +43,32 @@ app.post('/api/chat', async (req, res) => {
       parts: [{ text: fullPrompt }]
     });
 
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
-    
-    console.log('[Chat] Calling Gemini API');
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
     
     const geminiResponse = await fetch(apiUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents,
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 2048,
-        }
-      })
+      body: JSON.stringify({ contents })
     });
 
     if (!geminiResponse.ok) {
       const errorText = await geminiResponse.text();
-      console.error('[Chat] API error:', errorText);
-      return res.status(500).json({ 
-        error: 'Failed to get AI response',
-        details: errorText 
-      });
+      console.error('Gemini error:', errorText);
+      return res.status(500).json({ error: 'AI request failed' });
     }
 
     const data = await geminiResponse.json();
     const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response';
 
-    console.log('[Chat] Success');
     return res.json({ response: responseText, text: responseText });
   } catch (error) {
-    console.error('[Chat] Error:', error);
+    console.error('Error:', error);
     return res.status(500).json({ error: error.message });
   }
 });
 
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', time: new Date().toISOString() });
+  res.json({ status: 'ok' });
 });
 
 app.use(express.static(path.join(__dirname, 'dist')));
@@ -91,5 +78,5 @@ app.get('*', (req, res) => {
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Server on port ${PORT}`);
 });
