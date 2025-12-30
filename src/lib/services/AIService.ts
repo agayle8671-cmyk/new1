@@ -73,7 +73,9 @@ export interface RiskAssessment {
 // CONFIGURATION
 // ============================================================================
 
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent';
+// Use the correct Gemini API endpoint
+const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta';
+const GEMINI_MODEL = 'gemini-1.5-flash'; // Using flash for faster responses, can switch to 'gemini-1.5-pro' if needed
 
 const getApiKey = (): string | null => {
   const key = import.meta.env.VITE_GOOGLE_AI_KEY || null;
@@ -126,7 +128,7 @@ export async function testConnection(): Promise<ConnectionStatus> {
   const startTime = Date.now();
 
   try {
-    const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
+    const response = await fetch(`${GEMINI_API_BASE}/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -142,7 +144,7 @@ export async function testConnection(): Promise<ConnectionStatus> {
       console.error('[AI] Connection failed:', error);
       return {
         connected: false,
-        model: 'gemini-1.5-pro',
+        model: GEMINI_MODEL,
         latency,
         error: error.error?.message || `HTTP ${response.status}`,
       };
@@ -155,7 +157,7 @@ export async function testConnection(): Promise<ConnectionStatus> {
     
     return {
       connected: true,
-      model: 'gemini-1.5-pro',
+      model: GEMINI_MODEL,
       latency,
     };
   } catch (err) {
@@ -163,7 +165,7 @@ export async function testConnection(): Promise<ConnectionStatus> {
     console.error('[AI] Connection error:', err);
     return {
       connected: false,
-      model: 'gemini-1.5-pro',
+      model: GEMINI_MODEL,
       latency,
       error: err instanceof Error ? err.message : 'Network error',
     };
@@ -275,7 +277,7 @@ SIMULATOR PARAMETERS:
     parts: [{ text: prompt }]
   });
 
-  const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
+  const response = await fetch(`${GEMINI_API_BASE}/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
