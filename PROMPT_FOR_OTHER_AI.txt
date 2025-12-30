@@ -1,0 +1,191 @@
+I need help fixing a broken Google Gemini API integration in my Vercel Edge serverless function. Here's the complete context:
+
+PROJECT: Runway DNA - SaaS Financial Dashboard
+- Frontend: React 18 + TypeScript + Vite
+- Backend: Vercel Edge Serverless Functions
+- AI SDK: @google/generative-ai ^0.21.0
+- Deployment: Vercel (new1-tawny-eta.vercel.app)
+
+THE PROBLEM:
+The AI Advisor chatbot is completely broken. All attempts to get AI responses fail with various errors. Users see "Sorry, I encountered an error" messages.
+
+WHAT WE'VE TRIED (ALL FAILED):
+1. Direct REST API → Error: "models/gemini-1.5-flash is not found for API version v1beta"
+2. Node.js runtime with SDK → Model compatibility issues, systemInstruction field errors
+3. Edge runtime with SDK (current) → Still failing with model errors
+
+CURRENT CODE (api/chat.ts):
+```typescript
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
+export const config = { 
+  runtime: 'edge',
+};
+
+export default async function handler(req: Request) {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, {
+      status: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      },
+    });
+  }
+
+  if (req.method !== 'POST') {
+    return new Response('Method not allowed', { status: 405 });
+  }
+
+  try {
+    const { message, context, prompt, conversationHistory } = await req.json();
+    const userMessage = message || prompt;
+    
+    if (!userMessage) {
+      return new Response(
+        JSON.stringify({ error: 'Message or prompt is required' }), 
+        { status: 400, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
+      );
+    }
+
+    const apiKey = process.env.GOOGLE_AI_KEY || process.env.GOOGLE_API_KEY;
+    
+    if (!apiKey) {
+      return new Response(
+        JSON.stringify({ error: 'API key not configured' }), 
+        { status: 500, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
+      );
+    }
+
+    const genAI = new GoogleGenerativeAI(apiKey);
+    
+    // Try multiple model names with fallback
+    const modelNames = [
+      'gemini-1.5-flash',
+      'gemini-1.5-flash-latest',
+      'gemini-1.5-pro',
+      'gemini-pro',
+    ];
+    
+    let model;
+    let modelUsed = '';
+    let lastError: any = null;
+    
+    for (const modelName of modelNames) {
+      try {
+        model = genAI.getGenerativeModel({ model: modelName });
+        modelUsed = modelName;
+        break;
+      } catch (err: any) {
+        lastError = err;
+        continue;
+      }
+    }
+    
+    if (!model) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Failed to initialize any Gemini model',
+          details: lastError?.message,
+          modelsTried: modelNames
+        }), 
+        { status: 500, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
+      );
+    }
+
+    const systemPrompt = "You are the Runway DNA Strategic CFO. Analyze the provided financial data and give a short, actionable strategic insight. Keep it under 3 sentences.";
+    let fullPrompt = `${systemPrompt}\n\nContext: ${JSON.stringify(context || {})}\n\nUser Question: ${userMessage}`;
+
+    if (conversationHistory && Array.isArray(conversationHistory) && conversationHistory.length > 0) {
+      const history = conversationHistory
+        .filter(msg => msg.role === 'user' || msg.role === 'assistant')
+        .map(msg => ({
+          role: msg.role === 'assistant' ? 'model' : 'user',
+          parts: [{ text: msg.content }]
+        }));
+
+      history.push({
+        role: 'user',
+        parts: [{ text: fullPrompt }]
+      });
+
+      const result = await model.generateContent({
+        contents: history,
+        generationConfig: {
+          temperature: 0.7,
+          topK: 40,
+          topP: 0.95,
+          maxOutputTokens: 2048,
+        },
+      });
+
+      const response = result.response.text();
+      return new Response(
+        JSON.stringify({ response, text: response }), 
+        { headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
+      );
+    } else {
+      const result = await model.generateContent(fullPrompt);
+      const response = result.response.text();
+      
+      return new Response(
+        JSON.stringify({ response, text: response }), 
+        { headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
+      );
+    }
+  } catch (error: any) {
+    return new Response(
+      JSON.stringify({ error: error.message || 'Unknown error' }), 
+      { status: 500, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
+    );
+  }
+}
+```
+
+FRONTEND CODE (src/lib/services/AIService.ts - relevant part):
+```typescript
+async function callGemini(prompt: string, context?: AIContext, conversationHistory?: AIMessage[]): Promise<string> {
+  const apiUrl = '/api/chat';
+  
+  const response = await fetch(apiUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      message: prompt,
+      context,
+      conversationHistory,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || `HTTP ${response.status}`);
+  }
+
+  const data = await response.json();
+  return data.response || data.text;
+}
+```
+
+ENVIRONMENT:
+- API Key: GOOGLE_AI_KEY (confirmed set in Vercel, valid key from Google AI Studio)
+- Runtime: Edge (Vercel)
+- No client-side SDK usage (all server-side)
+
+CRITICAL QUESTIONS:
+1. Does @google/generative-ai SDK work with Vercel Edge runtime? (Some sources say it doesn't)
+2. What are the ACTUAL valid model names for Gemini in 2025?
+3. Should I use REST API instead of SDK for Edge runtime?
+4. Is there a Vercel-specific configuration needed?
+
+WHAT I NEED:
+A complete, working solution that:
+- Works with Vercel Edge runtime
+- Uses correct model names
+- Handles errors properly
+- Keeps API key secure (server-side only)
+- Actually works in production
+
+Please provide the corrected code and explain what was wrong.
+
