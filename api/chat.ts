@@ -3,11 +3,10 @@
  * 
  * Vercel Serverless Function for Google Gemini AI Chat
  * 
- * Uses @google/generative-ai SDK to avoid browser CORS issues.
+ * Uses REST API directly (not SDK) to avoid v1beta compatibility issues.
  * API key is stored server-side as GOOGLE_AI_KEY (not VITE_ prefix).
  */
 
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -50,17 +49,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    // Initialize Google Generative AI SDK
-    const genAI = new GoogleGenerativeAI(apiKey);
-    
-    // Use gemini-1.5-flash with v1beta API for full compatibility
-    const model = genAI.getGenerativeModel({ 
-      model: 'gemini-1.5-flash',
-      // Explicitly use v1beta API version as requested
-    });
-
-    // Build conversation history
-    const history: Array<{ role: string; parts: Array<{ text: string }> }> = [];
+    // Build conversation history for REST API
+    const contents: Array<{ role: 'user' | 'model'; parts: Array<{ text: string }> }> = [];
 
     // Add system context if provided
     if (context) {
@@ -92,7 +82,7 @@ SIMULATOR PARAMETERS:
       }
       
       if (contextString) {
-        history.push({
+        contents.push({
           role: 'user',
           parts: [{ text: `You are an elite SaaS CFO AI advisor embedded in Runway DNA, a strategic finance suite for SaaS founders. Your expertise includes:
 
@@ -107,7 +97,7 @@ You speak like a seasoned CFO: confident, direct, data-driven, and actionable. Y
 
 Here's the financial context:\n${contextString}\n\nNow answer the user's question with this context in mind.` }]
         });
-        history.push({
+        contents.push({
           role: 'model',
           parts: [{ text: 'I understand. I have the financial context and I\'m ready to provide strategic SaaS finance advice. How can I help?' }]
         });
@@ -118,7 +108,7 @@ Here's the financial context:\n${contextString}\n\nNow answer the user's questio
     if (conversationHistory && Array.isArray(conversationHistory)) {
       for (const msg of conversationHistory) {
         if (msg.role === 'user' || msg.role === 'assistant') {
-          history.push({
+          contents.push({
             role: msg.role === 'assistant' ? 'model' : 'user',
             parts: [{ text: msg.content }]
           });
@@ -127,40 +117,61 @@ Here's the financial context:\n${contextString}\n\nNow answer the user's questio
     }
 
     // Add current prompt
-    history.push({
+    contents.push({
       role: 'user',
       parts: [{ text: prompt }]
     });
 
-    console.log('[Chat API] Calling Gemini with', history.length, 'messages');
-    console.log('[Chat API] Model: gemini-1.5-flash (v1beta API)');
+    console.log('[Chat API] Calling Gemini REST API with', contents.length, 'messages');
+    console.log('[Chat API] Model: gemini-1.5-flash (v1 API - stable)');
 
-    // Generate content using the SDK
-    const result = await model.generateContent({
-      contents: history.map(h => ({
-        role: h.role as 'user' | 'model',
-        parts: h.parts,
-      })),
-      generationConfig: {
-        temperature: 0.7,
-        topK: 40,
-        topP: 0.95,
-        maxOutputTokens: 2048,
+    // Call Gemini REST API directly using v1 (not v1beta) for compatibility
+    // v1beta has issues with gemini-1.5-flash, v1 is stable and works
+    const model = 'gemini-1.5-flash';
+    const apiUrl = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`;
+    
+    console.log('[Chat API] API URL:', apiUrl.replace(apiKey, 'API_KEY_HIDDEN'));
+
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
       },
-      safetySettings: [
-        { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
-        { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
-        { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
-        { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
-      ],
+      body: JSON.stringify({
+        contents,
+        generationConfig: {
+          temperature: 0.7,
+          topK: 40,
+          topP: 0.95,
+          maxOutputTokens: 2048,
+        },
+        safetySettings: [
+          { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+          { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+          { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+          { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+        ],
+      }),
     });
 
-    const response = await result.response;
-    const text = response.text();
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+      console.error('[Chat API] ❌ API Error:', errorData);
+      throw new Error(errorData.error?.message || `HTTP ${response.status}: ${JSON.stringify(errorData)}`);
+    }
+
+    const data = await response.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
     
     if (!text) {
       console.error('[Chat API] ❌ No text in response');
       return res.status(500).json({ error: 'No response from AI' });
+    }
+
+    if (!text) {
+      console.error('[Chat API] ❌ No text in response');
+      console.error('[Chat API] Response data:', JSON.stringify(data, null, 2));
+      return res.status(500).json({ error: 'No response from AI', details: data });
     }
 
     console.log('[Chat API] ✅ Success, response length:', text.length);
