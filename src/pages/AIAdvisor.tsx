@@ -31,6 +31,7 @@ import AIService, {
   type RiskAssessment,
   type AIContext,
   type ConnectionStatus,
+  getDebugInfo,
 } from '../lib/services/AIService';
 import { useAppStore } from '../lib/store';
 
@@ -258,12 +259,20 @@ export default function AIAdvisor() {
           <code className="block bg-white/5 p-3 rounded-lg text-sm text-cyan-electric mb-4">
             VITE_GOOGLE_AI_KEY=your-api-key
           </code>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-gray-500 mb-4">
             Get your key at{' '}
             <a href="https://aistudio.google.com/apikey" target="_blank" className="text-cyan-electric hover:underline">
               aistudio.google.com
             </a>
           </p>
+          
+          {/* Debug Info */}
+          <div className="mt-6 p-4 bg-white/5 rounded-lg text-left border border-white/10">
+            <h3 className="text-xs font-bold text-warning mb-2">🔧 Debug Info</h3>
+            <pre className="text-xs text-gray-400 overflow-x-auto">
+{JSON.stringify(getDebugInfo(), null, 2)}
+            </pre>
+          </div>
         </MotionCard>
       </motion.div>
     );

@@ -76,11 +76,28 @@ export interface RiskAssessment {
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent';
 
 const getApiKey = (): string | null => {
-  return import.meta.env.VITE_GOOGLE_AI_KEY || null;
+  const key = import.meta.env.VITE_GOOGLE_AI_KEY || null;
+  // Debug logging (safe - only shows if key exists, not the actual key)
+  if (typeof window !== 'undefined') {
+    console.log('[AI Debug] API Key configured:', key ? `Yes (${key.substring(0, 8)}...)` : 'No');
+    console.log('[AI Debug] All VITE_ env vars:', Object.keys(import.meta.env).filter(k => k.startsWith('VITE_')));
+  }
+  return key;
 };
 
 export const isAIConfigured = (): boolean => {
   return Boolean(getApiKey());
+};
+
+// Expose debug info for troubleshooting
+export const getDebugInfo = () => {
+  const key = import.meta.env.VITE_GOOGLE_AI_KEY;
+  return {
+    keyConfigured: Boolean(key),
+    keyPrefix: key ? key.substring(0, 8) + '...' : 'none',
+    allViteVars: Object.keys(import.meta.env).filter(k => k.startsWith('VITE_')),
+    supabaseConfigured: Boolean(import.meta.env.VITE_SUPABASE_URL),
+  };
 };
 
 export interface ConnectionStatus {
