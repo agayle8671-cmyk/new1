@@ -74,8 +74,9 @@ export interface RiskAssessment {
 // ============================================================================
 
 // Use the correct Gemini API endpoint
-// Try v1 API first (more stable), fallback to v1beta if needed
-const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1';
+// Google AI Studio REST API format
+const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta';
+// Try the standard gemini-pro model (most compatible)
 const GEMINI_MODEL = 'gemini-pro';
 
 const getApiKey = (): string | null => {
@@ -129,7 +130,10 @@ export async function testConnection(): Promise<ConnectionStatus> {
   const startTime = Date.now();
 
   try {
-    const response = await fetch(`${GEMINI_API_BASE}/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`, {
+    const apiUrl = `${GEMINI_API_BASE}/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
+    console.log('[AI] Testing connection:', apiUrl.replace(apiKey, 'API_KEY_HIDDEN'));
+    
+    const response = await fetch(apiUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
