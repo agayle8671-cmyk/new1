@@ -97,3 +97,4 @@ CREATE TRIGGER alert_acknowledged_at_trigger
   EXECUTE FUNCTION update_alert_acknowledged_at();
 
 
+

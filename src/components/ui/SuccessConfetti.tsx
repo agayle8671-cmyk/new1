@@ -170,3 +170,4 @@ export function useFirstSnapshotCelebration() {
 export default SuccessConfetti;
 
 
+

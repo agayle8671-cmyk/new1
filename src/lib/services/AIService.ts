@@ -76,11 +76,11 @@ export interface RiskAssessment {
 // Use the correct Gemini API endpoint
 // Google AI Studio REST API - use v1beta with models endpoint
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta';
-// Model names that work with Google AI Studio API keys:
-// - gemini-pro (standard, most compatible)
-// - gemini-1.5-pro (if available with your API key)
-// - gemini-1.5-flash (faster, if available)
-const GEMINI_MODEL = 'gemini-pro';
+// Model names that work with Google AI Studio API keys (v1beta):
+// - gemini-1.5-flash (recommended: fastest, most reliable)
+// - gemini-1.5-pro (for deeper reasoning, slower)
+// Note: gemini-pro is deprecated and not available in v1beta
+const GEMINI_MODEL = 'gemini-1.5-flash';
 
 const getApiKey = (): string | null => {
   const key = import.meta.env.VITE_GOOGLE_AI_KEY || null;
@@ -141,7 +141,7 @@ export async function testConnection(): Promise<ConnectionStatus> {
       console.error('[AI] Connection failed:', error);
       return {
         connected: false,
-        model: 'gemini-pro',
+        model: 'gemini-1.5-flash',
         latency,
         error: error.error || `HTTP ${response.status}`,
       };
@@ -154,7 +154,7 @@ export async function testConnection(): Promise<ConnectionStatus> {
     
     return {
       connected: true,
-      model: 'gemini-pro',
+      model: 'gemini-1.5-flash',
       latency,
     };
   } catch (err) {
@@ -162,7 +162,7 @@ export async function testConnection(): Promise<ConnectionStatus> {
     console.error('[AI] Connection error:', err);
     return {
       connected: false,
-      model: 'gemini-pro',
+      model: 'gemini-1.5-flash',
       latency,
       error: err instanceof Error ? err.message : 'Network error',
     };

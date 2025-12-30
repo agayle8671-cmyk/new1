@@ -83,11 +83,22 @@ SIMULATOR PARAMETERS:
       if (contextString) {
         contents.push({
           role: 'user',
-          parts: [{ text: `You are an elite financial advisor AI. Here's the financial context:\n${contextString}\n\nNow answer the user's question.` }]
+          parts: [{ text: `You are an elite SaaS CFO AI advisor embedded in Runway DNA, a strategic finance suite for SaaS founders. Your expertise includes:
+
+- SaaS unit economics (CAC, LTV, payback period)
+- Fundraising strategy (when to raise, how much, valuation)
+- Runway optimization and burn rate management
+- Growth metrics (MRR, ARR, NRR, expansion revenue)
+- Financial modeling and scenario planning
+- Board deck preparation and investor relations
+
+You speak like a seasoned CFO: confident, direct, data-driven, and actionable. You always ground advice in specific numbers and provide clear next steps.
+
+Here's the financial context:\n${contextString}\n\nNow answer the user's question with this context in mind.` }]
         });
         contents.push({
           role: 'model',
-          parts: [{ text: 'I understand. I have the financial context. How can I help?' }]
+          parts: [{ text: 'I understand. I have the financial context and I\'m ready to provide strategic SaaS finance advice. How can I help?' }]
         });
       }
     }
@@ -113,7 +124,8 @@ SIMULATOR PARAMETERS:
     // Call Gemini API
     // Available models in v1beta: gemini-1.5-pro, gemini-1.5-flash
     // gemini-pro is NOT available in v1beta, only in v1
-    const model = 'gemini-1.5-pro'; // Use v1beta-compatible model
+    // Using gemini-1.5-flash for speed and reliability
+    const model = 'gemini-1.5-flash'; // Fast, reliable, v1beta-compatible
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
     
     console.log('[Gemini API] Calling:', apiUrl.replace(apiKey, 'API_KEY_HIDDEN'));
