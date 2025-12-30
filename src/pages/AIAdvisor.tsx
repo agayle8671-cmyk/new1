@@ -282,7 +282,7 @@ export default function AIAdvisor() {
           <Sparkles className="w-16 h-16 text-gray-600 mx-auto mb-4" />
           <h2 className="text-xl font-bold mb-2">AI Advisor Not Configured</h2>
           <p className="text-gray-400 mb-4">
-            Add your Google AI API key to Vercel (server-side) to enable AI-powered financial insights.
+            Add your Google AI API key to Railway (server-side) to enable AI-powered financial insights.
           </p>
           
           {/* Debug Info */}
@@ -304,7 +304,7 @@ export default function AIAdvisor() {
                 <li>Click <strong>"Save"</strong>, then go to <strong>Deployments</strong> → Click <strong>⋮</strong> → <strong>Redeploy</strong></li>
               </ol>
               <div className="mt-3 p-2 bg-warning/10 border border-warning/30 rounded text-xs text-warning">
-                <strong>⚠️ Important:</strong> Use <code>GOOGLE_AI_KEY</code> (not <code>VITE_GOOGLE_AI_KEY</code>) because the API key is stored server-side in the Vercel serverless function, not exposed to the browser.
+                <strong>⚠️ Important:</strong> Use <code>GOOGLE_AI_KEY</code> (not <code>VITE_GOOGLE_AI_KEY</code>) because the API key is stored server-side in the Express server, not exposed to the browser.
               </div>
             </div>
           </div>

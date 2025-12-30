@@ -124,9 +124,9 @@ export default function APITest() {
             <ul className="text-xs text-gray-400 space-y-1">
               <li>✅ Check browser console (F12) for detailed logs</li>
               <li>✅ Check Network tab (F12 → Network) for request/response</li>
-              <li>✅ Check Vercel Dashboard → Functions → api/chat for server logs</li>
-              <li>✅ Verify GOOGLE_AI_KEY is set in Vercel (not VITE_GOOGLE_AI_KEY)</li>
-              <li>✅ Ensure @vercel/node is in package.json dependencies</li>
+              <li>✅ Check Railway Dashboard → Deploy Logs for server logs</li>
+              <li>✅ Verify GOOGLE_AI_KEY is set in Railway Variables (not VITE_GOOGLE_AI_KEY)</li>
+              <li>✅ Ensure Express server is running and accessible</li>
             </ul>
           </div>
         </div>

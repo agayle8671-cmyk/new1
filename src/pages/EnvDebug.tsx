@@ -48,12 +48,12 @@ export default function EnvDebug() {
       </div>
 
       <div className="glass-card p-6 bg-warning/10 border border-warning/30">
-        <h2 className="text-lg font-semibold mb-2 text-warning">📍 How to Add API Key in Vercel</h2>
+        <h2 className="text-lg font-semibold mb-2 text-warning">📍 How to Add API Key in Railway</h2>
         <div className="space-y-4 text-sm">
           <div>
             <p className="font-medium mb-2">Step 1: Find Environment Variables</p>
             <ol className="list-decimal list-inside space-y-1 text-gray-300 ml-2">
-              <li>Go to <a href="https://vercel.com/dashboard" target="_blank" className="text-cyan-electric hover:underline">vercel.com/dashboard</a></li>
+              <li>Go to Railway Dashboard → Your Service → Settings → Variables</li>
               <li>Click on your project: <strong>new1</strong></li>
               <li>Click <strong>"Settings"</strong> (top navigation bar)</li>
               <li>Click <strong>"Environment Variables"</strong> (left sidebar)</li>
@@ -67,7 +67,7 @@ export default function EnvDebug() {
               <li><strong>Key:</strong> <code className="bg-white/10 px-1 rounded">GOOGLE_AI_KEY</code> (exact match, case-sensitive, NO VITE_ prefix)</li>
               <li><strong>Value:</strong> Your API key from Google AI Studio</li>
               <li><strong>Environments:</strong> Check <strong>✅ Production</strong> (and Preview/Development if you want)</li>
-              <li><strong>⚠️ Important:</strong> Use <code>GOOGLE_AI_KEY</code> (not <code>VITE_GOOGLE_AI_KEY</code>) because the API key is stored server-side in the Vercel serverless function, not exposed to the browser.</li>
+              <li><strong>⚠️ Important:</strong> Use <code>GOOGLE_AI_KEY</code> (not <code>VITE_GOOGLE_AI_KEY</code>) because the API key is stored server-side in the Express server, not exposed to the browser.</li>
               <li>Click <strong>"Save"</strong></li>
             </ol>
           </div>
@@ -87,8 +87,8 @@ export default function EnvDebug() {
           <div className="mt-4 p-3 bg-cyan-electric/10 rounded-lg border border-cyan-electric/30">
             <p className="text-xs text-cyan-electric font-medium">💡 Direct Links:</p>
             <div className="mt-2 space-y-1">
-              <a href="https://vercel.com/dashboard" target="_blank" className="block text-xs text-cyan-electric hover:underline">
-                → Vercel Dashboard
+              <a href="https://railway.app" target="_blank" className="block text-xs text-cyan-electric hover:underline">
+                → Railway Dashboard
               </a>
               <a href="https://aistudio.google.com/apikey" target="_blank" className="block text-xs text-cyan-electric hover:underline">
                 → Get Google AI API Key
