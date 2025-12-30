@@ -93,7 +93,9 @@ const getApiKey = (): string | null => {
 };
 
 export const isAIConfigured = (): boolean => {
-  return Boolean(getApiKey());
+  // For serverless functions, we don't need to check client-side
+  // The API key is on the server. Just return true - the server will handle errors.
+  return true;
 };
 
 // Expose debug info for troubleshooting
@@ -118,30 +120,17 @@ export interface ConnectionStatus {
  * Test the AI connection and return status
  */
 export async function testConnection(): Promise<ConnectionStatus> {
-  const apiKey = getApiKey();
-  
-  if (!apiKey) {
-    console.warn('[AI] No API key configured');
-    return {
-      connected: false,
-      model: 'none',
-      error: 'API key not configured. Add VITE_GOOGLE_AI_KEY to environment variables.',
-    };
-  }
-
-  console.log('[AI] Testing connection to Gemini...');
+  console.log('[AI] Testing connection via serverless function...');
   const startTime = Date.now();
 
   try {
-    const apiUrl = `${GEMINI_API_BASE}/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
-    console.log('[AI] Testing connection:', apiUrl.replace(apiKey, 'API_KEY_HIDDEN'));
-    
-    const response = await fetch(apiUrl, {
+    const response = await fetch('/api/gemini', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [{ role: 'user', parts: [{ text: 'Say "connected" in one word.' }] }],
-        generationConfig: { maxOutputTokens: 10 },
+        prompt: 'Say "connected" in one word.',
+        context: null,
+        conversationHistory: [],
       }),
     });
 
@@ -152,20 +141,20 @@ export async function testConnection(): Promise<ConnectionStatus> {
       console.error('[AI] Connection failed:', error);
       return {
         connected: false,
-        model: GEMINI_MODEL,
+        model: 'gemini-pro',
         latency,
-        error: error.error?.message || `HTTP ${response.status}`,
+        error: error.error || `HTTP ${response.status}`,
       };
     }
 
     const data = await response.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    const text = data.text;
     
     console.log('[AI] Connection successful!', { latency, response: text });
     
     return {
       connected: true,
-      model: GEMINI_MODEL,
+      model: 'gemini-pro',
       latency,
     };
   } catch (err) {
@@ -173,7 +162,7 @@ export async function testConnection(): Promise<ConnectionStatus> {
     console.error('[AI] Connection error:', err);
     return {
       connected: false,
-      model: GEMINI_MODEL,
+      model: 'gemini-pro',
       latency,
       error: err instanceof Error ? err.message : 'Network error',
     };
@@ -215,111 +204,36 @@ async function callGemini(
   context?: AIContext,
   conversationHistory?: AIMessage[]
 ): Promise<string> {
-  const apiKey = getApiKey();
+  // Call our Vercel serverless function instead of Gemini directly
+  // This keeps the API key secure and avoids CORS issues
+  const apiUrl = '/api/gemini';
   
-  if (!apiKey) {
-    throw new Error('Google AI API key not configured. Add VITE_GOOGLE_AI_KEY to environment variables.');
-  }
+  console.log('[AI] Calling Vercel serverless function:', apiUrl);
 
-  // Build context string
-  let contextString = '';
-  if (context?.analysis) {
-    const a = context.analysis;
-    contextString += `
-CURRENT FINANCIAL DATA:
-- Monthly Revenue: $${a.monthlyRevenue?.toLocaleString() || 'N/A'}
-- Monthly Burn: $${a.monthlyBurn?.toLocaleString() || 'N/A'}
-- Cash on Hand: $${a.cashOnHand?.toLocaleString() || 'N/A'}
-- Runway: ${a.runwayMonths?.toFixed(1) || 'N/A'} months
-- Grade: ${a.grade || 'N/A'}
-- Revenue Growth: ${((a.revenueGrowth || 0) * 100).toFixed(1)}%
-- Expense Growth: ${((a.expenseGrowth || 0) * 100).toFixed(1)}%
-- Profit Margin: ${((a.profitMargin || 0) * 100).toFixed(1)}%
-- Burn Multiple: ${a.burnMultiple?.toFixed(2) || 'N/A'}
-`;
-  }
-
-  if (context?.simulatorParams) {
-    const s = context.simulatorParams;
-    contextString += `
-SIMULATOR PARAMETERS:
-- Projected Monthly Revenue: $${s.monthlyRevenue?.toLocaleString() || 'N/A'}
-- Projected Monthly Expenses: $${s.monthlyExpenses?.toLocaleString() || 'N/A'}
-- Revenue Growth Rate: ${((s.revenueGrowth || 0) * 100).toFixed(1)}%
-- Expense Growth Rate: ${((s.expenseGrowth || 0) * 100).toFixed(1)}%
-`;
-  }
-
-  if (context?.additionalContext) {
-    contextString += `\nADDITIONAL CONTEXT:\n${context.additionalContext}`;
-  }
-
-  // Build conversation for multi-turn
-  const contents = [];
-  
-  // Add system context as first user message (Gemini doesn't have system role)
-  contents.push({
-    role: 'user',
-    parts: [{ text: SYSTEM_PROMPT + '\n\n' + contextString }]
-  });
-  contents.push({
-    role: 'model',
-    parts: [{ text: 'I understand. I\'m ready to provide financial insights based on the data you\'ve shared. How can I help you today?' }]
-  });
-
-  // Add conversation history
-  if (conversationHistory) {
-    for (const msg of conversationHistory) {
-      if (msg.role === 'user' || msg.role === 'assistant') {
-        contents.push({
-          role: msg.role === 'assistant' ? 'model' : 'user',
-          parts: [{ text: msg.content }]
-        });
-      }
-    }
-  }
-
-  // Add current prompt
-  contents.push({
-    role: 'user',
-    parts: [{ text: prompt }]
-  });
-
-  const response = await fetch(`${GEMINI_API_BASE}/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`, {
+  const response = await fetch(apiUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      contents,
-      generationConfig: {
-        temperature: 0.7,
-        topK: 40,
-        topP: 0.95,
-        maxOutputTokens: 2048,
-      },
-      safetySettings: [
-        { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
-        { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
-        { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
-        { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
-      ],
+      prompt,
+      context,
+      conversationHistory,
     }),
   });
 
   if (!response.ok) {
     const error = await response.json();
-    throw new Error(error.error?.message || 'Failed to get AI response');
+    throw new Error(error.error || 'Failed to get AI response');
   }
 
   const data = await response.json();
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
   
-  if (!text) {
+  if (!data.text) {
     throw new Error('No response from AI');
   }
 
-  return text;
+  return data.text;
 }
 
 // ============================================================================
