@@ -29,14 +29,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Get API key from environment variable
   const apiKey = process.env.GOOGLE_AI_KEY;
   
+  // Enhanced logging for debugging
+  console.log('[Gemini API] ========================================');
   console.log('[Gemini API] Request received');
-  console.log('[Gemini API] API key configured:', apiKey ? 'Yes' : 'No');
+  console.log('[Gemini API] Method:', req.method);
+  console.log('[Gemini API] API key configured:', apiKey ? `Yes (${apiKey.substring(0, 8)}...)` : 'No');
+  console.log('[Gemini API] All env vars with GOOGLE:', Object.keys(process.env).filter(k => k.includes('GOOGLE')));
   
   if (!apiKey) {
-    console.error('[Gemini API] GOOGLE_AI_KEY not configured');
+    console.error('[Gemini API] ❌ GOOGLE_AI_KEY not found in process.env');
+    console.error('[Gemini API] Available env vars:', Object.keys(process.env).slice(0, 10));
     return res.status(500).json({ 
       error: 'API key not configured. Add GOOGLE_AI_KEY to Vercel environment variables.',
-      hint: 'Check Vercel Settings → Environment Variables → Add GOOGLE_AI_KEY'
+      hint: 'Check Vercel Settings → Environment Variables → Add GOOGLE_AI_KEY',
+      debug: {
+        envVarExists: Boolean(process.env.GOOGLE_AI_KEY),
+        allGoogleVars: Object.keys(process.env).filter(k => k.includes('GOOGLE'))
+      }
     });
   }
 
