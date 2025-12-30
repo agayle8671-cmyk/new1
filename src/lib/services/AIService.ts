@@ -83,6 +83,76 @@ export const isAIConfigured = (): boolean => {
   return Boolean(getApiKey());
 };
 
+export interface ConnectionStatus {
+  connected: boolean;
+  model: string;
+  latency?: number;
+  error?: string;
+}
+
+/**
+ * Test the AI connection and return status
+ */
+export async function testConnection(): Promise<ConnectionStatus> {
+  const apiKey = getApiKey();
+  
+  if (!apiKey) {
+    console.warn('[AI] No API key configured');
+    return {
+      connected: false,
+      model: 'none',
+      error: 'API key not configured. Add VITE_GOOGLE_AI_KEY to environment variables.',
+    };
+  }
+
+  console.log('[AI] Testing connection to Gemini...');
+  const startTime = Date.now();
+
+  try {
+    const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ role: 'user', parts: [{ text: 'Say "connected" in one word.' }] }],
+        generationConfig: { maxOutputTokens: 10 },
+      }),
+    });
+
+    const latency = Date.now() - startTime;
+
+    if (!response.ok) {
+      const error = await response.json();
+      console.error('[AI] Connection failed:', error);
+      return {
+        connected: false,
+        model: 'gemini-1.5-pro',
+        latency,
+        error: error.error?.message || `HTTP ${response.status}`,
+      };
+    }
+
+    const data = await response.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    
+    console.log('[AI] Connection successful!', { latency, response: text });
+    
+    return {
+      connected: true,
+      model: 'gemini-1.5-pro',
+      latency,
+    };
+  } catch (err) {
+    const latency = Date.now() - startTime;
+    console.error('[AI] Connection error:', err);
+    return {
+      connected: false,
+      model: 'gemini-1.5-pro',
+      latency,
+      error: err instanceof Error ? err.message : 'Network error',
+    };
+  }
+}
+
 // ============================================================================
 // SYSTEM PROMPTS
 // ============================================================================
@@ -524,6 +594,7 @@ Format with clear headers and bullet points.`;
 
 const AIService = {
   isConfigured: isAIConfigured,
+  testConnection,
   chat,
   getStrategicInsights,
   generateBoardDeck,

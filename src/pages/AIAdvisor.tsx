@@ -30,6 +30,7 @@ import AIService, {
   type FundraisingReadiness,
   type RiskAssessment,
   type AIContext,
+  type ConnectionStatus,
 } from '../lib/services/AIService';
 import { useAppStore } from '../lib/store';
 
@@ -75,10 +76,33 @@ export default function AIAdvisor() {
   const [isBenchmarksLoading, setIsBenchmarksLoading] = useState(false);
 
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus | null>(null);
+  const [isTestingConnection, setIsTestingConnection] = useState(false);
 
   useEffect(() => {
     setIsConfigured(AIService.isConfigured());
+    // Auto-test connection on mount
+    if (AIService.isConfigured()) {
+      testAIConnection();
+    }
   }, []);
+
+  const testAIConnection = async () => {
+    setIsTestingConnection(true);
+    try {
+      const status = await AIService.testConnection();
+      setConnectionStatus(status);
+      if (status.connected) {
+        toast.success('AI Connected', { description: `${status.model} • ${status.latency}ms latency` });
+      } else {
+        toast.error('AI Connection Failed', { description: status.error });
+      }
+    } catch {
+      toast.error('Connection test failed');
+    } finally {
+      setIsTestingConnection(false);
+    }
+  };
 
   const getContext = useCallback((): AIContext => ({
     analysis: currentAnalysis,
@@ -253,13 +277,43 @@ export default function AIAdvisor() {
       transition={{ duration: 0.5 }}
     >
       {/* Header */}
-      <header>
-        <h1 className="text-2xl sm:text-3xl font-bold">
-          <span className="gradient-text-mixed">AI Financial Advisor</span>
-        </h1>
-        <p className="text-gray-400 mt-1">
-          Powered by Gemini • {currentAnalysis ? 'Using your financial data' : 'Upload data in DNA Lab for personalized insights'}
-        </p>
+      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold">
+            <span className="gradient-text-mixed">AI Financial Advisor</span>
+          </h1>
+          <p className="text-gray-400 mt-1">
+            Powered by Gemini • {currentAnalysis ? 'Using your financial data' : 'Upload data in DNA Lab for personalized insights'}
+          </p>
+        </div>
+        
+        {/* Connection Status */}
+        <div className="flex items-center gap-3">
+          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${
+            connectionStatus?.connected
+              ? 'bg-success/20 text-success border border-success/30'
+              : connectionStatus === null
+                ? 'bg-white/10 text-gray-400 border border-white/10'
+                : 'bg-danger/20 text-danger border border-danger/30'
+          }`}>
+            <div className={`w-2 h-2 rounded-full ${
+              connectionStatus?.connected ? 'bg-success animate-pulse' : 
+              connectionStatus === null ? 'bg-gray-400' : 'bg-danger'
+            }`} />
+            {isTestingConnection ? 'Testing...' :
+              connectionStatus?.connected ? `Connected • ${connectionStatus.latency}ms` :
+              connectionStatus === null ? 'Not tested' :
+              'Disconnected'}
+          </div>
+          <button
+            onClick={testAIConnection}
+            disabled={isTestingConnection}
+            className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors disabled:opacity-50"
+            title="Test AI Connection"
+          >
+            <RefreshCw className={`w-4 h-4 text-gray-400 ${isTestingConnection ? 'animate-spin' : ''}`} />
+          </button>
+        </div>
       </header>
 
       {/* Quick Actions Grid */}
