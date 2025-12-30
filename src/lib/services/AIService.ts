@@ -199,13 +199,20 @@ async function callGemini(
   conversationHistory?: AIMessage[]
 ): Promise<string> {
   // Call our Vercel serverless function instead of Gemini directly
-  // This keeps the API key secure and avoids CORS issues
+  // This keeps the API key secure (server-side) and avoids CORS issues
   const apiUrl = '/api/gemini';
   
+  console.log('[AI] ========================================');
   console.log('[AI] Calling Vercel serverless function:', apiUrl);
-  console.log('[AI] Request payload:', { prompt: prompt.substring(0, 50) + '...', hasContext: !!context, historyLength: conversationHistory?.length || 0 });
+  console.log('[AI] Setup: Server-side API key (GOOGLE_AI_KEY in Vercel)');
+  console.log('[AI] Request payload:', { 
+    prompt: prompt.substring(0, 50) + '...', 
+    hasContext: !!context, 
+    historyLength: conversationHistory?.length || 0 
+  });
 
   try {
+    const startTime = Date.now();
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
@@ -218,16 +225,32 @@ async function callGemini(
       }),
     });
 
-    console.log('[AI] Response status:', response.status);
+    const latency = Date.now() - startTime;
+    console.log('[AI] Response status:', response.status, `(${latency}ms)`);
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
-      console.error('[AI] Error response:', error);
-      throw new Error(error.error || error.message || `HTTP ${response.status}: Failed to get AI response`);
+      const errorText = await response.text();
+      let errorData;
+      try {
+        errorData = JSON.parse(errorText);
+      } catch {
+        errorData = { error: errorText || `HTTP ${response.status}` };
+      }
+      
+      console.error('[AI] ❌ Error response:', errorData);
+      console.error('[AI] Full error text:', errorText);
+      
+      // Provide helpful error messages
+      if (response.status === 500 && errorData.error?.includes('API key not configured')) {
+        throw new Error('API key not configured in Vercel. Add GOOGLE_AI_KEY (not VITE_ prefix) in Vercel Settings → Environment Variables.');
+      }
+      
+      throw new Error(errorData.error || errorData.message || `HTTP ${response.status}: ${errorText}`);
     }
 
     const data = await response.json();
-    console.log('[AI] Success, response length:', data.text?.length || 0);
+    console.log('[AI] ✅ Success, response length:', data.text?.length || 0);
+    console.log('[AI] ========================================');
     
     if (!data.text) {
       throw new Error('No response from AI - empty response');
@@ -235,7 +258,9 @@ async function callGemini(
 
     return data.text;
   } catch (err) {
-    console.error('[AI] Fetch error:', err);
+    console.error('[AI] ❌ Fetch error:', err);
+    console.error('[AI] Error type:', err instanceof Error ? err.constructor.name : typeof err);
+    console.error('[AI] ========================================');
     throw err;
   }
 }
