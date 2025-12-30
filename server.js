@@ -151,8 +151,27 @@ app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'ok', 
     timestamp: new Date().toISOString(),
-    service: 'Runway DNA API'
+    service: 'Runway DNA API',
+    port: process.env.PORT || 3000,
+    distExists: fs.existsSync(distPath)
   });
+});
+
+// Root route - helpful for debugging
+app.get('/', (req, res) => {
+  const distPath = join(__dirname, 'dist');
+  if (fs.existsSync(distPath)) {
+    // Serve index.html
+    res.sendFile(join(distPath, 'index.html'));
+  } else {
+    res.json({ 
+      message: 'Dist folder not found',
+      hint: 'Check Railway build logs to ensure npm run build completed successfully',
+      distPath,
+      cwd: process.cwd(),
+      __dirname
+    });
+  }
 });
 
 // Serve static files from Vite build
