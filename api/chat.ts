@@ -1,249 +1,148 @@
 /**
  * api/chat.ts
  * 
- * Vercel Edge Serverless Function for Google Gemini AI Chat
+ * Vercel Serverless Function for Google Gemini AI Chat
  * 
- * Uses direct REST API (not SDK) for Edge runtime compatibility.
+ * Uses Google Generative AI SDK with Node.js runtime.
  * API key is stored server-side as GOOGLE_AI_KEY (not VITE_ prefix).
  */
 
-export const config = {
-  runtime: 'edge',
-};
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-interface Message {
-  role: 'user' | 'assistant';
-  content: string;
-}
+// Strategic CFO Persona
+const STRATEGIC_CFO_PERSONA = 'You are the Runway DNA Strategic CFO. Analyze the provided financial data and give a short, actionable strategic insight. Keep it under 3 sentences.';
 
-interface RequestBody {
-  message?: string;
-  prompt?: string;
-  context?: any;
-  conversationHistory?: Message[];
-}
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Enable CORS
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
 
-export default async function handler(req: Request) {
-  // CORS preflight
+  // Handle preflight
   if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-      },
-    });
+    return res.status(200).end();
   }
 
   if (req.method !== 'POST') {
-    return new Response(
-      JSON.stringify({ error: 'Method not allowed' }),
-      {
-        status: 405,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-        },
-      }
-    );
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const body: RequestBody = await req.json();
-    const userMessage = body.message || body.prompt;
+    const { message, prompt, context, conversationHistory } = req.body;
+    const userMessage = message || prompt;
 
     if (!userMessage) {
-      return new Response(
-        JSON.stringify({ error: 'Message or prompt is required' }),
-        {
-          status: 400,
-          headers: {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
-          },
-        }
-      );
+      return res.status(400).json({ error: 'Message or prompt is required' });
     }
 
     // Get API key
-    const apiKey =
-      process.env.GOOGLE_AI_KEY || process.env.GOOGLE_API_KEY;
+    const apiKey = process.env.GOOGLE_AI_KEY || process.env.GOOGLE_API_KEY;
 
     if (!apiKey) {
       console.error('[Chat API] ❌ API key not configured');
-      return new Response(
-        JSON.stringify({ 
-          error: 'API key not configured',
-          hint: 'Add GOOGLE_AI_KEY to Vercel environment variables and redeploy'
-        }),
-        {
-          status: 500,
-          headers: {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
-          },
-        }
-      );
+      return res.status(500).json({
+        error: 'API key not configured',
+        hint: 'Add GOOGLE_AI_KEY to Vercel environment variables and redeploy',
+      });
     }
 
-    // System prompt - Strategic CFO persona
-    const systemPrompt =
-      'You are the Runway DNA Strategic CFO. Analyze the provided financial data and give a short, actionable strategic insight. Keep it under 3 sentences.';
+    // Initialize Google Generative AI SDK
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ 
+      model: 'gemini-1.5-flash',
+    });
 
-    // Build contents array for API
+    console.log('[Chat API] ✅ Using Google SDK with gemini-1.5-flash');
+
+    // Build conversation contents
     const contents: any[] = [];
 
     // Add conversation history if present
-    if (
-      body.conversationHistory &&
-      Array.isArray(body.conversationHistory) &&
-      body.conversationHistory.length > 0
-    ) {
-      for (const msg of body.conversationHistory) {
-        contents.push({
-          role: msg.role === 'assistant' ? 'model' : 'user',
-          parts: [{ text: msg.content }],
-        });
+    if (conversationHistory && Array.isArray(conversationHistory) && conversationHistory.length > 0) {
+      for (const msg of conversationHistory) {
+        if (msg.role === 'user' || msg.role === 'assistant') {
+          contents.push({
+            role: msg.role === 'assistant' ? 'model' : 'user',
+            parts: [{ text: msg.content }],
+          });
+        }
       }
     }
 
-    // Add current user message with context
-    let fullPrompt = `${systemPrompt}\n\n`;
-    if (body.context) {
-      fullPrompt += `Context: ${JSON.stringify(body.context)}\n\n`;
+    // Build prompt with context and Strategic CFO persona
+    let fullPrompt = `${STRATEGIC_CFO_PERSONA}\n\n`;
+    if (context) {
+      fullPrompt += `Context: ${JSON.stringify(context)}\n\n`;
     }
     fullPrompt += `User Question: ${userMessage}`;
 
+    // Add current message
     contents.push({
       role: 'user',
       parts: [{ text: fullPrompt }],
     });
 
-    // Use the correct model name and API endpoint (v1 stable API)
-    const model = 'gemini-1.5-flash';
-    const apiUrl = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`;
+    console.log('[Chat API] Calling Gemini with', contents.length, 'messages');
 
-    console.log('[Chat API] Calling Gemini REST API:', apiUrl.replace(apiKey, 'API_KEY_HIDDEN'));
-    console.log('[Chat API] Contents count:', contents.length);
-
-    // Make request to Gemini API
-    const geminiResponse = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+    // Generate content using SDK
+    const result = await model.generateContent({
+      contents,
+      generationConfig: {
+        temperature: 0.7,
+        topK: 40,
+        topP: 0.95,
+        maxOutputTokens: 2048,
       },
-      body: JSON.stringify({
-        contents,
-        generationConfig: {
-          temperature: 0.7,
-          topK: 40,
-          topP: 0.95,
-          maxOutputTokens: 2048,
-        },
-        safetySettings: [
-          { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
-          { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
-          { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
-          { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
-        ],
-      }),
+      safetySettings: [
+        { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+        { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+        { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+        { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+      ],
     });
 
-    if (!geminiResponse.ok) {
-      const errorText = await geminiResponse.text();
-      let errorData;
-      try {
-        errorData = JSON.parse(errorText);
-      } catch {
-        errorData = { error: errorText };
-      }
-      
-      console.error('[Chat API] ❌ Gemini API error:', errorData);
-      console.error('[Chat API] Status:', geminiResponse.status);
+    const response = await result.response;
+    const text = response.text();
 
-      return new Response(
-        JSON.stringify({
-          error: 'Failed to get response from AI',
-          details: errorData.error?.message || errorData.error || errorText,
-          status: geminiResponse.status,
-          hint: geminiResponse.status === 404 
-            ? 'Model may not be available. Check available models at https://aistudio.google.com/'
-            : geminiResponse.status === 401 || geminiResponse.status === 403
-            ? 'API key may be invalid. Verify at https://aistudio.google.com/'
-            : 'Check Vercel function logs for more details'
-        }),
-        {
-          status: 500,
-          headers: {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
-          },
-        }
-      );
-    }
-
-    const data = await geminiResponse.json();
-
-    // Extract text from response
-    const responseText =
-      data.candidates?.[0]?.content?.parts?.[0]?.text ||
-      'No response generated';
-
-    if (!responseText || responseText === 'No response generated') {
+    if (!text) {
       console.error('[Chat API] ❌ No text in response');
-      console.error('[Chat API] Response data:', JSON.stringify(data, null, 2));
-      return new Response(
-        JSON.stringify({
-          error: 'No response generated from AI',
-          details: data,
-        }),
-        {
-          status: 500,
-          headers: {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
-          },
-        }
-      );
+      return res.status(500).json({
+        error: 'No response generated from AI',
+      });
     }
 
-    console.log('[Chat API] ✅ Success, response length:', responseText.length);
+    console.log('[Chat API] ✅ Success, response length:', text.length);
 
-    return new Response(
-      JSON.stringify({
-        response: responseText,
-        text: responseText,
-      }),
-      {
-        status: 200,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-        },
-      }
-    );
+    return res.status(200).json({
+      response: text,
+      text: text,
+    });
   } catch (error: any) {
-    console.error('[Chat API] ❌ Exception:', error);
+    console.error('[Chat API] ❌ Error:', error);
     console.error('[Chat API] Error details:', {
       message: error.message,
       name: error.name,
       stack: error.stack?.substring(0, 200),
     });
 
-    return new Response(
-      JSON.stringify({
-        error: 'Internal server error',
-        message: error.message,
-        hint: 'Check Vercel function logs for detailed error information',
-      }),
-      {
-        status: 500,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-        },
-      }
-    );
+    // Provide helpful error messages
+    let errorMessage = error.message || 'Unknown error';
+    let hint = '';
+
+    if (errorMessage.includes('API key') || errorMessage.includes('PERMISSION_DENIED')) {
+      hint = 'Verify your API key is valid at https://aistudio.google.com/ and has the correct permissions.';
+    } else if (errorMessage.includes('model') || errorMessage.includes('not found')) {
+      hint = 'The model may not be available. Check available models at https://aistudio.google.com/';
+    } else if (errorMessage.includes('quota') || errorMessage.includes('limit')) {
+      hint = 'You may have exceeded your API quota. Check your usage at https://aistudio.google.com/';
+    }
+
+    return res.status(500).json({
+      error: errorMessage,
+      hint,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+    });
   }
 }
