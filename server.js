@@ -146,16 +146,17 @@ app.get('/api/test', (req, res) => {
   });
 });
 
-// Health check endpoint
+// Health check endpoint (Railway uses this for health checks)
 app.get('/api/health', (req, res) => {
-  const distPath = join(__dirname, 'dist');
   res.json({ 
     status: 'ok', 
     timestamp: new Date().toISOString(),
     service: 'Runway DNA API',
     port: process.env.PORT || 3000,
     distExists: fs.existsSync(distPath),
-    distPath
+    distPath,
+    nodeVersion: process.version,
+    uptime: process.uptime()
   });
 });
 
