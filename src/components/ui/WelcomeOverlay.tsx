@@ -89,12 +89,16 @@ export function WelcomeOverlay() {
                 className="text-center"
               >
                 <motion.div
-                  className={`w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-${currentStep.color}/30 to-${currentStep.color}/10 flex items-center justify-center`}
+                  className={`w-20 h-20 mx-auto mb-6 rounded-2xl flex items-center justify-center ${
+                    step === 0 
+                      ? 'bg-gradient-to-br from-cyan-electric/30 to-cyan-electric/10' 
+                      : 'bg-gradient-to-br from-violet-vivid/30 to-violet-vivid/10'
+                  }`}
                   animate={{
                     boxShadow: [
-                      `0 0 20px rgba(0, 212, 255, 0.2)`,
-                      `0 0 40px rgba(139, 92, 246, 0.3)`,
-                      `0 0 20px rgba(0, 212, 255, 0.2)`,
+                      '0 0 20px rgba(0, 212, 255, 0.2)',
+                      '0 0 40px rgba(139, 92, 246, 0.3)',
+                      '0 0 20px rgba(0, 212, 255, 0.2)',
                     ],
                   }}
                   transition={{ duration: 2, repeat: Infinity }}
