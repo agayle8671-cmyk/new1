@@ -222,11 +222,18 @@ if (fs.existsSync(distPath)) {
   });
 }
 
+// Start server - MUST bind to 0.0.0.0 for Railway
 app.listen(port, '0.0.0.0', () => {
   console.log(`[Server] ========================================`);
   console.log(`🚀 Server running on port ${port}`);
   console.log(`📊 Runway DNA API ready`);
+  console.log(`🌐 Listening on 0.0.0.0:${port}`);
   console.log(`🌐 Health check: http://localhost:${port}/api/health`);
   console.log(`🤖 Chat API: http://localhost:${port}/api/chat`);
+  console.log(`📁 Dist folder: ${distPath}`);
+  console.log(`📁 Dist exists: ${fs.existsSync(distPath)}`);
   console.log(`[Server] ========================================`);
+  
+  // Verify server is actually listening
+  console.log(`[Server] ✅ Server is listening and ready to accept connections`);
 });
