@@ -293,15 +293,13 @@ export default function AIAdvisor() {
             </pre>
             
             <div className="border-t border-white/10 pt-4">
-              <h4 className="text-xs font-bold mb-2">📍 How to Add API Key in Vercel (Server-Side):</h4>
+              <h4 className="text-xs font-bold mb-2">📍 How to Add API Key in Railway (Server-Side):</h4>
               <ol className="list-decimal list-inside space-y-1 text-xs text-gray-300">
-                <li>Go to <a href="https://vercel.com/dashboard" target="_blank" className="text-cyan-electric hover:underline">vercel.com/dashboard</a></li>
-                <li>Click project <strong>new1</strong> → <strong>Settings</strong> → <strong>Environment Variables</strong></li>
-                <li>Click <strong>"Add New"</strong></li>
+                <li>Go to Railway Dashboard → Your Service → <strong>Settings</strong> → <strong>Variables</strong></li>
+                <li>Click <strong>"+ New Variable"</strong></li>
                 <li><strong>Key:</strong> <code className="bg-white/10 px-1 rounded">GOOGLE_AI_KEY</code> <span className="text-warning">(NO VITE_ prefix!)</span></li>
                 <li><strong>Value:</strong> Your API key from <a href="https://aistudio.google.com/apikey" target="_blank" className="text-cyan-electric hover:underline">Google AI Studio</a></li>
-                <li><strong>Environments:</strong> Check <strong>✅ Production</strong> (and Preview if needed)</li>
-                <li>Click <strong>"Save"</strong>, then go to <strong>Deployments</strong> → Click <strong>⋮</strong> → <strong>Redeploy</strong></li>
+                <li>Click <strong>"Add"</strong> - Railway will automatically redeploy</li>
               </ol>
               <div className="mt-3 p-2 bg-warning/10 border border-warning/30 rounded text-xs text-warning">
                 <strong>⚠️ Important:</strong> Use <code>GOOGLE_AI_KEY</code> (not <code>VITE_GOOGLE_AI_KEY</code>) because the API key is stored server-side in the Express server, not exposed to the browser.
