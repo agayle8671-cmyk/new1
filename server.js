@@ -74,11 +74,11 @@ app.post('/api/chat', async (req, res) => {
       parts: [{ text: fullPrompt }]
     });
 
-    // Use REST API directly with v1 endpoint (not v1beta)
-    const apiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    // Use gemini-pro (stable model that works with v1 endpoint)
+    const apiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${apiKey}`;
     
     console.log('[Chat API] Calling Gemini v1 REST API');
-    console.log('[Chat API] Model: gemini-1.5-flash');
+    console.log('[Chat API] Model: gemini-pro (stable v1 model)');
     console.log('[Chat API] Contents length:', contents.length);
     
     const geminiResponse = await fetch(apiUrl, {
