@@ -54,6 +54,7 @@ const INITIAL_MESSAGE: AIMessage = {
 export default function AIAdvisor() {
   const { currentAnalysis, simulatorParams } = useAppStore();
   const [isConfigured, setIsConfigured] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   // Chat state
   const [messages, setMessages] = useState<AIMessage[]>([INITIAL_MESSAGE]);
@@ -81,10 +82,15 @@ export default function AIAdvisor() {
   const [isTestingConnection, setIsTestingConnection] = useState(false);
 
   useEffect(() => {
-    setIsConfigured(AIService.isConfigured());
-    // Auto-test connection on mount
-    if (AIService.isConfigured()) {
-      testAIConnection();
+    try {
+      setIsConfigured(AIService.isConfigured());
+      // Auto-test connection on mount
+      if (AIService.isConfigured()) {
+        testAIConnection();
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error');
+      console.error('[AIAdvisor] Error on mount:', err);
     }
   }, []);
 
@@ -242,6 +248,28 @@ export default function AIAdvisor() {
       default: return 'text-gray-400 bg-gray-400/20';
     }
   };
+
+  if (error) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex items-center justify-center min-h-[60vh]"
+      >
+        <MotionCard className="p-8 text-center max-w-md">
+          <AlertTriangle className="w-16 h-16 text-danger mx-auto mb-4" />
+          <h2 className="text-xl font-bold mb-2">Error Loading AI Advisor</h2>
+          <p className="text-gray-400 mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-cyan-electric text-charcoal rounded-lg hover:bg-cyan-glow transition-colors"
+          >
+            Reload Page
+          </button>
+        </MotionCard>
+      </motion.div>
+    );
+  }
 
   if (!isConfigured) {
     return (
