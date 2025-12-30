@@ -85,7 +85,7 @@ const GEMINI_MODEL = 'gemini-1.5-flash';
 // NOTE: We use a Vercel Edge serverless function (/api/chat) to proxy requests
 // The API key is stored server-side as GOOGLE_AI_KEY (not VITE_GOOGLE_AI_KEY)
 // The client doesn't need the key - it just calls our API endpoint
-// All Google SDK usage is server-side only - no browser-side SDK calls
+// Server uses direct REST API (not SDK) for Edge runtime compatibility
 export const isAIConfigured = (): boolean => {
   // Always return true - the serverless function will handle API key validation
   // If the key is missing, the server will return an error that we'll display
