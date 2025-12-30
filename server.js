@@ -1,14 +1,13 @@
 import express from 'express';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import path from 'path';
 import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
 import { readFileSync, existsSync } from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const __dirname = path.dirname(__filename);
 
 const app = express();
-const port = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(express.json());
@@ -39,76 +38,101 @@ app.post('/api/chat', async (req, res) => {
     const userMessage = message || prompt;
 
     if (!userMessage) {
-      return res.status(400).json({ error: 'Message is required' });
+      return res.status(400).json({ error: 'Message required' });
     }
 
     const apiKey = process.env.GOOGLE_AI_KEY || process.env.GOOGLE_API_KEY;
-
     if (!apiKey) {
       console.error('API key not configured');
       return res.status(500).json({ error: 'API key not configured' });
     }
 
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ 
-      model: 'gemini-1.5-flash',
-      generationConfig: {
-        temperature: 0.7,
-        topK: 40,
-        topP: 0.95,
-        maxOutputTokens: 2048,
-      },
-    });
-
-    const systemPrompt =
-      'You are the Runway DNA Strategic CFO. Analyze the provided financial data and give a short, actionable strategic insight. Keep it under 3 sentences.';
-
+    // Build prompt
+    const systemPrompt = 'You are the Runway DNA Strategic CFO. Give short, actionable strategic insights under 3 sentences.';
     let fullPrompt = `${systemPrompt}\n\n`;
     if (context) {
       fullPrompt += `Context: ${JSON.stringify(context)}\n\n`;
     }
-    fullPrompt += `User Question: ${userMessage}`;
+    fullPrompt += `User: ${userMessage}`;
 
+    // Build contents for API
+    const contents = [];
+    
     if (conversationHistory && conversationHistory.length > 0) {
-      const history = conversationHistory.map((msg) => ({
-        role: msg.role === 'assistant' ? 'model' : 'user',
-        parts: [{ text: msg.content }],
-      }));
-
-      history.push({
-        role: 'user',
-        parts: [{ text: fullPrompt }],
-      });
-
-      const chat = model.startChat({ history: history.slice(0, -1) });
-      const result = await chat.sendMessage(fullPrompt);
-      const response = result.response.text();
-
-      return res.json({ response, text: response });
-    } else {
-      const result = await model.generateContent(fullPrompt);
-      const response = result.response.text();
-
-      return res.json({ response, text: response });
+      for (const msg of conversationHistory) {
+        if (msg.role === 'user' || msg.role === 'assistant') {
+          contents.push({
+            role: msg.role === 'assistant' ? 'model' : 'user',
+            parts: [{ text: msg.content }]
+          });
+        }
+      }
     }
+    
+    contents.push({
+      role: 'user',
+      parts: [{ text: fullPrompt }]
+    });
+
+    // Use REST API directly with v1 endpoint (not v1beta)
+    const apiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    
+    console.log('[Chat API] Calling Gemini v1 REST API');
+    console.log('[Chat API] Model: gemini-1.5-flash');
+    console.log('[Chat API] Contents length:', contents.length);
+    
+    const geminiResponse = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents,
+        generationConfig: {
+          temperature: 0.7,
+          topK: 40,
+          topP: 0.95,
+          maxOutputTokens: 2048,
+        }
+      })
+    });
+
+    if (!geminiResponse.ok) {
+      const errorText = await geminiResponse.text();
+      console.error('[Chat API] Gemini API error:', errorText);
+      let errorData;
+      try {
+        errorData = JSON.parse(errorText);
+      } catch {
+        errorData = { error: errorText };
+      }
+      return res.status(500).json({ 
+        error: 'Failed to get AI response',
+        details: errorData.error || errorText 
+      });
+    }
+
+    const data = await geminiResponse.json();
+    const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response';
+
+    console.log('[Chat API] ✅ Success, response length:', responseText.length);
+    return res.json({ response: responseText, text: responseText });
   } catch (error) {
-    console.error('Chat API error:', error);
-    return res.status(500).json({
+    console.error('[Chat API] ❌ Error:', error);
+    return res.status(500).json({ 
       error: 'Failed to get AI response',
-      message: error.message,
+      message: error.message 
     });
   }
 });
 
 app.get('/api/health', (req, res) => {
-  const distPath = join(__dirname, 'dist');
-  const indexExists = existsSync(join(distPath, 'index.html'));
+  const distPath = path.join(__dirname, 'dist');
+  const indexExists = existsSync(path.join(distPath, 'index.html'));
   
   res.json({ 
     status: 'ok', 
     timestamp: new Date().toISOString(),
     service: 'Runway DNA API',
-    port: port.toString(),
+    port: PORT.toString(),
     distExists: existsSync(distPath),
     indexExists,
     distPath,
@@ -118,10 +142,10 @@ app.get('/api/health', (req, res) => {
 });
 
 // Serve static files
-const distPath = join(__dirname, 'dist');
+const distPath = path.join(__dirname, 'dist');
 
 // Serve assets with proper headers
-app.use('/assets', express.static(join(distPath, 'assets'), {
+app.use('/assets', express.static(path.join(distPath, 'assets'), {
   maxAge: 0,
   etag: false
 }));
@@ -140,7 +164,7 @@ app.get('*', (req, res) => {
     return res.status(404).json({ error: 'API endpoint not found' });
   }
   
-  const indexPath = join(distPath, 'index.html');
+  const indexPath = path.join(distPath, 'index.html');
   
   console.log(`Request: ${req.method} ${req.path}`);
   console.log(`Serving index from: ${indexPath}`);
@@ -160,10 +184,10 @@ app.get('*', (req, res) => {
   }
 });
 
-app.listen(port, '0.0.0.0', () => {
-  console.log(`🚀 Server running on port ${port}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📊 Runway DNA API ready`);
-  console.log(`🌐 Listening on 0.0.0.0:${port}`);
+  console.log(`🌐 Listening on 0.0.0.0:${PORT}`);
   console.log(`📁 Dist path: ${distPath}`);
-  console.log(`📄 Index exists: ${existsSync(join(distPath, 'index.html'))}`);
+  console.log(`📄 Index exists: ${existsSync(path.join(distPath, 'index.html'))}`);
 });
