@@ -165,6 +165,22 @@ function executeFunction(functionName, args, context) {
       };
     }
 
+    case 'get_industry_benchmarks': {
+      // Stage 6: Return industry benchmarks for comparison
+      return {
+        industry: 'B2B SaaS',
+        typicalBurn: 75000,
+        typicalGrowth: 0.15, // 15% MoM
+        typicalChurn: 0.05, // 5% monthly
+        seriesASizeAvg: 8000000, // $8M
+        healthyBurnMultiple: 2, // < 2x
+        idealRunwayMonths: '18-24 months',
+        targetGrossMargin: '> 70%',
+        goodNrr: '> 100%',
+        notes: 'Use these benchmarks to compare company metrics and provide context on performance relative to industry standards'
+      };
+    }
+
     default:
       return { error: `Unknown function: ${functionName}` };
   }
@@ -243,6 +259,19 @@ You can perform specific types of analysis using the perform_analysis function:
 - breakeven: Calculate path to profitability
 
 When users ask for specific analysis types, use the perform_analysis function to get structured guidance.
+
+INDUSTRY BENCHMARKS (B2B SaaS):
+Use these benchmarks to compare the company's metrics:
+- Typical monthly burn: $75,000 (for similar stage companies)
+- Typical monthly growth: 15% MoM (month-over-month)
+- Typical monthly churn: 5%
+- Average Series A size: $8,000,000
+- Healthy burn multiple: < 2x (net burn / net new ARR)
+- Ideal runway: 18-24 months
+- Target gross margin: > 70%
+- Good NRR (Net Revenue Retention): > 100%
+
+When analyzing metrics, always compare against these benchmarks and provide context on how the company measures up.
 
 CURRENT COMPANY CONTEXT:
 ${context ? `
