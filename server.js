@@ -11,6 +11,9 @@ const PORT = process.env.PORT || 3000;
 // Cache for financial summaries
 const financialSummaryCache = new Map();
 
+// Response cache for AI chat
+const responseCache = new Map();
+
 // Rate limiting
 const rateLimitMap = new Map();
 
@@ -29,6 +32,19 @@ function checkRateLimit(userId) {
   rateLimitMap.set(userId, recentRequests);
 }
 
+// Helper function to generate cache key for responses
+function getCacheKey(message, context) {
+  // Normalize context to create consistent cache keys
+  const normalizedContext = context ? {
+    cashOnHand: context.cashOnHand,
+    monthlyBurn: context.monthlyBurn,
+    monthlyRevenue: context.monthlyRevenue,
+    runway: context.runway,
+    revenueGrowthRate: context.revenueGrowthRate
+  } : null;
+  return `${message}_${JSON.stringify(normalizedContext)}`;
+}
+
 // Clean up old rate limit entries periodically (every 5 minutes)
 setInterval(() => {
   const now = Date.now();
@@ -41,6 +57,16 @@ setInterval(() => {
     }
   }
 }, 5 * 60 * 1000); // Every 5 minutes
+
+// Clean up old response cache entries periodically (every 10 minutes)
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, cached] of responseCache.entries()) {
+    if (now - cached.timestamp > 10 * 60 * 1000) { // 10 minutes TTL
+      responseCache.delete(key);
+    }
+  }
+}, 10 * 60 * 1000); // Every 10 minutes
 
 app.use(express.json());
 
@@ -303,6 +329,21 @@ app.post('/api/chat', async (req, res) => {
 
     if (!userMessage) {
       return res.status(400).json({ error: 'Message required' });
+    }
+
+    // Check response cache (only for non-streaming, non-conversation requests)
+    if (!useStreaming && (!conversationHistory || conversationHistory.length === 0)) {
+      const cacheKey = getCacheKey(userMessage, context);
+      const cached = responseCache.get(cacheKey);
+      
+      if (cached && (Date.now() - cached.timestamp < 10 * 60 * 1000)) { // 10 minute TTL
+        console.log(`[Cache] Response cache hit for: ${userMessage.substring(0, 50)}...`);
+        return res.json({ 
+          response: cached.response, 
+          text: cached.response,
+          cached: true 
+        });
+      }
     }
 
     const apiKey = process.env.GOOGLE_AI_KEY || process.env.GOOGLE_API_KEY;
@@ -613,6 +654,17 @@ When the user asks questions, analyze the data deeply and provide strategic guid
     }
 
     console.log('[Chat API] ✅ Success, response length:', responseText.length);
+    
+    // Cache the response (only for non-streaming, non-conversation requests)
+    if (!useStreaming && (!conversationHistory || conversationHistory.length === 0)) {
+      const cacheKey = getCacheKey(userMessage, context);
+      responseCache.set(cacheKey, {
+        response: responseText,
+        timestamp: Date.now()
+      });
+      console.log(`[Cache] Response cached for: ${userMessage.substring(0, 50)}...`);
+    }
+    
     return res.json({ response: responseText, text: responseText });
   } catch (error) {
     console.error('[Chat API] ❌ Error:', error.message);
