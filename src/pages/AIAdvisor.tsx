@@ -704,56 +704,6 @@ export default function AIAdvisor() {
         )}
       </AnimatePresence>
 
-      {/* 90-Day Runway Plan */}
-      <AnimatePresence>
-        {(runwayPlan || isPlanLoading) && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="glass-card p-6 border border-cyan-electric/30"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-cyan-electric" />
-                <h3 className="font-semibold">90-Day Runway Plan</h3>
-                {isPlanLoading && (
-                  <Loader2 className="w-4 h-4 animate-spin text-cyan-electric ml-2" />
-                )}
-              </div>
-              {runwayPlan && (
-                <button
-                  onClick={() => copyToClipboard(runwayPlan, 'plan')}
-                  className="flex items-center gap-1 text-xs text-gray-400 hover:text-white"
-                >
-                  {copiedSection === 'plan' ? (
-                    <>
-                      <Check className="w-4 h-4" />
-                      Copied
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-4 h-4" />
-                      Copy
-                    </>
-                  )}
-                </button>
-              )}
-            </div>
-            {isPlanLoading && !runwayPlan ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-6 h-6 animate-spin text-cyan-electric" />
-                <span className="ml-3 text-sm text-gray-400">Generating your 90-day plan...</span>
-              </div>
-            ) : runwayPlan ? (
-              <div className="prose prose-invert max-w-none">
-                <p className="text-sm text-gray-300 whitespace-pre-wrap leading-relaxed">{runwayPlan}</p>
-              </div>
-            ) : null}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* Board Deck */}
       <AnimatePresence>
         {boardDeck && (
