@@ -14,16 +14,16 @@ import {
   formatRunway,
   compareScenarios,
 } from '../lib/simulator-engine';
-import GrowthService, { 
-  type MRRInput, 
+import GrowthService, {
+  type MRRInput,
   type GrowthScenario,
-  DEFAULT_SCENARIOS 
+  DEFAULT_SCENARIOS
 } from '../lib/services/GrowthService';
-import { 
-  saveSimulationSnapshot, 
-  saveGrowthScenario, 
+import {
+  saveSimulationSnapshot,
+  saveGrowthScenario,
   fetchLatestGrowthScenario,
-  type GrowthScenarioInput 
+  type GrowthScenarioInput
 } from '../lib/api';
 import { MotionCard, MotionButton } from '../components/ui/MotionCard';
 import { useAppStore } from '../lib/store';
@@ -54,23 +54,40 @@ const cardVariants = {
 const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: Array<{ value: number; name: string; color: string }>; label?: string }) => {
   if (!active || !payload) return null;
   return (
-    <div className="glass-card p-3 border border-white/20">
-      <p className="text-gray-400 text-xs mb-2">{label}</p>
-      {payload.map((entry, i) => (
-        <p key={i} className="text-sm font-semibold" style={{ color: entry.color }}>
-          {entry.name}: {formatCurrency(entry.value, true)}
-        </p>
-      ))}
+    <div
+      className="glass-card p-4 border border-white/20 backdrop-blur-xl shadow-2xl"
+      style={{
+        background: 'linear-gradient(135deg, rgba(13,13,13,0.95) 0%, rgba(26,26,26,0.9) 100%)',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.5), 0 0 40px rgba(0,212,255,0.1)'
+      }}
+    >
+      <p className="text-gray-400 text-xs font-medium mb-3 uppercase tracking-wider">{label}</p>
+      <div className="space-y-2">
+        {payload.map((entry, i) => (
+          <div key={i} className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <span
+                className="w-2.5 h-2.5 rounded-full"
+                style={{ backgroundColor: entry.color, boxShadow: `0 0 8px ${entry.color}` }}
+              />
+              <span className="text-sm text-gray-300">{entry.name}</span>
+            </div>
+            <span className="text-sm font-bold" style={{ color: entry.color }}>
+              {formatCurrency(entry.value, true)}
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
 
 export default function Simulator() {
   const { simulatorParams, contextMode, currentAnalysis } = useAppStore();
-  
+
   // Initialize params from store (hydrated from DNALab) or use defaults
   const initialParams = simulatorParams || DEFAULT_PARAMS;
-  
+
   const [paramsA, setParamsA] = useState<SimParams>(initialParams);
   const [paramsB, setParamsB] = useState<SimParams>(() => applyPreset(initialParams, 'winter'));
   const [activeScenario, setActiveScenario] = useState<'A' | 'B'>('A');
@@ -128,7 +145,7 @@ export default function Simulator() {
   // Wire the "Run Simulation" button to save both scenarios
   const handleRunSimulation = useCallback(async () => {
     setRunStatus('running');
-    
+
     try {
       // Save both scenarios to the database
       const [responseA, responseB] = await Promise.all([
@@ -199,7 +216,7 @@ export default function Simulator() {
   };
 
   // Filter presets based on context mode
-  const visiblePresets = contextMode === 'growth' 
+  const visiblePresets = contextMode === 'growth'
     ? PRESETS.filter(p => ['blitz', 'raise'].includes(p.id))
     : PRESETS.filter(p => ['hire', 'winter'].includes(p.id));
 
@@ -216,16 +233,16 @@ export default function Simulator() {
             <span className="gradient-text-violet">Runway Simulator</span>
           </h1>
           <p className="text-gray-400 mt-1">
-            {contextMode === 'growth' 
-              ? 'Model aggressive growth scenarios' 
+            {contextMode === 'growth'
+              ? 'Model aggressive growth scenarios'
               : 'Plan strategic operational changes'}
           </p>
         </div>
         <div className="flex gap-3">
           {currentAnalysis && (
-            <MotionButton 
-              variant="secondary" 
-              onClick={handleHydrateFromDNA} 
+            <MotionButton
+              variant="secondary"
+              onClick={handleHydrateFromDNA}
               className="flex items-center gap-2"
             >
               <RefreshCw className="w-4 h-4" />
@@ -236,8 +253,8 @@ export default function Simulator() {
             <RotateCcw className="w-4 h-4" />
             Reset
           </MotionButton>
-          <MotionButton 
-            onClick={handleRunSimulation} 
+          <MotionButton
+            onClick={handleRunSimulation}
             disabled={runStatus === 'running'}
             className={`flex items-center gap-2 ${runStatus === 'complete' ? 'bg-success text-charcoal' : ''}`}
           >
@@ -377,9 +394,8 @@ export default function Simulator() {
               <div className="flex gap-2">
                 <motion.button
                   onClick={() => setActiveScenario('A')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                    activeScenario === 'A' ? 'bg-cyan-electric text-charcoal' : 'bg-white/5 text-gray-400 hover:text-white'
-                  }`}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeScenario === 'A' ? 'bg-cyan-electric text-charcoal' : 'bg-white/5 text-gray-400 hover:text-white'
+                    }`}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
@@ -387,9 +403,8 @@ export default function Simulator() {
                 </motion.button>
                 <motion.button
                   onClick={() => setActiveScenario('B')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                    activeScenario === 'B' ? 'bg-success text-charcoal' : 'bg-white/5 text-gray-400 hover:text-white'
-                  }`}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeScenario === 'B' ? 'bg-success text-charcoal' : 'bg-white/5 text-gray-400 hover:text-white'
+                    }`}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
@@ -401,15 +416,29 @@ export default function Simulator() {
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData}>
                   <defs>
+                    {/* Enhanced Gradient for Scenario A */}
+                    <linearGradient id="gradientScenarioA" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#00D4FF" stopOpacity={0.4} />
+                      <stop offset="50%" stopColor="#00D4FF" stopOpacity={0.15} />
+                      <stop offset="100%" stopColor="#00D4FF" stopOpacity={0} />
+                    </linearGradient>
+                    {/* Enhanced Gradient for Scenario B */}
+                    <linearGradient id="gradientScenarioB" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#00FF88" stopOpacity={0.3} />
+                      <stop offset="50%" stopColor="#00FF88" stopOpacity={0.1} />
+                      <stop offset="100%" stopColor="#00FF88" stopOpacity={0} />
+                    </linearGradient>
+                    {/* Animated Glow Filter - Cyan */}
                     <filter id="glowA" x="-50%" y="-50%" width="200%" height="200%">
-                      <feGaussianBlur stdDeviation="3" result="coloredBlur" />
+                      <feGaussianBlur stdDeviation="4" result="coloredBlur" />
                       <feMerge>
                         <feMergeNode in="coloredBlur" />
                         <feMergeNode in="SourceGraphic" />
                       </feMerge>
                     </filter>
+                    {/* Animated Glow Filter - Success */}
                     <filter id="glowB" x="-50%" y="-50%" width="200%" height="200%">
-                      <feGaussianBlur stdDeviation="2" result="coloredBlur" />
+                      <feGaussianBlur stdDeviation="3" result="coloredBlur" />
                       <feMerge>
                         <feMergeNode in="coloredBlur" />
                         <feMergeNode in="SourceGraphic" />
@@ -424,26 +453,36 @@ export default function Simulator() {
                     axisLine={false}
                     tickFormatter={(v) => formatCurrency(v, true)}
                   />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Legend />
+                  <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1 }} />
+                  <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                  {/* Scenario A - Primary Line with Glow */}
                   <Line
                     type="monotone"
                     dataKey="scenarioA"
                     name="Scenario A"
                     stroke="#00D4FF"
-                    strokeWidth={2}
+                    strokeWidth={3}
                     dot={false}
+                    activeDot={{ r: 6, fill: '#00D4FF', stroke: '#0D0D0D', strokeWidth: 2, style: { filter: 'drop-shadow(0 0 8px #00D4FF)' } }}
                     filter="url(#glowA)"
+                    animationBegin={0}
+                    animationDuration={1500}
+                    animationEasing="ease-out"
                   />
+                  {/* Scenario B - Dashed Line with Glow */}
                   <Line
                     type="monotone"
                     dataKey="scenarioB"
                     name="Scenario B"
                     stroke="#00FF88"
-                    strokeWidth={2}
+                    strokeWidth={3}
                     dot={false}
-                    strokeDasharray="5 5"
+                    activeDot={{ r: 6, fill: '#00FF88', stroke: '#0D0D0D', strokeWidth: 2, style: { filter: 'drop-shadow(0 0 8px #00FF88)' } }}
+                    strokeDasharray="8 4"
                     filter="url(#glowB)"
+                    animationBegin={300}
+                    animationDuration={1500}
+                    animationEasing="ease-out"
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -556,7 +595,7 @@ interface TopLineChartProps {
 
 function TopLineChart({ currentMRR }: TopLineChartProps) {
   const { growthScenario, setGrowthScenario, isGrowthHydrated, setGrowthHydrated } = useAppStore();
-  
+
   const [growthRate, setGrowthRate] = useState(0.08); // 8% monthly
   const [churnRate, setChurnRate] = useState(0.03); // 3% monthly
   const [contractionRate, setContractionRate] = useState(0.01); // 1% monthly (downgrades)
@@ -586,7 +625,7 @@ function TopLineChart({ currentMRR }: TopLineChartProps) {
         setArpa(saved.arpa);
         setNewCustomers(saved.new_customers_per_month);
         setTargetARR(saved.target_arr);
-        
+
         // Update store
         setGrowthScenario({
           baselineMRR: saved.baseline_mrr,
@@ -598,7 +637,7 @@ function TopLineChart({ currentMRR }: TopLineChartProps) {
           newCustomersPerMonth: saved.new_customers_per_month,
           targetARR: saved.target_arr,
         });
-        
+
         toast.info('Growth Scenario Loaded', {
           description: `Restored "${saved.name}" from archive.`,
         });
@@ -641,13 +680,13 @@ function TopLineChart({ currentMRR }: TopLineChartProps) {
   }), [growthRate, churnRate, contractionRate]);
 
   // Generate projections using GrowthService
-  const comparison = useMemo(() => 
+  const comparison = useMemo(() =>
     GrowthService.generateScenarioComparison(mrrInput, customScenarios, 24, targetARR),
     [mrrInput, customScenarios, targetARR]
   );
 
   // Merge projections for chart
-  const chartData = useMemo(() => 
+  const chartData = useMemo(() =>
     GrowthService.mergeProjectionsForChart(comparison),
     [comparison]
   );
@@ -701,7 +740,7 @@ function TopLineChart({ currentMRR }: TopLineChartProps) {
     };
 
     const response = await saveGrowthScenario(input);
-    
+
     if (response.error) {
       setSaveStatus('error');
       setTimeout(() => setSaveStatus('idle'), 3000);
@@ -764,9 +803,8 @@ function TopLineChart({ currentMRR }: TopLineChartProps) {
                 <motion.button
                   key={id}
                   onClick={() => toggleScenario(id)}
-                  className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
-                    isActive ? 'bg-white/10 border border-white/20' : 'bg-white/5 text-gray-500'
-                  }`}
+                  className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${isActive ? 'bg-white/10 border border-white/20' : 'bg-white/5 text-gray-500'
+                    }`}
                   style={{ color: isActive ? colors[id] : undefined }}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
@@ -779,13 +817,12 @@ function TopLineChart({ currentMRR }: TopLineChartProps) {
           <motion.button
             onClick={handleSaveGrowthScenario}
             disabled={saveStatus === 'saving'}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-              saveStatus === 'saved' 
-                ? 'bg-success/20 text-success border border-success/30' 
-                : saveStatus === 'error'
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${saveStatus === 'saved'
+              ? 'bg-success/20 text-success border border-success/30'
+              : saveStatus === 'error'
                 ? 'bg-danger/20 text-danger border border-danger/30'
                 : 'bg-cyan-electric/20 text-cyan-electric border border-cyan-electric/30 hover:bg-cyan-electric/30'
-            }`}
+              }`}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
@@ -882,64 +919,111 @@ function TopLineChart({ currentMRR }: TopLineChartProps) {
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={chartData}>
             <defs>
+              {/* Enhanced Gradient for Base Case */}
               <linearGradient id="toplineGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#00D4FF" stopOpacity={0.2} />
-                <stop offset="95%" stopColor="#00D4FF" stopOpacity={0} />
+                <stop offset="0%" stopColor="#00D4FF" stopOpacity={0.4} />
+                <stop offset="50%" stopColor="#00D4FF" stopOpacity={0.15} />
+                <stop offset="100%" stopColor="#00D4FF" stopOpacity={0} />
               </linearGradient>
+              {/* Glow Filters */}
+              <filter id="glowToplineCyan" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="4" result="coloredBlur" />
+                <feMerge>
+                  <feMergeNode in="coloredBlur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+              <filter id="glowToplineWarning" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="2" result="coloredBlur" />
+                <feMerge>
+                  <feMergeNode in="coloredBlur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+              <filter id="glowToplineSuccess" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="3" result="coloredBlur" />
+                <feMerge>
+                  <feMergeNode in="coloredBlur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
             </defs>
-            <XAxis 
-              dataKey="month" 
-              stroke="#555" 
-              fontSize={10} 
-              tickLine={false} 
+            <XAxis
+              dataKey="month"
+              stroke="#555"
+              fontSize={10}
+              tickLine={false}
               axisLine={false}
               interval={2}
             />
-            <YAxis 
-              stroke="#555" 
-              fontSize={10} 
-              tickLine={false} 
+            <YAxis
+              stroke="#555"
+              fontSize={10}
+              tickLine={false}
               axisLine={false}
               tickFormatter={(v) => formatCurrency(v, true)}
             />
-            <Tooltip 
+            <Tooltip
               content={({ active, payload, label }) => {
                 if (!active || !payload) return null;
                 return (
-                  <div className="glass-card p-3 border border-white/20">
-                    <p className="text-gray-400 text-xs mb-2">{label}</p>
-                    {payload.map((entry, i) => (
-                      <p key={i} className="text-sm font-semibold" style={{ color: entry.color }}>
-                        {entry.name}: {formatCurrency(entry.value as number, true)}
-                      </p>
-                    ))}
+                  <div
+                    className="glass-card p-4 border border-white/20 backdrop-blur-xl shadow-2xl"
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(13,13,13,0.95) 0%, rgba(26,26,26,0.9) 100%)',
+                      boxShadow: '0 4px 20px rgba(0,0,0,0.5), 0 0 40px rgba(0,212,255,0.1)'
+                    }}
+                  >
+                    <p className="text-gray-400 text-xs font-medium mb-3 uppercase tracking-wider">{label}</p>
+                    <div className="space-y-2">
+                      {payload.map((entry, i) => (
+                        <div key={i} className="flex items-center justify-between gap-4">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className="w-2.5 h-2.5 rounded-full"
+                              style={{ backgroundColor: entry.color, boxShadow: `0 0 8px ${entry.color}` }}
+                            />
+                            <span className="text-sm text-gray-300">{entry.name}</span>
+                          </div>
+                          <span className="text-sm font-bold" style={{ color: entry.color }}>
+                            {formatCurrency(entry.value as number, true)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 );
               }}
+              cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1 }}
             />
-            <Legend />
-            
-            {/* Target ARR line (Vivid Violet) */}
-            <ReferenceLine 
-              y={targetARR / 12} 
-              stroke="#8B5CF6" 
-              strokeDasharray="5 5" 
+            <Legend wrapperStyle={{ paddingTop: '10px' }} />
+
+            {/* Target ARR line (Vivid Violet) with glow */}
+            <ReferenceLine
+              y={targetARR / 12}
+              stroke="#8B5CF6"
+              strokeDasharray="5 5"
               strokeWidth={2}
+              style={{ filter: 'drop-shadow(0 0 4px #8B5CF6)' }}
             />
 
-            {/* Base case with area */}
+            {/* Base case with area + glow */}
             {activeScenarios.has('base') && (
               <Area
                 type="monotone"
                 dataKey="base"
                 name="Base Case"
                 stroke="#00D4FF"
-                strokeWidth={2}
+                strokeWidth={3}
                 fill="url(#toplineGradient)"
+                filter="url(#glowToplineCyan)"
+                animationBegin={0}
+                animationDuration={1500}
+                animationEasing="ease-out"
               />
             )}
 
-            {/* Conservative */}
+            {/* Conservative with glow */}
             {activeScenarios.has('conservative') && (
               <Line
                 type="monotone"
@@ -947,12 +1031,17 @@ function TopLineChart({ currentMRR }: TopLineChartProps) {
                 name="Conservative"
                 stroke="#FFB800"
                 strokeWidth={2}
-                strokeDasharray="5 5"
+                strokeDasharray="8 4"
                 dot={false}
+                activeDot={{ r: 5, fill: '#FFB800', stroke: '#0D0D0D', strokeWidth: 2, style: { filter: 'drop-shadow(0 0 6px #FFB800)' } }}
+                filter="url(#glowToplineWarning)"
+                animationBegin={200}
+                animationDuration={1500}
+                animationEasing="ease-out"
               />
             )}
 
-            {/* Optimistic */}
+            {/* Optimistic with glow */}
             {activeScenarios.has('optimistic') && (
               <Line
                 type="monotone"
@@ -961,6 +1050,11 @@ function TopLineChart({ currentMRR }: TopLineChartProps) {
                 stroke="#00FF88"
                 strokeWidth={2}
                 dot={false}
+                activeDot={{ r: 5, fill: '#00FF88', stroke: '#0D0D0D', strokeWidth: 2, style: { filter: 'drop-shadow(0 0 6px #00FF88)' } }}
+                filter="url(#glowToplineSuccess)"
+                animationBegin={400}
+                animationDuration={1500}
+                animationEasing="ease-out"
               />
             )}
           </ComposedChart>

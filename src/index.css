@@ -150,6 +150,7 @@
       opacity: 0;
       transform: translateY(10px);
     }
+
     to {
       opacity: 1;
       transform: translateY(0);
@@ -164,9 +165,11 @@
     0% {
       box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.4);
     }
+
     50% {
       box-shadow: 0 0 0 20px rgba(0, 255, 136, 0);
     }
+
     100% {
       box-shadow: 0 0 0 0 rgba(0, 255, 136, 0);
     }
@@ -177,9 +180,12 @@
   }
 
   @keyframes glowPulse {
-    0%, 100% {
+
+    0%,
+    100% {
       filter: drop-shadow(0 0 4px rgba(0, 212, 255, 0.5));
     }
+
     50% {
       filter: drop-shadow(0 0 12px rgba(0, 212, 255, 0.8));
     }
@@ -202,6 +208,7 @@
     0% {
       background-position: -200% 0;
     }
+
     100% {
       background-position: 200% 0;
     }
@@ -209,18 +216,58 @@
 
   .animate-shimmer {
     animation: shimmer 2s ease-in-out infinite;
-    background: linear-gradient(
-      90deg,
-      rgba(255, 255, 255, 0.03) 0%,
-      rgba(255, 255, 255, 0.08) 50%,
-      rgba(255, 255, 255, 0.03) 100%
-    );
+    background: linear-gradient(90deg,
+        rgba(255, 255, 255, 0.03) 0%,
+        rgba(255, 255, 255, 0.08) 50%,
+        rgba(255, 255, 255, 0.03) 100%);
     background-size: 200% 100%;
+  }
+
+  /* Chart Glow Animations */
+  @keyframes chartGlowPulse {
+
+    0%,
+    100% {
+      filter: drop-shadow(0 0 4px currentColor);
+    }
+
+    50% {
+      filter: drop-shadow(0 0 12px currentColor);
+    }
+  }
+
+  .chart-line-glow {
+    animation: chartGlowPulse 2s ease-in-out infinite;
+  }
+
+  /* Chart Tooltip Styles */
+  .chart-tooltip {
+    border-radius: 12px !important;
+    box-shadow:
+      0 4px 20px rgba(0, 0, 0, 0.5),
+      0 0 40px rgba(0, 212, 255, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  }
+
+  /* Bar Chart Hover Effect */
+  .recharts-bar-rectangle:hover {
+    filter: brightness(1.2) drop-shadow(0 0 8px currentColor);
+    transition: filter 0.2s ease;
+  }
+
+  /* Legend Enhancement */
+  .recharts-legend-item {
+    transition: opacity 0.2s ease;
+  }
+
+  .recharts-legend-item:hover {
+    opacity: 0.8;
   }
 }
 
 /* Critical LCP optimizations */
 @layer base {
+
   /* Use CSS containment for better rendering performance */
   main {
     contain: layout style paint;
@@ -247,6 +294,7 @@
 
 /* Reduce motion for accessibility */
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {

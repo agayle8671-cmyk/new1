@@ -110,7 +110,7 @@ export default function DNALab() {
   const [isAnalysisRunning, setIsAnalysisRunning] = useState(false);
   const [activeAnalysisMode, setActiveAnalysisMode] = useState<AnalysisType | null>(null);
   const [analysisResult, setAnalysisResult] = useState<string | null>(null);
-  
+
   // Confetti celebration for first snapshot save
   const { celebrateFirstSnapshot, ConfettiComponent } = useFirstSnapshotCelebration();
 
@@ -130,11 +130,11 @@ export default function DNALab() {
         setAnalysis(result);
         setShowSuccessPulse(true);
         setTimeout(() => setShowSuccessPulse(false), 600);
-        
+
         toast.success('DNA Sequencing Complete', {
           description: `Grade ${result.grade} • ${result.runwayMonths.toFixed(1)} months runway detected.`,
         });
-        
+
         setSyncStatus('syncing');
         // saveAnalysisSnapshot now handles its own toast notifications
         const saveResponse = await saveAnalysisSnapshot(result);
@@ -164,7 +164,7 @@ export default function DNALab() {
   // Quick Analysis handler
   const runAnalysis = useCallback(async (mode: AnalysisType) => {
     if (isAnalysisRunning) return;
-    
+
     setIsAnalysisRunning(true);
     setActiveAnalysisMode(mode);
     setAnalysisResult(null);
@@ -257,7 +257,7 @@ export default function DNALab() {
     <>
       {/* Confetti celebration for first snapshot */}
       <ConfettiComponent />
-      
+
       <motion.div
         className="space-y-6"
         initial={{ opacity: 0, y: 20 }}
@@ -265,421 +265,446 @@ export default function DNALab() {
         transition={{ duration: 0.5 }}
       >
         <header className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">
-            <span className="gradient-text-mixed">DNA Lab</span>
-          </h1>
-          <p className="text-gray-400 mt-1">Decode your financial genome</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <AnimatePresence>
-            {syncStatus !== 'idle' && (
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                className={`flex items-center gap-2 px-3 py-1 rounded-lg text-sm ${syncStatus === 'syncing' ? 'bg-cyan-electric/20 text-cyan-electric' : syncStatus === 'synced' ? 'bg-success/20 text-success' : 'bg-danger/20 text-danger'}`}
-              >
-                {syncStatus === 'syncing' && <Loader2 className="w-4 h-4 animate-spin" />}
-                {syncStatus === 'synced' && <Check className="w-4 h-4" />}
-                {syncStatus === 'error' && <Database className="w-4 h-4" />}
-                {syncStatus === 'syncing' ? 'Syncing...' : syncStatus === 'synced' ? 'Saved to Archive' : 'Sync Failed'}
-              </motion.div>
-            )}
-          </AnimatePresence>
-          <input
-            type="text"
-            placeholder="Cash on hand"
-            value={formatCurrency(cashInput)}
-            onChange={(e) => setCashInput(parseFloat(e.target.value.replace(/[$,]/g, '')) || 0)}
-            className="w-40 bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white text-sm"
-          />
-          <input ref={fileInputRef} type="file" accept=".csv" onChange={handleFileSelect} className="hidden" />
-          <MotionButton
-            onClick={handleUploadClick}
-            disabled={!!isProcessing}
-            className={`flex items-center gap-2 ${showSuccessPulse ? 'animate-success-pulse' : ''}`}
-          >
-            {isProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
-            {isProcessing ? progress?.message : 'Upload CSV'}
-          </MotionButton>
-        </div>
-      </header>
-
-      <AnimatePresence>
-        {progress?.stage === 'error' && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="glass-card p-4 border-danger/50 bg-danger/10"
-          >
-            <p className="text-danger">{progress.message}</p>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Quick Analysis Buttons */}
-      {!isProcessing && (
-        <MotionCard
-          variant="elevated"
-          className="p-4"
-          custom={-1}
-          initial="hidden"
-          animate="visible"
-          variants={cardVariants}
-        >
-          <h3 className="text-sm font-semibold mb-3 text-gray-300">Quick AI Analysis</h3>
-          <div className="flex flex-wrap gap-2">
-            {[
-              { 
-                mode: 'runway' as AnalysisType, 
-                label: 'Runway Analysis', 
-                icon: Plane,
-                iconColor: 'text-cyan-electric',
-                activeColor: 'bg-cyan-electric text-charcoal'
-              },
-              { 
-                mode: 'fundraising' as AnalysisType, 
-                label: 'Fundraising Readiness', 
-                icon: Target,
-                iconColor: 'text-violet-vivid',
-                activeColor: 'bg-violet-vivid text-white'
-              },
-              { 
-                mode: 'growth' as AnalysisType, 
-                label: 'Growth Assessment', 
-                icon: BarChart3,
-                iconColor: 'text-success',
-                activeColor: 'bg-success text-charcoal'
-              },
-              { 
-                mode: 'risk' as AnalysisType, 
-                label: 'Risk Analysis', 
-                icon: AlertTriangle,
-                iconColor: 'text-warning',
-                activeColor: 'bg-warning text-charcoal'
-              },
-              { 
-                mode: 'breakeven' as AnalysisType, 
-                label: 'Path to Profitability', 
-                icon: Heart,
-                iconColor: 'text-pink-400',
-                activeColor: 'bg-cyan-electric text-charcoal'
-              }
-            ].map(btn => {
-              const IconComponent = btn.icon;
-              const isActive = activeAnalysisMode === btn.mode;
-              return (
-                <MotionButton
-                  key={btn.mode}
-                  onClick={() => runAnalysis(btn.mode)}
-                  disabled={isAnalysisRunning}
-                  variant="secondary"
-                  className={`flex items-center gap-2 px-4 py-2 text-sm transition-all ${
-                    isActive 
-                      ? btn.activeColor 
-                      : isAnalysisRunning
-                        ? 'opacity-50 cursor-not-allowed'
-                        : 'hover:bg-white/10'
-                  }`}
-                >
-                  {isAnalysisRunning && isActive ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Running...
-                    </>
-                  ) : (
-                    <>
-                      <IconComponent className={`w-4 h-4 ${isActive ? '' : btn.iconColor}`} />
-                      {btn.label}
-                    </>
-                  )}
-                </MotionButton>
-              );
-            })}
+          <div>
+            <h1 className="text-3xl font-bold">
+              <span className="gradient-text-mixed">DNA Lab</span>
+            </h1>
+            <p className="text-gray-400 mt-1">Decode your financial genome</p>
           </div>
-          {analysisResult && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mt-4 p-4 bg-white/5 rounded-lg border border-white/10"
+          <div className="flex items-center gap-3">
+            <AnimatePresence>
+              {syncStatus !== 'idle' && (
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  className={`flex items-center gap-2 px-3 py-1 rounded-lg text-sm ${syncStatus === 'syncing' ? 'bg-cyan-electric/20 text-cyan-electric' : syncStatus === 'synced' ? 'bg-success/20 text-success' : 'bg-danger/20 text-danger'}`}
+                >
+                  {syncStatus === 'syncing' && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {syncStatus === 'synced' && <Check className="w-4 h-4" />}
+                  {syncStatus === 'error' && <Database className="w-4 h-4" />}
+                  {syncStatus === 'syncing' ? 'Syncing...' : syncStatus === 'synced' ? 'Saved to Archive' : 'Sync Failed'}
+                </motion.div>
+              )}
+            </AnimatePresence>
+            <input
+              type="text"
+              placeholder="Cash on hand"
+              value={formatCurrency(cashInput)}
+              onChange={(e) => setCashInput(parseFloat(e.target.value.replace(/[$,]/g, '')) || 0)}
+              className="w-40 bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white text-sm"
+            />
+            <input ref={fileInputRef} type="file" accept=".csv" onChange={handleFileSelect} className="hidden" />
+            <MotionButton
+              onClick={handleUploadClick}
+              disabled={!!isProcessing}
+              className={`flex items-center gap-2 ${showSuccessPulse ? 'animate-success-pulse' : ''}`}
             >
-              <p className="text-sm text-gray-300 whitespace-pre-wrap">{analysisResult}</p>
+              {isProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
+              {isProcessing ? progress?.message : 'Upload CSV'}
+            </MotionButton>
+          </div>
+        </header>
+
+        <AnimatePresence>
+          {progress?.stage === 'error' && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="glass-card p-4 border-danger/50 bg-danger/10"
+            >
+              <p className="text-danger">{progress.message}</p>
             </motion.div>
           )}
-        </MotionCard>
-      )}
+        </AnimatePresence>
 
-      {isProcessing ? (
-        <SequencingLoader />
-      ) : (
-        <div className="grid grid-cols-12 gap-4">
+        {/* Quick Analysis Buttons */}
+        {!isProcessing && (
           <MotionCard
             variant="elevated"
-            className="col-span-8 p-6"
-            custom={0}
+            className="p-4"
+            custom={-1}
             initial="hidden"
             animate="visible"
             variants={cardVariants}
           >
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-semibold">Financial Trajectory</h2>
-              <div className="flex gap-4 text-sm">
-                <span className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-cyan-electric animate-glow-pulse" />
-                  Revenue
-                </span>
-                <span className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-violet-vivid" />
-                  Expenses
-                </span>
-              </div>
+            <h3 className="text-sm font-semibold mb-3 text-gray-300">Quick AI Analysis</h3>
+            <div className="flex flex-wrap gap-2">
+              {[
+                {
+                  mode: 'runway' as AnalysisType,
+                  label: 'Runway Analysis',
+                  icon: Plane,
+                  iconColor: 'text-cyan-electric',
+                  activeColor: 'bg-cyan-electric text-charcoal'
+                },
+                {
+                  mode: 'fundraising' as AnalysisType,
+                  label: 'Fundraising Readiness',
+                  icon: Target,
+                  iconColor: 'text-violet-vivid',
+                  activeColor: 'bg-violet-vivid text-white'
+                },
+                {
+                  mode: 'growth' as AnalysisType,
+                  label: 'Growth Assessment',
+                  icon: BarChart3,
+                  iconColor: 'text-success',
+                  activeColor: 'bg-success text-charcoal'
+                },
+                {
+                  mode: 'risk' as AnalysisType,
+                  label: 'Risk Analysis',
+                  icon: AlertTriangle,
+                  iconColor: 'text-warning',
+                  activeColor: 'bg-warning text-charcoal'
+                },
+                {
+                  mode: 'breakeven' as AnalysisType,
+                  label: 'Path to Profitability',
+                  icon: Heart,
+                  iconColor: 'text-pink-400',
+                  activeColor: 'bg-cyan-electric text-charcoal'
+                }
+              ].map(btn => {
+                const IconComponent = btn.icon;
+                const isActive = activeAnalysisMode === btn.mode;
+                return (
+                  <MotionButton
+                    key={btn.mode}
+                    onClick={() => runAnalysis(btn.mode)}
+                    disabled={isAnalysisRunning}
+                    variant="secondary"
+                    className={`flex items-center gap-2 px-4 py-2 text-sm transition-all ${isActive
+                        ? btn.activeColor
+                        : isAnalysisRunning
+                          ? 'opacity-50 cursor-not-allowed'
+                          : 'hover:bg-white/10'
+                      }`}
+                  >
+                    {isAnalysisRunning && isActive ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Running...
+                      </>
+                    ) : (
+                      <>
+                        <IconComponent className={`w-4 h-4 ${isActive ? '' : btn.iconColor}`} />
+                        {btn.label}
+                      </>
+                    )}
+                  </MotionButton>
+                );
+              })}
             </div>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={analysis.revenueTrend}>
-                  <defs>
-                    <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#00D4FF" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#00D4FF" stopOpacity={0} />
-                    </linearGradient>
-                    <linearGradient id="expenseGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0} />
-                    </linearGradient>
-                    <filter id="glowCyan" x="-50%" y="-50%" width="200%" height="200%">
-                      <feGaussianBlur stdDeviation="3" result="coloredBlur" />
-                      <feMerge>
-                        <feMergeNode in="coloredBlur" />
-                        <feMergeNode in="SourceGraphic" />
-                      </feMerge>
-                    </filter>
-                    <filter id="glowViolet" x="-50%" y="-50%" width="200%" height="200%">
-                      <feGaussianBlur stdDeviation="2" result="coloredBlur" />
-                      <feMerge>
-                        <feMergeNode in="coloredBlur" />
-                        <feMergeNode in="SourceGraphic" />
-                      </feMerge>
-                    </filter>
-                  </defs>
-                  <XAxis dataKey="month" stroke="#555" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis stroke="#555" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v / 1000}k`} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Area type="monotone" dataKey="revenue" stroke="#00D4FF" fill="url(#revenueGrad)" strokeWidth={2} filter="url(#glowCyan)" />
-                  <Area type="monotone" dataKey="expenses" stroke="#8B5CF6" fill="url(#expenseGrad)" strokeWidth={2} filter="url(#glowViolet)" />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
+            {analysisResult && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-4 p-4 bg-white/5 rounded-lg border border-white/10"
+              >
+                <p className="text-sm text-gray-300 whitespace-pre-wrap">{analysisResult}</p>
+              </motion.div>
+            )}
           </MotionCard>
+        )}
 
-          <div className="col-span-4 space-y-4">
+        {isProcessing ? (
+          <SequencingLoader />
+        ) : (
+          <div className="grid grid-cols-12 gap-4">
             <MotionCard
-              className="p-6 text-center"
-              custom={1}
+              variant="elevated"
+              className="col-span-8 p-6"
+              custom={0}
               initial="hidden"
               animate="visible"
               variants={cardVariants}
             >
-              <div className="text-sm text-gray-400 uppercase tracking-wider mb-2">DNA Grade</div>
-              <motion.div
-                className={`text-7xl font-black ${getGradeColor(analysis.grade)}`}
-                key={analysis.grade}
-                initial={{ scale: 0.5, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-              >
-                {analysis.grade}
-              </motion.div>
-              <div className="text-sm text-gray-400 mt-2">{analysis.gradeLabel}</div>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-lg font-semibold">Financial Trajectory</h2>
+                <div className="flex gap-4 text-sm">
+                  <span className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full bg-cyan-electric animate-glow-pulse" />
+                    Revenue
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full bg-violet-vivid" />
+                    Expenses
+                  </span>
+                </div>
+              </div>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={analysis.revenueTrend}>
+                    <defs>
+                      {/* Enhanced Revenue Gradient */}
+                      <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#00D4FF" stopOpacity={0.5} />
+                        <stop offset="50%" stopColor="#00D4FF" stopOpacity={0.2} />
+                        <stop offset="100%" stopColor="#00D4FF" stopOpacity={0} />
+                      </linearGradient>
+                      {/* Enhanced Expense Gradient */}
+                      <linearGradient id="expenseGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#8B5CF6" stopOpacity={0.4} />
+                        <stop offset="50%" stopColor="#8B5CF6" stopOpacity={0.15} />
+                        <stop offset="100%" stopColor="#8B5CF6" stopOpacity={0} />
+                      </linearGradient>
+                      {/* Glow Filter - Cyan */}
+                      <filter id="glowCyan" x="-50%" y="-50%" width="200%" height="200%">
+                        <feGaussianBlur stdDeviation="4" result="coloredBlur" />
+                        <feMerge>
+                          <feMergeNode in="coloredBlur" />
+                          <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                      </filter>
+                      {/* Glow Filter - Violet */}
+                      <filter id="glowViolet" x="-50%" y="-50%" width="200%" height="200%">
+                        <feGaussianBlur stdDeviation="3" result="coloredBlur" />
+                        <feMerge>
+                          <feMergeNode in="coloredBlur" />
+                          <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                      </filter>
+                    </defs>
+                    <XAxis dataKey="month" stroke="#555" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis stroke="#555" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v / 1000}k`} />
+                    <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1 }} />
+                    <Area
+                      type="monotone"
+                      dataKey="revenue"
+                      stroke="#00D4FF"
+                      fill="url(#revenueGrad)"
+                      strokeWidth={3}
+                      filter="url(#glowCyan)"
+                      animationBegin={0}
+                      animationDuration={1500}
+                      animationEasing="ease-out"
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="expenses"
+                      stroke="#8B5CF6"
+                      fill="url(#expenseGrad)"
+                      strokeWidth={2}
+                      filter="url(#glowViolet)"
+                      animationBegin={300}
+                      animationDuration={1500}
+                      animationEasing="ease-out"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
             </MotionCard>
+
+            <div className="col-span-4 space-y-4">
+              <MotionCard
+                className="p-6 text-center"
+                custom={1}
+                initial="hidden"
+                animate="visible"
+                variants={cardVariants}
+              >
+                <div className="text-sm text-gray-400 uppercase tracking-wider mb-2">DNA Grade</div>
+                <motion.div
+                  className={`text-7xl font-black ${getGradeColor(analysis.grade)}`}
+                  key={analysis.grade}
+                  initial={{ scale: 0.5, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                >
+                  {analysis.grade}
+                </motion.div>
+                <div className="text-sm text-gray-400 mt-2">{analysis.gradeLabel}</div>
+              </MotionCard>
+              <MotionCard
+                className="p-6"
+                custom={2}
+                initial="hidden"
+                animate="visible"
+                variants={cardVariants}
+              >
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-cyan-electric/20 flex items-center justify-center">
+                    <Calendar className="w-5 h-5 text-cyan-electric" />
+                  </div>
+                  <div>
+                    <div className="text-sm text-gray-400">Runway</div>
+                    <div className="text-2xl font-bold">
+                      {analysis.runwayMonths >= 999 ? 'Infinite' : `${analysis.runwayMonths.toFixed(1)} mo`}
+                    </div>
+                  </div>
+                </div>
+                <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                  <motion.div
+                    className="h-full bg-gradient-to-r from-cyan-electric to-success rounded-full"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${runwayPercent}%` }}
+                    transition={{ duration: 0.8, ease: 'easeOut' }}
+                  />
+                </div>
+              </MotionCard>
+            </div>
+
             <MotionCard
-              className="p-6"
-              custom={2}
+              className="col-span-4 p-6"
+              custom={3}
+              initial="hidden"
+              animate="visible"
+              variants={cardVariants}
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-xl bg-success/20 flex items-center justify-center">
+                  <TrendingUp className="w-5 h-5 text-success" />
+                </div>
+                <div className="flex-1">
+                  <div className="text-sm text-gray-400">Monthly Revenue</div>
+                  <div className="text-2xl font-bold text-success">{formatCurrency(analysis.monthlyRevenue)}</div>
+                </div>
+                <span className="badge badge-success">
+                  {analysis.revenueGrowth >= 0 ? '+' : ''}
+                  {Math.round(analysis.revenueGrowth * 100)}%
+                </span>
+              </div>
+            </MotionCard>
+
+            <MotionCard
+              className="col-span-4 p-6"
+              custom={4}
+              initial="hidden"
+              animate="visible"
+              variants={cardVariants}
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-xl bg-violet-vivid/20 flex items-center justify-center">
+                  <TrendingDown className="w-5 h-5 text-violet-vivid" />
+                </div>
+                <div className="flex-1">
+                  <div className="text-sm text-gray-400">Monthly Burn</div>
+                  <div className="text-2xl font-bold text-violet-vivid">{formatCurrency(analysis.monthlyBurn)}</div>
+                </div>
+                <span className="badge badge-violet">
+                  {analysis.expenseGrowth >= 0 ? '+' : ''}
+                  {Math.round(analysis.expenseGrowth * 100)}%
+                </span>
+              </div>
+            </MotionCard>
+
+            <MotionCard
+              className="col-span-4 p-6"
+              custom={5}
               initial="hidden"
               animate="visible"
               variants={cardVariants}
             >
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-xl bg-cyan-electric/20 flex items-center justify-center">
-                  <Calendar className="w-5 h-5 text-cyan-electric" />
+                  <DollarSign className="w-5 h-5 text-cyan-electric" />
+                </div>
+                <div className="flex-1">
+                  <div className="text-sm text-gray-400">Cash on Hand</div>
+                  <div className="text-2xl font-bold text-cyan-electric">{formatCurrency(analysis.cashOnHand, true)}</div>
+                </div>
+              </div>
+            </MotionCard>
+
+            <MotionCard
+              className="col-span-12 p-6"
+              custom={6}
+              initial="hidden"
+              animate="visible"
+              variants={cardVariants}
+            >
+              <div className="flex items-start gap-4">
+                <motion.div
+                  className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-electric to-violet-vivid flex items-center justify-center flex-shrink-0"
+                  animate={{
+                    boxShadow: [
+                      '0 0 20px rgba(0, 212, 255, 0.3)',
+                      '0 0 30px rgba(139, 92, 246, 0.4)',
+                      '0 0 20px rgba(0, 212, 255, 0.3)',
+                    ],
+                  }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >
+                  <Sparkles className="w-6 h-6 text-charcoal" />
+                </motion.div>
+                <div>
+                  <h3 className="font-semibold mb-2">AI Insight</h3>
+                  <p className="text-gray-400 leading-relaxed">{analysis.insight}</p>
+                </div>
+              </div>
+            </MotionCard>
+
+            <MotionCard
+              className="col-span-6 p-6"
+              custom={7}
+              initial="hidden"
+              animate="visible"
+              variants={cardVariants}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold">Export Report</h3>
+              </div>
+              <div className="space-y-3">
+                <MotionButton
+                  variant="secondary"
+                  onClick={handleDownloadReport}
+                  className="w-full text-left flex items-center gap-3"
+                >
+                  <Download className="w-5 h-5" />
+                  Download Investor Report
+                </MotionButton>
+                <MotionButton
+                  variant="secondary"
+                  onClick={handleCopyReport}
+                  className="w-full text-left flex items-center gap-3"
+                >
+                  {copied ? <CheckCheck className="w-5 h-5 text-success" /> : <Copy className="w-5 h-5" />}
+                  {copied ? 'Copied to Clipboard!' : 'Copy Report to Clipboard'}
+                </MotionButton>
+              </div>
+            </MotionCard>
+
+            <MotionCard
+              className="col-span-6 p-6"
+              custom={8}
+              initial="hidden"
+              animate="visible"
+              variants={cardVariants}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold">Key Metrics</h3>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="text-sm text-gray-400">Profit Margin</div>
+                  <div className={`text-xl font-bold ${analysis.profitMargin >= 0 ? 'text-success' : 'text-danger'}`}>
+                    {analysis.profitMargin.toFixed(1)}%
+                  </div>
                 </div>
                 <div>
-                  <div className="text-sm text-gray-400">Runway</div>
-                  <div className="text-2xl font-bold">
-                    {analysis.runwayMonths >= 999 ? 'Infinite' : `${analysis.runwayMonths.toFixed(1)} mo`}
+                  <div className="text-sm text-gray-400">Burn Multiple</div>
+                  <div className="text-xl font-bold text-cyan-electric">
+                    {analysis.burnMultiple > 10 ? '>10x' : `${analysis.burnMultiple.toFixed(1)}x`}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-400">MRR Growth</div>
+                  <div className="text-xl font-bold text-violet-vivid">{Math.round(analysis.revenueGrowth * 100)}%</div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-400">Net Burn</div>
+                  <div className={`text-xl font-bold ${netBurn > 0 ? 'text-warning' : 'text-success'}`}>
+                    {netBurn > 0 ? '-' : '+'}
+                    {formatCurrency(Math.abs(netBurn), true)}
                   </div>
                 </div>
               </div>
-              <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                <motion.div
-                  className="h-full bg-gradient-to-r from-cyan-electric to-success rounded-full"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${runwayPercent}%` }}
-                  transition={{ duration: 0.8, ease: 'easeOut' }}
-                />
-              </div>
             </MotionCard>
           </div>
-
-          <MotionCard
-            className="col-span-4 p-6"
-            custom={3}
-            initial="hidden"
-            animate="visible"
-            variants={cardVariants}
-          >
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-success/20 flex items-center justify-center">
-                <TrendingUp className="w-5 h-5 text-success" />
-              </div>
-              <div className="flex-1">
-                <div className="text-sm text-gray-400">Monthly Revenue</div>
-                <div className="text-2xl font-bold text-success">{formatCurrency(analysis.monthlyRevenue)}</div>
-              </div>
-              <span className="badge badge-success">
-                {analysis.revenueGrowth >= 0 ? '+' : ''}
-                {Math.round(analysis.revenueGrowth * 100)}%
-              </span>
-            </div>
-          </MotionCard>
-
-          <MotionCard
-            className="col-span-4 p-6"
-            custom={4}
-            initial="hidden"
-            animate="visible"
-            variants={cardVariants}
-          >
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-violet-vivid/20 flex items-center justify-center">
-                <TrendingDown className="w-5 h-5 text-violet-vivid" />
-              </div>
-              <div className="flex-1">
-                <div className="text-sm text-gray-400">Monthly Burn</div>
-                <div className="text-2xl font-bold text-violet-vivid">{formatCurrency(analysis.monthlyBurn)}</div>
-              </div>
-              <span className="badge badge-violet">
-                {analysis.expenseGrowth >= 0 ? '+' : ''}
-                {Math.round(analysis.expenseGrowth * 100)}%
-              </span>
-            </div>
-          </MotionCard>
-
-          <MotionCard
-            className="col-span-4 p-6"
-            custom={5}
-            initial="hidden"
-            animate="visible"
-            variants={cardVariants}
-          >
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-cyan-electric/20 flex items-center justify-center">
-                <DollarSign className="w-5 h-5 text-cyan-electric" />
-              </div>
-              <div className="flex-1">
-                <div className="text-sm text-gray-400">Cash on Hand</div>
-                <div className="text-2xl font-bold text-cyan-electric">{formatCurrency(analysis.cashOnHand, true)}</div>
-              </div>
-            </div>
-          </MotionCard>
-
-          <MotionCard
-            className="col-span-12 p-6"
-            custom={6}
-            initial="hidden"
-            animate="visible"
-            variants={cardVariants}
-          >
-            <div className="flex items-start gap-4">
-              <motion.div
-                className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-electric to-violet-vivid flex items-center justify-center flex-shrink-0"
-                animate={{
-                  boxShadow: [
-                    '0 0 20px rgba(0, 212, 255, 0.3)',
-                    '0 0 30px rgba(139, 92, 246, 0.4)',
-                    '0 0 20px rgba(0, 212, 255, 0.3)',
-                  ],
-                }}
-                transition={{ duration: 2, repeat: Infinity }}
-              >
-                <Sparkles className="w-6 h-6 text-charcoal" />
-              </motion.div>
-              <div>
-                <h3 className="font-semibold mb-2">AI Insight</h3>
-                <p className="text-gray-400 leading-relaxed">{analysis.insight}</p>
-              </div>
-            </div>
-          </MotionCard>
-
-          <MotionCard
-            className="col-span-6 p-6"
-            custom={7}
-            initial="hidden"
-            animate="visible"
-            variants={cardVariants}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold">Export Report</h3>
-            </div>
-            <div className="space-y-3">
-              <MotionButton
-                variant="secondary"
-                onClick={handleDownloadReport}
-                className="w-full text-left flex items-center gap-3"
-              >
-                <Download className="w-5 h-5" />
-                Download Investor Report
-              </MotionButton>
-              <MotionButton
-                variant="secondary"
-                onClick={handleCopyReport}
-                className="w-full text-left flex items-center gap-3"
-              >
-                {copied ? <CheckCheck className="w-5 h-5 text-success" /> : <Copy className="w-5 h-5" />}
-                {copied ? 'Copied to Clipboard!' : 'Copy Report to Clipboard'}
-              </MotionButton>
-            </div>
-          </MotionCard>
-
-          <MotionCard
-            className="col-span-6 p-6"
-            custom={8}
-            initial="hidden"
-            animate="visible"
-            variants={cardVariants}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold">Key Metrics</h3>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <div className="text-sm text-gray-400">Profit Margin</div>
-                <div className={`text-xl font-bold ${analysis.profitMargin >= 0 ? 'text-success' : 'text-danger'}`}>
-                  {analysis.profitMargin.toFixed(1)}%
-                </div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-400">Burn Multiple</div>
-                <div className="text-xl font-bold text-cyan-electric">
-                  {analysis.burnMultiple > 10 ? '>10x' : `${analysis.burnMultiple.toFixed(1)}x`}
-                </div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-400">MRR Growth</div>
-                <div className="text-xl font-bold text-violet-vivid">{Math.round(analysis.revenueGrowth * 100)}%</div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-400">Net Burn</div>
-                <div className={`text-xl font-bold ${netBurn > 0 ? 'text-warning' : 'text-success'}`}>
-                  {netBurn > 0 ? '-' : '+'}
-                  {formatCurrency(Math.abs(netBurn), true)}
-                </div>
-              </div>
-            </div>
-          </MotionCard>
-        </div>
-      )}
+        )}
       </motion.div>
     </>
   );

@@ -1,14 +1,14 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Users, 
-  Code, 
-  Megaphone, 
-  HeadphonesIcon, 
-  Settings2, 
-  Plus, 
-  Minus, 
-  AlertTriangle, 
+import {
+  Users,
+  Code,
+  Megaphone,
+  HeadphonesIcon,
+  Settings2,
+  Plus,
+  Minus,
+  AlertTriangle,
   TrendingDown,
   Calendar,
   DollarSign,
@@ -21,12 +21,12 @@ import {
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell, Legend } from 'recharts';
 import { toast } from 'sonner';
-import { 
-  SimParams, 
-  runSimulation, 
-  formatCurrency, 
+import {
+  SimParams,
+  runSimulation,
+  formatCurrency,
   formatRunway,
-  DEFAULT_PARAMS 
+  DEFAULT_PARAMS
 } from '../lib/simulator-engine';
 import { saveSimulationSnapshot, saveAlert } from '../lib/api';
 import { MotionCard, MotionButton } from '../components/ui/MotionCard';
@@ -107,14 +107,14 @@ const cardVariants = {
 // CUSTOM TOOLTIP
 // ============================================================================
 
-const CustomTooltip = ({ 
-  active, 
-  payload, 
-  label 
-}: { 
-  active?: boolean; 
-  payload?: Array<{ value: number; name: string; color: string }>; 
-  label?: string 
+const CustomTooltip = ({
+  active,
+  payload,
+  label
+}: {
+  active?: boolean;
+  payload?: Array<{ value: number; name: string; color: string }>;
+  label?: string
 }) => {
   if (!active || !payload) return null;
   return (
@@ -135,7 +135,7 @@ const CustomTooltip = ({
 
 export default function HiringPlanner() {
   const { simulatorParams, currentAnalysis } = useAppStore();
-  
+
   // Initialize from store or defaults
   const baseParams: SimParams = simulatorParams || {
     cashOnHand: currentAnalysis?.cashOnHand || DEFAULT_PARAMS.cashOnHand,
@@ -149,7 +149,7 @@ export default function HiringPlanner() {
   const [hirePlans, setHirePlans] = useState<HirePlan[]>(
     ROLES.map(role => ({ roleId: role.id, count: 0, startMonth: 0 }))
   );
-  
+
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
   // ============================================================================
@@ -184,7 +184,7 @@ export default function HiringPlanner() {
 
   // Run simulations: baseline vs with hires
   const baselineResult = useMemo(() => runSimulation(baseParams, 24), [baseParams]);
-  
+
   const modifiedParams = useMemo((): SimParams => ({
     ...baseParams,
     monthlyExpenses: baseParams.monthlyExpenses + totalHiringCost,
@@ -195,18 +195,18 @@ export default function HiringPlanner() {
   }, [modifiedParams]);
 
   // Use BurnMonitor for health grading
-  const baselineHealth = useMemo(() => 
+  const baselineHealth = useMemo(() =>
     BurnMonitor.evaluateRunwayHealth(baselineResult.runwayMonths),
     [baselineResult.runwayMonths]
   );
 
-  const withHiresHealth = useMemo(() => 
+  const withHiresHealth = useMemo(() =>
     BurnMonitor.evaluateRunwayHealth(withHiresResult.runwayMonths),
     [withHiresResult.runwayMonths]
   );
 
   // Calculate runway impact using BurnMonitor
-  const healthComparison = useMemo(() => 
+  const healthComparison = useMemo(() =>
     BurnMonitor.compareHealth(baseParams, modifiedParams),
     [baseParams, modifiedParams]
   );
@@ -285,7 +285,7 @@ export default function HiringPlanner() {
     }
 
     setSaveStatus('saving');
-    
+
     const modifiedParams: SimParams = {
       ...baseParams,
       monthlyExpenses: baseParams.monthlyExpenses + totalHiringCost,
@@ -331,36 +331,33 @@ export default function HiringPlanner() {
         </div>
         <div className="flex items-center gap-4">
           {/* Live Health Grade */}
-          <motion.div 
-            className={`flex items-center gap-3 px-4 py-2 rounded-xl border ${
-              withHiresHealth.grade === 'A' ? 'border-success/30 bg-success/10' :
+          <motion.div
+            className={`flex items-center gap-3 px-4 py-2 rounded-xl border ${withHiresHealth.grade === 'A' ? 'border-success/30 bg-success/10' :
               withHiresHealth.grade === 'B' ? 'border-warning/30 bg-warning/10' :
-              'border-danger/30 bg-danger/10'
-            }`}
+                'border-danger/30 bg-danger/10'
+              }`}
             animate={gradeChanged ? {
               scale: [1, 1.05, 1],
-              boxShadow: gradeWorsened 
+              boxShadow: gradeWorsened
                 ? ['0 0 0 0 rgba(255,68,68,0)', '0 0 20px 5px rgba(255,68,68,0.3)', '0 0 0 0 rgba(255,68,68,0)']
                 : ['0 0 0 0 rgba(0,255,136,0)', '0 0 20px 5px rgba(0,255,136,0.3)', '0 0 0 0 rgba(0,255,136,0)'],
             } : {}}
             transition={{ duration: 0.5 }}
             key={withHiresHealth.grade}
           >
-            <Activity className={`w-4 h-4 ${
-              withHiresHealth.grade === 'A' ? 'text-success' :
+            <Activity className={`w-4 h-4 ${withHiresHealth.grade === 'A' ? 'text-success' :
               withHiresHealth.grade === 'B' ? 'text-warning' :
-              'text-danger'
-            }`} />
+                'text-danger'
+              }`} />
             <div className="text-sm">
               <span className="text-gray-400">Health: </span>
-              <span className={`font-bold ${
-                withHiresHealth.grade === 'A' ? 'text-success' :
+              <span className={`font-bold ${withHiresHealth.grade === 'A' ? 'text-success' :
                 withHiresHealth.grade === 'B' ? 'text-warning' :
-                'text-danger'
-              }`}>Grade {withHiresHealth.grade}</span>
+                  'text-danger'
+                }`}>Grade {withHiresHealth.grade}</span>
             </div>
             {gradeChanged && totalHeadcount > 0 && (
-              <motion.span 
+              <motion.span
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 className={`text-xs ${gradeWorsened ? 'text-danger' : 'text-success'}`}
@@ -375,12 +372,11 @@ export default function HiringPlanner() {
               <RotateCcw className="w-4 h-4" />
               Reset
             </MotionButton>
-            <MotionButton 
+            <MotionButton
               onClick={handleSavePlan}
               disabled={saveStatus === 'saving' || totalHeadcount === 0}
-              className={`flex items-center gap-2 ${
-                saveStatus === 'saved' ? 'bg-success text-charcoal' : ''
-              } ${saveStatus === 'error' ? 'bg-danger/20 text-danger' : ''}`}
+              className={`flex items-center gap-2 ${saveStatus === 'saved' ? 'bg-success text-charcoal' : ''
+                } ${saveStatus === 'error' ? 'bg-danger/20 text-danger' : ''}`}
             >
               {saveStatus === 'saving' && <Loader2 className="w-4 h-4 animate-spin" />}
               {saveStatus === 'saved' && <Check className="w-4 h-4" />}
@@ -407,7 +403,7 @@ export default function HiringPlanner() {
             <div>
               <h3 className="font-semibold text-danger">Critical Runway Warning</h3>
               <p className="text-gray-400 text-sm">
-                This hiring plan reduces runway to {withHiresResult.runwayMonths.toFixed(1)} months. 
+                This hiring plan reduces runway to {withHiresResult.runwayMonths.toFixed(1)} months.
                 Consider reducing hires or securing additional funding first.
               </p>
             </div>
@@ -459,7 +455,7 @@ export default function HiringPlanner() {
                           <div className="text-xs text-gray-400">{formatCurrency(role.monthlyCost)}/mo each</div>
                         </div>
                       </div>
-                      
+
                       {/* Counter */}
                       <div className="flex items-center gap-2">
                         <motion.button
@@ -471,7 +467,7 @@ export default function HiringPlanner() {
                         >
                           <Minus className="w-4 h-4" />
                         </motion.button>
-                        <motion.span 
+                        <motion.span
                           className="w-10 text-center text-xl font-bold"
                           key={count}
                           initial={{ scale: 1.2 }}
@@ -523,7 +519,7 @@ export default function HiringPlanner() {
               </div>
               <div>
                 <div className="text-sm text-gray-400">Total Added Burn</div>
-                <motion.div 
+                <motion.div
                   className="text-2xl font-bold text-cyan-electric"
                   key={totalHiringCost}
                   initial={{ scale: 0.8 }}
@@ -578,7 +574,7 @@ export default function HiringPlanner() {
             <div className="grid grid-cols-3 gap-4 mb-6">
               <div className="glass-card p-4 text-center">
                 <div className="text-sm text-gray-400 mb-2">Current Runway</div>
-                <motion.div 
+                <motion.div
                   className="text-3xl font-bold text-cyan-electric"
                   key={baselineResult.runwayMonths}
                   initial={{ scale: 0.8 }}
@@ -591,10 +587,9 @@ export default function HiringPlanner() {
 
               <div className="glass-card p-4 text-center flex flex-col items-center justify-center">
                 <ArrowRight className={`w-6 h-6 ${runwayDelta < 0 ? 'text-danger' : 'text-gray-400'}`} />
-                <motion.div 
-                  className={`text-lg font-bold mt-1 ${
-                    runwayDelta < 0 ? 'text-danger' : runwayDelta > 0 ? 'text-success' : 'text-gray-400'
-                  }`}
+                <motion.div
+                  className={`text-lg font-bold mt-1 ${runwayDelta < 0 ? 'text-danger' : runwayDelta > 0 ? 'text-success' : 'text-gray-400'
+                    }`}
                   key={runwayDelta}
                   initial={{ scale: 1.2 }}
                   animate={{ scale: 1 }}
@@ -604,16 +599,14 @@ export default function HiringPlanner() {
                 <div className="text-xs text-gray-400">months</div>
               </div>
 
-              <div className={`glass-card p-4 text-center ${
-                isCritical ? 'border-danger/50 bg-danger/10' : 
+              <div className={`glass-card p-4 text-center ${isCritical ? 'border-danger/50 bg-danger/10' :
                 isWarning ? 'border-warning/50 bg-warning/10' : ''
-              }`}>
+                }`}>
                 <div className="text-sm text-gray-400 mb-2">Projected Runway</div>
-                <motion.div 
-                  className={`text-3xl font-bold ${
-                    isCritical ? 'text-danger' : 
+                <motion.div
+                  className={`text-3xl font-bold ${isCritical ? 'text-danger' :
                     isWarning ? 'text-warning' : 'text-violet-vivid'
-                  }`}
+                    }`}
                   key={withHiresResult.runwayMonths}
                   initial={{ scale: 0.8 }}
                   animate={{ scale: 1 }}
@@ -628,39 +621,66 @@ export default function HiringPlanner() {
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={comparisonData} barGap={2}>
-                  <XAxis 
-                    dataKey="month" 
-                    stroke="#555" 
-                    fontSize={12} 
-                    tickLine={false} 
-                    axisLine={false} 
+                  <defs>
+                    {/* Gradient for Baseline */}
+                    <linearGradient id="barGradientCyan" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#00D4FF" stopOpacity={1} />
+                      <stop offset="100%" stopColor="#00D4FF" stopOpacity={0.6} />
+                    </linearGradient>
+                    {/* Gradient for With Hires */}
+                    <linearGradient id="barGradientViolet" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#8B5CF6" stopOpacity={1} />
+                      <stop offset="100%" stopColor="#8B5CF6" stopOpacity={0.6} />
+                    </linearGradient>
+                    {/* Danger Gradient */}
+                    <linearGradient id="barGradientDanger" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#E53935" stopOpacity={1} />
+                      <stop offset="100%" stopColor="#E53935" stopOpacity={0.6} />
+                    </linearGradient>
+                    {/* Bar Shadow Filter */}
+                    <filter id="barShadow" x="-20%" y="-20%" width="140%" height="140%">
+                      <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#000" floodOpacity="0.3" />
+                    </filter>
+                  </defs>
+                  <XAxis
+                    dataKey="month"
+                    stroke="#555"
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={false}
                   />
-                  <YAxis 
-                    stroke="#555" 
-                    fontSize={12} 
-                    tickLine={false} 
-                    axisLine={false} 
+                  <YAxis
+                    stroke="#555"
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={false}
                     tickFormatter={(v) => formatCurrency(v, true)}
                   />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Legend />
-                  <Bar 
-                    dataKey="baseline" 
-                    name="Baseline" 
-                    fill="#00D4FF" 
+                  <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
+                  <Legend wrapperStyle={{ paddingTop: '10px' }} />
+                  <Bar
+                    dataKey="baseline"
+                    name="Baseline"
+                    fill="url(#barGradientCyan)"
                     radius={[4, 4, 0, 0]}
-                    opacity={0.8}
+                    filter="url(#barShadow)"
+                    animationBegin={0}
+                    animationDuration={800}
+                    animationEasing="ease-out"
                   />
-                  <Bar 
-                    dataKey="withHires" 
-                    name="With Hires" 
+                  <Bar
+                    dataKey="withHires"
+                    name="With Hires"
                     radius={[4, 4, 0, 0]}
+                    filter="url(#barShadow)"
+                    animationBegin={200}
+                    animationDuration={800}
+                    animationEasing="ease-out"
                   >
                     {comparisonData.map((entry, index) => (
-                      <Cell 
-                        key={`cell-${index}`} 
-                        fill={entry.withHires < entry.baseline * 0.5 ? '#E53935' : '#8B5CF6'}
-                        opacity={0.8}
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={entry.withHires < entry.baseline * 0.5 ? 'url(#barGradientDanger)' : 'url(#barGradientViolet)'}
                       />
                     ))}
                   </Bar>
@@ -682,25 +702,39 @@ export default function HiringPlanner() {
               <div className="h-48">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={hiringBreakdown} layout="vertical">
-                    <XAxis 
-                      type="number" 
-                      stroke="#555" 
-                      fontSize={12} 
-                      tickLine={false} 
+                    <defs>
+                      {/* Re-use the bar shadow filter */}
+                      <filter id="barShadowH" x="-20%" y="-20%" width="140%" height="140%">
+                        <feDropShadow dx="2" dy="0" stdDeviation="2" floodColor="#000" floodOpacity="0.3" />
+                      </filter>
+                    </defs>
+                    <XAxis
+                      type="number"
+                      stroke="#555"
+                      fontSize={12}
+                      tickLine={false}
                       axisLine={false}
                       tickFormatter={(v) => formatCurrency(v, true)}
                     />
-                    <YAxis 
-                      type="category" 
-                      dataKey="name" 
-                      stroke="#555" 
-                      fontSize={12} 
-                      tickLine={false} 
+                    <YAxis
+                      type="category"
+                      dataKey="name"
+                      stroke="#555"
+                      fontSize={12}
+                      tickLine={false}
                       axisLine={false}
                       width={100}
                     />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Bar dataKey="cost" name="Monthly Cost" radius={[0, 4, 4, 0]}>
+                    <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
+                    <Bar
+                      dataKey="cost"
+                      name="Monthly Cost"
+                      radius={[0, 4, 4, 0]}
+                      filter="url(#barShadowH)"
+                      animationBegin={0}
+                      animationDuration={800}
+                      animationEasing="ease-out"
+                    >
                       {hiringBreakdown.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
@@ -712,7 +746,7 @@ export default function HiringPlanner() {
               {/* Role badges */}
               <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-white/10">
                 {hiringBreakdown.map((item) => (
-                  <span 
+                  <span
                     key={item.name}
                     className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm"
                     style={{ backgroundColor: `${item.color}20`, color: item.color }}

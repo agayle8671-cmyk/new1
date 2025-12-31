@@ -1,10 +1,10 @@
 import { useState, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  TrendingUp, 
-  Target, 
-  Users, 
-  DollarSign, 
+import {
+  TrendingUp,
+  Target,
+  Users,
+  DollarSign,
   Percent,
   BarChart3,
   Save,
@@ -16,13 +16,13 @@ import {
   Rocket,
   Info
 } from 'lucide-react';
-import { 
-  LineChart, 
-  Line, 
-  XAxis, 
-  YAxis, 
-  ResponsiveContainer, 
-  Tooltip, 
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  ResponsiveContainer,
+  Tooltip,
   Legend,
   ReferenceLine,
   Area,
@@ -182,14 +182,14 @@ function calculateNRR(expansionRate: number, churnRate: number): number {
 // CUSTOM TOOLTIP
 // ============================================================================
 
-const CustomTooltip = ({ 
-  active, 
-  payload, 
-  label 
-}: { 
-  active?: boolean; 
-  payload?: Array<{ value: number; name: string; color: string; dataKey: string }>; 
-  label?: string 
+const CustomTooltip = ({
+  active,
+  payload,
+  label
+}: {
+  active?: boolean;
+  payload?: Array<{ value: number; name: string; color: string; dataKey: string }>;
+  label?: string
 }) => {
   if (!active || !payload) return null;
   return (
@@ -233,21 +233,21 @@ export default function GrowthTracker() {
   // Generate projections for all scenarios
   const projections = useMemo(() => {
     const conservative = calculateMRRProjection(
-      params, 
-      PROJECTION_MONTHS, 
-      SCENARIOS[0].growthMultiplier, 
+      params,
+      PROJECTION_MONTHS,
+      SCENARIOS[0].growthMultiplier,
       SCENARIOS[0].churnMultiplier
     );
     const base = calculateMRRProjection(
-      params, 
-      PROJECTION_MONTHS, 
-      SCENARIOS[1].growthMultiplier, 
+      params,
+      PROJECTION_MONTHS,
+      SCENARIOS[1].growthMultiplier,
       SCENARIOS[1].churnMultiplier
     );
     const optimistic = calculateMRRProjection(
-      params, 
-      PROJECTION_MONTHS, 
-      SCENARIOS[2].growthMultiplier, 
+      params,
+      PROJECTION_MONTHS,
+      SCENARIOS[2].growthMultiplier,
       SCENARIOS[2].churnMultiplier
     );
 
@@ -256,7 +256,7 @@ export default function GrowthTracker() {
     return Array.from({ length: PROJECTION_MONTHS }, (_, i) => {
       const monthName = MONTH_LABELS[(startMonth + i) % 12];
       const year = Math.floor((startMonth + i) / 12);
-      
+
       return {
         month: year > 0 ? `${monthName} Y${year + 1}` : monthName,
         monthIndex: i,
@@ -274,12 +274,12 @@ export default function GrowthTracker() {
     const currentARR = params.currentMRR * 12;
     const projectedARR12 = projections[11]?.base * 12 || 0;
     const projectedARR24 = projections[23]?.base * 12 || 0;
-    
+
     const cagr12 = calculateCAGR(currentARR, projectedARR12, 1);
     const cagr24 = calculateCAGR(currentARR, projectedARR24, 2);
-    
+
     const nrr = calculateNRR(params.expansionRate, params.churnRate);
-    
+
     // Find month when target ARR is reached
     const targetMonthIndex = projections.findIndex(p => p.base * 12 >= targetARR);
     const monthsToTarget = targetMonthIndex >= 0 ? targetMonthIndex + 1 : null;
@@ -409,12 +409,11 @@ export default function GrowthTracker() {
             <RotateCcw className="w-4 h-4" />
             Reset
           </MotionButton>
-          <MotionButton 
+          <MotionButton
             onClick={handleSave}
             disabled={saveStatus === 'saving'}
-            className={`flex items-center gap-2 ${
-              saveStatus === 'saved' ? 'bg-success text-charcoal' : ''
-            } ${saveStatus === 'error' ? 'bg-danger/20 text-danger' : ''}`}
+            className={`flex items-center gap-2 ${saveStatus === 'saved' ? 'bg-success text-charcoal' : ''
+              } ${saveStatus === 'error' ? 'bg-danger/20 text-danger' : ''}`}
           >
             {saveStatus === 'saving' && <Loader2 className="w-4 h-4 animate-spin" />}
             {saveStatus === 'saved' && <Check className="w-4 h-4" />}
@@ -429,7 +428,7 @@ export default function GrowthTracker() {
       <div className="grid grid-cols-5 gap-4">
         <MotionCard className="p-4 text-center" custom={0} initial="hidden" animate="visible" variants={cardVariants}>
           <div className="text-sm text-gray-400 mb-1">Current ARR</div>
-          <motion.div 
+          <motion.div
             className="text-2xl font-bold text-cyan-electric"
             key={metrics.currentARR}
             initial={{ scale: 0.9 }}
@@ -441,7 +440,7 @@ export default function GrowthTracker() {
 
         <MotionCard className="p-4 text-center" custom={1} initial="hidden" animate="visible" variants={cardVariants}>
           <div className="text-sm text-gray-400 mb-1">12-Month ARR</div>
-          <motion.div 
+          <motion.div
             className="text-2xl font-bold text-success"
             key={metrics.projectedARR12}
             initial={{ scale: 0.9 }}
@@ -453,7 +452,7 @@ export default function GrowthTracker() {
 
         <MotionCard className="p-4 text-center" custom={2} initial="hidden" animate="visible" variants={cardVariants}>
           <div className="text-sm text-gray-400 mb-1">CAGR (1Y)</div>
-          <motion.div 
+          <motion.div
             className={`text-2xl font-bold ${metrics.cagr12 >= 0 ? 'text-success' : 'text-danger'}`}
             key={metrics.cagr12}
             initial={{ scale: 0.9 }}
@@ -465,7 +464,7 @@ export default function GrowthTracker() {
 
         <MotionCard className="p-4 text-center" custom={3} initial="hidden" animate="visible" variants={cardVariants}>
           <div className="text-sm text-gray-400 mb-1">Net Revenue Retention</div>
-          <motion.div 
+          <motion.div
             className={`text-2xl font-bold ${metrics.nrr >= 1 ? 'text-success' : 'text-warning'}`}
             key={metrics.nrr}
             initial={{ scale: 0.9 }}
@@ -477,7 +476,7 @@ export default function GrowthTracker() {
 
         <MotionCard className="p-4 text-center" custom={4} initial="hidden" animate="visible" variants={cardVariants}>
           <div className="text-sm text-gray-400 mb-1">Months to Target</div>
-          <motion.div 
+          <motion.div
             className={`text-2xl font-bold ${metrics.monthsToTarget ? 'text-violet-vivid' : 'text-gray-400'}`}
             key={metrics.monthsToTarget}
             initial={{ scale: 0.9 }}
@@ -672,11 +671,10 @@ export default function GrowthTracker() {
                     <motion.button
                       key={scenario.id}
                       onClick={() => toggleScenario(scenario.id)}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                        isActive 
-                          ? 'bg-white/10 border border-white/20' 
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${isActive
+                          ? 'bg-white/10 border border-white/20'
                           : 'bg-white/5 text-gray-500 border border-transparent'
-                      }`}
+                        }`}
                       style={{ color: isActive ? scenario.color : undefined }}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
@@ -691,12 +689,12 @@ export default function GrowthTracker() {
           </MotionCard>
 
           {/* Main Chart */}
-          <MotionCard 
-            variant="elevated" 
-            className="p-6" 
-            custom={8} 
-            initial="hidden" 
-            animate="visible" 
+          <MotionCard
+            variant="elevated"
+            className="p-6"
+            custom={8}
+            initial="hidden"
+            animate="visible"
             variants={cardVariants}
           >
             <div className="flex items-center justify-between mb-6">
@@ -721,11 +719,30 @@ export default function GrowthTracker() {
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={projections}>
                   <defs>
+                    {/* Enhanced Base Gradient */}
                     <linearGradient id="baseGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#00D4FF" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#00D4FF" stopOpacity={0} />
+                      <stop offset="0%" stopColor="#00D4FF" stopOpacity={0.4} />
+                      <stop offset="50%" stopColor="#00D4FF" stopOpacity={0.15} />
+                      <stop offset="100%" stopColor="#00D4FF" stopOpacity={0} />
                     </linearGradient>
+                    {/* Glow Filter - Cyan */}
                     <filter id="glowCyan" x="-50%" y="-50%" width="200%" height="200%">
+                      <feGaussianBlur stdDeviation="4" result="coloredBlur" />
+                      <feMerge>
+                        <feMergeNode in="coloredBlur" />
+                        <feMergeNode in="SourceGraphic" />
+                      </feMerge>
+                    </filter>
+                    {/* Glow Filter - Warning */}
+                    <filter id="glowWarning" x="-50%" y="-50%" width="200%" height="200%">
+                      <feGaussianBlur stdDeviation="2" result="coloredBlur" />
+                      <feMerge>
+                        <feMergeNode in="coloredBlur" />
+                        <feMergeNode in="SourceGraphic" />
+                      </feMerge>
+                    </filter>
+                    {/* Glow Filter - Success */}
+                    <filter id="glowSuccess" x="-50%" y="-50%" width="200%" height="200%">
                       <feGaussianBlur stdDeviation="3" result="coloredBlur" />
                       <feMerge>
                         <feMergeNode in="coloredBlur" />
@@ -733,39 +750,40 @@ export default function GrowthTracker() {
                       </feMerge>
                     </filter>
                   </defs>
-                  
-                  <XAxis 
-                    dataKey="month" 
-                    stroke="#555" 
-                    fontSize={12} 
-                    tickLine={false} 
-                    axisLine={false} 
+
+                  <XAxis
+                    dataKey="month"
+                    stroke="#555"
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={false}
                   />
-                  <YAxis 
-                    stroke="#555" 
-                    fontSize={12} 
-                    tickLine={false} 
-                    axisLine={false} 
+                  <YAxis
+                    stroke="#555"
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={false}
                     tickFormatter={(v) => formatCurrency(v, true)}
                   />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Legend />
+                  <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1 }} />
+                  <Legend wrapperStyle={{ paddingTop: '10px' }} />
 
-                  {/* Target line (Vivid Violet) */}
-                  <ReferenceLine 
-                    y={targetARR / 12} 
-                    stroke="#8B5CF6" 
-                    strokeDasharray="5 5" 
+                  {/* Target line (Vivid Violet) with glow */}
+                  <ReferenceLine
+                    y={targetARR / 12}
+                    stroke="#8B5CF6"
+                    strokeDasharray="5 5"
                     strokeWidth={2}
-                    label={{ 
-                      value: 'Target', 
-                      position: 'right', 
+                    style={{ filter: 'drop-shadow(0 0 4px #8B5CF6)' }}
+                    label={{
+                      value: 'Target',
+                      position: 'right',
                       fill: '#8B5CF6',
-                      fontSize: 12 
+                      fontSize: 12
                     }}
                   />
 
-                  {/* Base case with area fill */}
+                  {/* Base case with area fill + glow */}
                   {activeScenarios.has('base') && (
                     <Area
                       type="monotone"
@@ -775,10 +793,13 @@ export default function GrowthTracker() {
                       strokeWidth={3}
                       fill="url(#baseGradient)"
                       filter="url(#glowCyan)"
+                      animationBegin={0}
+                      animationDuration={1500}
+                      animationEasing="ease-out"
                     />
                   )}
 
-                  {/* Conservative (dashed) */}
+                  {/* Conservative (dashed) with glow */}
                   {activeScenarios.has('conservative') && (
                     <Line
                       type="monotone"
@@ -786,12 +807,17 @@ export default function GrowthTracker() {
                       name="Conservative"
                       stroke="#FFB800"
                       strokeWidth={2}
-                      strokeDasharray="5 5"
+                      strokeDasharray="8 4"
                       dot={false}
+                      activeDot={{ r: 5, fill: '#FFB800', stroke: '#0D0D0D', strokeWidth: 2, style: { filter: 'drop-shadow(0 0 6px #FFB800)' } }}
+                      filter="url(#glowWarning)"
+                      animationBegin={200}
+                      animationDuration={1500}
+                      animationEasing="ease-out"
                     />
                   )}
 
-                  {/* Optimistic (solid bright) */}
+                  {/* Optimistic (solid bright) with glow */}
                   {activeScenarios.has('optimistic') && (
                     <Line
                       type="monotone"
@@ -800,6 +826,11 @@ export default function GrowthTracker() {
                       stroke="#00FF88"
                       strokeWidth={2}
                       dot={false}
+                      activeDot={{ r: 5, fill: '#00FF88', stroke: '#0D0D0D', strokeWidth: 2, style: { filter: 'drop-shadow(0 0 6px #00FF88)' } }}
+                      filter="url(#glowSuccess)"
+                      animationBegin={400}
+                      animationDuration={1500}
+                      animationEasing="ease-out"
                     />
                   )}
                 </ComposedChart>
@@ -814,13 +845,12 @@ export default function GrowthTracker() {
               const Icon = scenario.icon;
               const finalMRR = projections[23]?.[scenario.id] || 0;
               const finalARR = finalMRR * 12;
-              
+
               return (
                 <MotionCard
                   key={scenario.id}
-                  className={`p-4 cursor-pointer transition-all ${
-                    isActive ? 'border-white/20' : 'opacity-50'
-                  }`}
+                  className={`p-4 cursor-pointer transition-all ${isActive ? 'border-white/20' : 'opacity-50'
+                    }`}
                   custom={9 + i}
                   initial="hidden"
                   animate="visible"
@@ -829,7 +859,7 @@ export default function GrowthTracker() {
                   style={{ borderColor: isActive ? `${scenario.color}40` : undefined }}
                 >
                   <div className="flex items-center gap-3 mb-3">
-                    <div 
+                    <div
                       className="w-10 h-10 rounded-xl flex items-center justify-center"
                       style={{ backgroundColor: `${scenario.color}20` }}
                     >
@@ -853,6 +883,8 @@ export default function GrowthTracker() {
     </motion.div>
   );
 }
+
+
 
 
 
