@@ -239,12 +239,18 @@ ALWAYS end your response with a confidence indicator:
 
     if (!geminiResponse.ok) {
       const errorText = await geminiResponse.text();
-      console.error('Gemini error:', errorText);
+      console.error('[Chat API] Gemini API error:', errorText);
+      console.error('[Chat API] Status:', geminiResponse.status);
+      console.error('[Chat API] URL:', apiUrl);
       if (useStreaming) {
-        res.write(`data: ${JSON.stringify({ error: 'AI request failed' })}\n\n`);
+        res.write(`data: ${JSON.stringify({ error: 'AI request failed', details: errorText })}\n\n`);
         res.end();
       } else {
-        return res.status(500).json({ error: 'AI request failed' });
+        return res.status(500).json({ 
+          error: 'AI request failed',
+          details: errorText,
+          status: geminiResponse.status
+        });
       }
       return;
     }
@@ -292,8 +298,18 @@ ALWAYS end your response with a confidence indicator:
 
     // Non-streaming response
     let data = await geminiResponse.json();
+    console.log('[Chat API] Response structure:', {
+      hasCandidates: !!data.candidates,
+      candidatesLength: data.candidates?.length,
+      hasParts: !!data.candidates?.[0]?.content?.parts,
+      partsLength: data.candidates?.[0]?.content?.parts?.length
+    });
+    
     let responseText = data.candidates?.[0]?.content?.parts?.[0]?.text;
     const functionCalls = data.candidates?.[0]?.content?.parts?.filter(part => part.functionCall);
+    
+    console.log('[Chat API] Response text length:', responseText?.length || 0);
+    console.log('[Chat API] Function calls:', functionCalls?.length || 0);
 
     // Handle function calls
     if (functionCalls && functionCalls.length > 0) {
@@ -348,8 +364,18 @@ ALWAYS end your response with a confidence indicator:
 
       data = await geminiResponse.json();
       responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response';
+      console.log('[Chat API] Final response after function calls:', responseText?.length || 0);
     }
 
+    if (!responseText) {
+      console.error('[Chat API] No response text found in data:', JSON.stringify(data, null, 2));
+      return res.status(500).json({ 
+        error: 'No response from AI',
+        debug: 'Check server logs for details'
+      });
+    }
+
+    console.log('[Chat API] ✅ Success, returning response');
     return res.json({ response: responseText, text: responseText });
   } catch (error) {
     console.error('Error:', error);
