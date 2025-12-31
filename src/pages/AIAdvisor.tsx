@@ -48,7 +48,7 @@ const cardVariants = {
 const INITIAL_MESSAGE: AIMessage = {
   id: 'welcome',
   role: 'assistant',
-  content: "Welcome to the AI Advisor! I have full access to your financial data and can provide deep strategic insights. Ask me anything about your runway, growth, risks, or fundraising strategy.",
+  content: "Hey, I'm Runa — yes, like Runway. The DNA team thought they were clever. 😏\n\nI'm your AI financial advisor, and I've already analyzed enough startup financials to have opinions. Ask me about your runway, growth, risks, or fundraising strategy.\n\nI've run the numbers. Trust me.",
   timestamp: new Date(),
 };
 
@@ -544,7 +544,7 @@ export default function AIAdvisor() {
               <div className="flex justify-start">
                 <div className="bg-white/10 rounded-2xl px-4 py-3">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-400 animate-pulse">Analyzing...</span>
+                    <span className="text-xs text-gray-400 animate-pulse">Runa is calculating...</span>
                     <div className="flex gap-1">
                       <div className="w-1.5 h-1.5 bg-cyan-electric rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                       <div className="w-1.5 h-1.5 bg-cyan-electric rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />

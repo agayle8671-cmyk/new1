@@ -14,7 +14,7 @@ import { useAppStore } from '../../lib/store';
 const INITIAL_MESSAGE: AIMessage = {
   id: 'welcome',
   role: 'assistant',
-  content: "👋 I'm your AI Financial Advisor. I can analyze your runway, explain anomalies, assess fundraising readiness, and answer any financial questions. What would you like to know?",
+  content: "Hey! I'm Runa, your AI financial advisor. Yes, like Runway — the DNA team thought they were clever. 😏 Ask me about your runway, burn rate, or fundraising readiness. I've run the numbers. Trust me.",
   timestamp: new Date(),
 };
 
@@ -204,8 +204,8 @@ export function AIChat() {
                     >
                       <div
                         className={`max-w-[85%] rounded-2xl px-4 py-2 ${message.role === 'user'
-                            ? 'bg-cyan-electric text-charcoal'
-                            : 'bg-white/10 text-gray-100'
+                          ? 'bg-cyan-electric text-charcoal'
+                          : 'bg-white/10 text-gray-100'
                           }`}
                       >
                         <p className="text-sm whitespace-pre-wrap">{message.content}</p>
@@ -276,8 +276,8 @@ export function AIChat() {
       <motion.button
         onClick={() => setIsOpen(!isOpen)}
         className={`w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all ${isOpen
-            ? 'bg-white/10 hover:bg-white/20'
-            : 'bg-gradient-to-r from-cyan-electric to-violet-vivid hover:scale-110'
+          ? 'bg-white/10 hover:bg-white/20'
+          : 'bg-gradient-to-r from-cyan-electric to-violet-vivid hover:scale-110'
           }`}
         whileHover={{ scale: isOpen ? 1 : 1.1 }}
         whileTap={{ scale: 0.95 }}
