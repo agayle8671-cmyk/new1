@@ -67,41 +67,75 @@ const functionDeclarations = [
   }
 ];
 
+// Helper function to get financial summary with caching
+async function getFinancialSummary(timeframe, context) {
+  // Create cache key based on timeframe and context data
+  const contextHash = context ? JSON.stringify({
+    cashOnHand: context.cashOnHand,
+    monthlyBurn: context.monthlyBurn,
+    monthlyRevenue: context.monthlyRevenue,
+    revenueGrowthRate: context.revenueGrowthRate
+  }) : 'no-context';
+  const cacheKey = `summary_${timeframe}_${contextHash}`;
+  
+  // Check cache
+  if (financialSummaryCache.has(cacheKey)) {
+    console.log(`[Cache] Hit for ${cacheKey}`);
+    return financialSummaryCache.get(cacheKey);
+  }
+  
+  // Calculate summary
+  if (!context) {
+    const result = {
+      error: 'No financial data available',
+      timeframe
+    };
+    return result;
+  }
+
+  const monthlyBurn = context.monthlyBurn || 0;
+  const monthlyRevenue = context.monthlyRevenue || 0;
+  const cashOnHand = context.cashOnHand || 0;
+  const runway = context.runway || (cashOnHand && monthlyBurn ? cashOnHand / monthlyBurn : 0);
+  const netBurn = monthlyBurn - monthlyRevenue;
+  const burnMultiple = monthlyRevenue > 0 ? netBurn / monthlyRevenue : null;
+  const profitMargin = monthlyRevenue > 0 ? ((monthlyRevenue - monthlyBurn) / monthlyRevenue) * 100 : null;
+
+  const result = {
+    timeframe,
+    cashOnHand: cashOnHand,
+    monthlyBurn: monthlyBurn,
+    monthlyRevenue: monthlyRevenue,
+    netBurn: netBurn,
+    runwayMonths: Math.round(runway * 10) / 10,
+    burnMultiple: burnMultiple ? Math.round(burnMultiple * 100) / 100 : null,
+    profitMargin: profitMargin ? Math.round(profitMargin * 10) / 10 : null,
+    revenueGrowthRate: context.revenueGrowthRate ? (context.revenueGrowthRate * 100).toFixed(1) + '%' : null,
+    churnRate: context.churnRate ? (context.churnRate * 100).toFixed(1) + '%' : null,
+    customerCount: context.customerCount || null,
+    employeeCount: context.employeeCount || null
+  };
+  
+  // Cache the result
+  financialSummaryCache.set(cacheKey, result);
+  console.log(`[Cache] Stored ${cacheKey}`);
+  
+  // Set TTL: delete after 60 seconds
+  setTimeout(() => {
+    financialSummaryCache.delete(cacheKey);
+    console.log(`[Cache] Expired ${cacheKey}`);
+  }, 60000);
+  
+  return result;
+}
+
 // Function implementations
 function executeFunction(functionName, args, context) {
   switch (functionName) {
     case 'get_financial_summary': {
       const timeframe = args?.timeframe || 'current';
-      
-      if (!context) {
-        return {
-          error: 'No financial data available',
-          timeframe
-        };
-      }
-
-      const monthlyBurn = context.monthlyBurn || 0;
-      const monthlyRevenue = context.monthlyRevenue || 0;
-      const cashOnHand = context.cashOnHand || 0;
-      const runway = context.runway || (cashOnHand && monthlyBurn ? cashOnHand / monthlyBurn : 0);
-      const netBurn = monthlyBurn - monthlyRevenue;
-      const burnMultiple = monthlyRevenue > 0 ? netBurn / monthlyRevenue : null;
-      const profitMargin = monthlyRevenue > 0 ? ((monthlyRevenue - monthlyBurn) / monthlyRevenue) * 100 : null;
-
-      return {
-        timeframe,
-        cashOnHand: cashOnHand,
-        monthlyBurn: monthlyBurn,
-        monthlyRevenue: monthlyRevenue,
-        netBurn: netBurn,
-        runwayMonths: Math.round(runway * 10) / 10,
-        burnMultiple: burnMultiple ? Math.round(burnMultiple * 100) / 100 : null,
-        profitMargin: profitMargin ? Math.round(profitMargin * 10) / 10 : null,
-        revenueGrowthRate: context.revenueGrowthRate ? (context.revenueGrowthRate * 100).toFixed(1) + '%' : null,
-        churnRate: context.churnRate ? (context.churnRate * 100).toFixed(1) + '%' : null,
-        customerCount: context.customerCount || null,
-        employeeCount: context.employeeCount || null
-      };
+      // Use cached version
+      return getFinancialSummary(timeframe, context);
     }
 
     case 'get_revenue_forecast': {
