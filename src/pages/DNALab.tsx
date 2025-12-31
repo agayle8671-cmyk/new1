@@ -1,6 +1,6 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Upload, TrendingUp, TrendingDown, DollarSign, Calendar, Download, Sparkles, Loader2, Check, Database, Copy, CheckCheck, Plane, Target, BarChart3, AlertTriangle, Heart } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Calendar, Download, Sparkles, Loader2, Check, Database, Copy, CheckCheck, Plane, Target, BarChart3, AlertTriangle, Heart } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { toast } from 'sonner';
 import {
@@ -108,7 +108,7 @@ export default function DNALab() {
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'synced' | 'error'>('idle');
   const [showSuccessPulse, setShowSuccessPulse] = useState(false);
   const [copied, setCopied] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [isAnalysisRunning, setIsAnalysisRunning] = useState(false);
   const [activeAnalysisMode, setActiveAnalysisMode] = useState<AnalysisType | null>(null);
   const [analysisResult, setAnalysisResult] = useState<string | null>(null);
@@ -120,49 +120,6 @@ export default function DNALab() {
   useEffect(() => {
     setCurrentAnalysis(analysis);
   }, [analysis, setCurrentAnalysis]);
-
-  const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      const content = event.target?.result as string;
-      try {
-        const result = await processFinancialData(content, cashInput, setProgress);
-        setAnalysis(result);
-        setShowSuccessPulse(true);
-        setTimeout(() => setShowSuccessPulse(false), 600);
-
-        toast.success('DNA Sequencing Complete', {
-          description: `Grade ${result.grade} • ${result.runwayMonths.toFixed(1)} months runway detected.`,
-        });
-
-        setSyncStatus('syncing');
-        // saveAnalysisSnapshot now handles its own toast notifications
-        const saveResponse = await saveAnalysisSnapshot(result);
-        if (saveResponse.error) {
-          setSyncStatus('error');
-        } else {
-          setSyncStatus('synced');
-          // Celebrate first snapshot save with confetti
-          celebrateFirstSnapshot();
-        }
-        setTimeout(() => setSyncStatus('idle'), 3000);
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Processing failed';
-        setProgress({ stage: 'error', message: errorMessage, progress: 0 });
-        toast.error('DNA Sequencing Failed', {
-          description: errorMessage,
-        });
-      }
-    };
-    reader.readAsText(file);
-  }, [cashInput]);
-
-  const handleUploadClick = () => {
-    fileInputRef.current?.click();
-  };
 
   // Handler for AI-extracted financial data from SmartUpload
   const handleAIExtracted = useCallback(async (data: ExtractedFinancials, confidence: number) => {
@@ -330,15 +287,6 @@ export default function DNALab() {
               onChange={(e) => setCashInput(parseFloat(e.target.value.replace(/[$,]/g, '')) || 0)}
               className="w-40 bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white text-sm"
             />
-            <input ref={fileInputRef} type="file" accept=".csv" onChange={handleFileSelect} className="hidden" />
-            <MotionButton
-              onClick={handleUploadClick}
-              disabled={!!isProcessing}
-              className={`flex items-center gap-2 ${showSuccessPulse ? 'animate-success-pulse' : ''}`}
-            >
-              {isProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
-              {isProcessing ? progress?.message : 'Upload CSV'}
-            </MotionButton>
           </div>
         </header>
 
@@ -365,48 +313,15 @@ export default function DNALab() {
             animate="visible"
             variants={cardVariants}
           >
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-violet-vivid" />
-                <h3 className="text-lg font-semibold text-white">Upload Financial Data</h3>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <button
-                  onClick={() => setUploadMode('smart')}
-                  className={`px-3 py-1.5 rounded-lg transition-all ${uploadMode === 'smart'
-                      ? 'bg-violet-vivid text-white'
-                      : 'bg-white/5 text-gray-400 hover:text-white'
-                    }`}
-                >
-                  Smart (AI)
-                </button>
-                <button
-                  onClick={() => setUploadMode('basic')}
-                  className={`px-3 py-1.5 rounded-lg transition-all ${uploadMode === 'basic'
-                      ? 'bg-cyan-electric text-charcoal'
-                      : 'bg-white/5 text-gray-400 hover:text-white'
-                    }`}
-                >
-                  Basic CSV
-                </button>
-              </div>
+            <div className="flex items-center gap-2 mb-4">
+              <Sparkles className="w-5 h-5 text-violet-vivid" />
+              <h3 className="text-lg font-semibold text-white">Upload Financial Data</h3>
             </div>
 
-            {uploadMode === 'smart' ? (
-              <SmartUpload
-                onExtracted={handleAIExtracted}
-                onError={(error) => toast.error('Extraction Error', { description: error })}
-              />
-            ) : (
-              <div
-                className="border-2 border-dashed border-white/20 rounded-2xl p-8 text-center cursor-pointer hover:border-cyan-electric/50 hover:bg-white/5 transition-all"
-                onClick={handleUploadClick}
-              >
-                <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-white font-medium mb-2">Click to upload CSV file</p>
-                <p className="text-gray-500 text-sm">Only .csv format supported in basic mode</p>
-              </div>
-            )}
+            <SmartUpload
+              onExtracted={handleAIExtracted}
+              onError={(error) => toast.error('Extraction Error', { description: error })}
+            />
           </MotionCard>
         )}
 
