@@ -87,10 +87,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Initialize Google Generative AI SDK
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.5-flash-preview-05-20',
     });
 
-    console.log('[Chat API] ✅ Using Google SDK with gemini-1.5-flash');
+    console.log('[Chat API] ✅ Using Google SDK with gemini-2.5-flash');
 
     // Build conversation contents
     const contents: any[] = [];

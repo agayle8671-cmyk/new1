@@ -158,7 +158,7 @@ const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1';
 // - gemini-1.5-flash (recommended: fastest, most reliable)
 // - gemini-1.5-pro (for deeper reasoning, slower)
 // Note: gemini-pro is deprecated
-const GEMINI_MODEL = 'gemini-1.5-flash';
+const GEMINI_MODEL = 'gemini-2.5-flash';
 
 // NOTE: We use an Express server on Railway (/api/chat) to proxy requests
 // The API key is stored server-side as GOOGLE_AI_KEY (not VITE_GOOGLE_AI_KEY)
