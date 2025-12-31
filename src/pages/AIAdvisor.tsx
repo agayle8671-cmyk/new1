@@ -20,7 +20,6 @@ import {
   RefreshCw,
   BarChart3,
   Send,
-  Calendar,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { MotionCard, MotionButton } from '../components/ui/MotionCard';
