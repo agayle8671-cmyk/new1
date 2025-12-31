@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { TrendingUp, TrendingDown, DollarSign, Calendar, Download, Sparkles, Loader2, Check, Database, Copy, CheckCheck, Plane, Target, BarChart3, AlertTriangle, Heart } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Calendar, Download, Sparkles, Loader2, Check, Database, Copy, CheckCheck, Plane, Target, BarChart3, AlertTriangle, Heart, Zap } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { toast } from 'sonner';
 import {
@@ -19,6 +19,9 @@ import { useFirstSnapshotCelebration } from '../components/ui/SuccessConfetti';
 import { performAnalysis, type AnalysisType, type AIContext } from '../lib/services/AIService';
 import SmartUpload from '../components/ui/SmartUpload';
 import type { ExtractedFinancials } from '../lib/universal-parser';
+import { Card, CardHeader } from '../components/design-system';
+import { GradeBadge, Badge } from '../components/design-system';
+import { cn } from '../lib/utils';
 
 const DEFAULT_CASH = 1200000;
 
@@ -112,7 +115,7 @@ export default function DNALab() {
   const [isAnalysisRunning, setIsAnalysisRunning] = useState(false);
   const [activeAnalysisMode, setActiveAnalysisMode] = useState<AnalysisType | null>(null);
   const [analysisResult, setAnalysisResult] = useState<string | null>(null);
-  const [uploadMode, setUploadMode] = useState<'basic' | 'smart'>('smart'); // Default to smart mode
+  const [uploadMode] = useState<'basic' | 'smart'>('smart'); // Default to smart mode
 
   // Confetti celebration for first snapshot save
   const { celebrateFirstSnapshot, ConfettiComponent } = useFirstSnapshotCelebration();
@@ -259,19 +262,24 @@ export default function DNALab() {
       >
         <header className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">
+            <h1 className="text-4xl font-bold tracking-tight">
               <span className="gradient-text-mixed">DNA Lab</span>
             </h1>
-            <p className="text-gray-400 mt-1">Decode your financial genome</p>
+            <p className="text-text-secondary mt-1">Decode your financial genome</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <AnimatePresence>
               {syncStatus !== 'idle' && (
                 <motion.div
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 20 }}
-                  className={`flex items-center gap-2 px-3 py-1 rounded-lg text-sm ${syncStatus === 'syncing' ? 'bg-cyan-electric/20 text-cyan-electric' : syncStatus === 'synced' ? 'bg-success/20 text-success' : 'bg-danger/20 text-danger'}`}
+                  className={cn(
+                    'flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium',
+                    syncStatus === 'syncing' && 'bg-cyan-electric/15 text-cyan-electric',
+                    syncStatus === 'synced' && 'bg-success-muted text-success',
+                    syncStatus === 'error' && 'bg-danger-muted text-danger'
+                  )}
                 >
                   {syncStatus === 'syncing' && <Loader2 className="w-4 h-4 animate-spin" />}
                   {syncStatus === 'synced' && <Check className="w-4 h-4" />}
@@ -280,13 +288,16 @@ export default function DNALab() {
                 </motion.div>
               )}
             </AnimatePresence>
-            <input
-              type="text"
-              placeholder="Cash on hand"
-              value={formatCurrency(cashInput)}
-              onChange={(e) => setCashInput(parseFloat(e.target.value.replace(/[$,]/g, '')) || 0)}
-              className="w-40 bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white text-sm"
-            />
+            <div className="relative">
+              <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
+              <input
+                type="text"
+                placeholder="Cash on hand"
+                value={formatCurrency(cashInput)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCashInput(parseFloat(e.target.value.replace(/[$,]/g, '')) || 0)}
+                className="w-44 bg-surface-1 border border-border rounded-xl pl-10 pr-4 py-2.5 text-text-primary text-sm focus:border-cyan-electric/50 focus:ring-1 focus:ring-cyan-electric/20 transition-all"
+              />
+            </div>
           </div>
         </header>
 
