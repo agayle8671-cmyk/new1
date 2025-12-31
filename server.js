@@ -217,8 +217,9 @@ async function retryWithBackoff(fn, maxRetries = 3, initialDelay = 1000) {
 
 app.post('/api/chat', async (req, res) => {
   try {
-    const { message, prompt, context, conversationHistory } = req.body;
+    const { message, prompt, context, conversationHistory, stream } = req.body;
     const userMessage = message || prompt;
+    const useStreaming = stream === true;
 
     if (!userMessage) {
       return res.status(400).json({ error: 'Message required' });
@@ -319,21 +320,86 @@ When the user asks questions, analyze the data deeply and provide strategic guid
     });
 
     // Stage 4: Use v1beta endpoint for function calling support
-    // v1 endpoint doesn't support function calling, need v1beta
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+    // Stage 7: Support streaming with streamGenerateContent endpoint
+    // Note: Function calling doesn't work with streaming, so disable streaming if functions are needed
+    const endpoint = useStreaming ? 'streamGenerateContent' : 'generateContent';
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:${endpoint}?key=${apiKey}`;
     
-    console.log('[Chat API] Calling Gemini API with function calling (v1beta)...');
+    console.log(`[Chat API] Calling Gemini API (${useStreaming ? 'streaming' : 'non-streaming'})...`);
     
     // Stage 4: Add function calling support
+    // Stage 7: Note: Streaming and function calling are mutually exclusive
     let requestBody = {
       contents,
-      tools: [{ functionDeclarations }],
+      tools: useStreaming ? undefined : [{ functionDeclarations }], // Disable tools for streaming
       generationConfig: {
         temperature: 0.7,
         maxOutputTokens: 2048,
       }
     };
     
+    // Stage 7: Handle streaming response
+    if (useStreaming) {
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+      
+      try {
+        const geminiResponse = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
+          signal: AbortSignal.timeout(30000)
+        });
+
+        if (!geminiResponse.ok) {
+          const errorText = await geminiResponse.text();
+          res.write(`data: ${JSON.stringify({ error: 'AI request failed', details: errorText })}\n\n`);
+          res.end();
+          return;
+        }
+
+        // Stream the response
+        const reader = geminiResponse.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              try {
+                const data = JSON.parse(line.slice(6));
+                const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (text) {
+                  res.write(`data: ${JSON.stringify({ text, done: false })}\n\n`);
+                }
+              } catch (e) {
+                // Skip invalid JSON chunks
+                console.warn('[Chat API] Invalid JSON chunk:', line);
+              }
+            }
+          }
+        }
+
+        res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+        res.end();
+        return;
+      } catch (error) {
+        console.error('[Chat API] Streaming error:', error);
+        res.write(`data: ${JSON.stringify({ error: error.message })}\n\n`);
+        res.end();
+        return;
+      }
+    }
+    
+    // Non-streaming response (with function calling support)
     // Retry logic for transient failures (cold starts, rate limits, network issues)
     let geminiResponse = await retryWithBackoff(async () => {
       const response = await fetch(apiUrl, {
