@@ -211,8 +211,8 @@ ALWAYS end your response with a confidence indicator:
     // Choose endpoint based on streaming preference
     // Note: Function calling doesn't work with streaming, so disable streaming if functions are needed
     const endpoint = useStreaming ? 'streamGenerateContent' : 'generateContent';
-    // Use v1beta with gemini-1.5-flash (stable and reliable)
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:${endpoint}?key=${apiKey}`;
+    // Use v1beta with gemini-1.5-pro (was working before)
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:${endpoint}?key=${apiKey}`;
     
     // First API call with function declarations
     let requestBody = {
