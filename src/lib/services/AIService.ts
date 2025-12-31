@@ -634,9 +634,17 @@ Write conversationally but professionally.`;
  * Compare metrics to industry benchmarks
  */
 export async function benchmarkAnalysis(context: AIContext): Promise<string> {
-  const prompt = `Compare this company's metrics to SaaS industry benchmarks:
+  const benchmarks = BENCHMARKS;
+  
+  const prompt = `Compare this company's metrics to ${benchmarks.industry} industry benchmarks:
 
-Key benchmarks to compare against:
+INDUSTRY BENCHMARKS:
+- Typical monthly burn: $${benchmarks.typicalBurn.toLocaleString()}
+- Typical monthly growth: ${(benchmarks.typicalGrowth * 100).toFixed(0)}% MoM
+- Typical monthly churn: ${(benchmarks.typicalChurn * 100).toFixed(0)}%
+- Average Series A size: $${benchmarks.seriesASizeAvg.toLocaleString()}
+
+ADDITIONAL BENCHMARKS:
 - Healthy burn multiple: < 2x
 - Good revenue growth: > 100% YoY for early stage
 - Ideal runway: 18-24 months
@@ -644,12 +652,12 @@ Key benchmarks to compare against:
 - Good NRR: > 100%
 
 Provide:
-1. How each metric compares (above/below/at benchmark)
+1. How each metric compares to industry benchmarks (above/below/at benchmark)
 2. Percentile estimate (top 10%, median, bottom 25%)
 3. What this means for the business
-4. How to improve underperforming metrics
+4. Specific recommendations to improve underperforming metrics
 
-Format with clear headers and bullet points.`;
+Format with clear headers and bullet points. Include specific numbers from the company's data compared to benchmarks.`;
 
   return callGemini(prompt, context);
 }
