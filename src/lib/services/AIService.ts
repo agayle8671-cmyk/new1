@@ -625,6 +625,7 @@ const AIService = {
   isConfigured: isAIConfigured,
   testConnection,
   chat,
+  askAI,
   getStrategicInsights,
   generateBoardDeck,
   explainAnomaly,
