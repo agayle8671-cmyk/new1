@@ -150,7 +150,7 @@ export function OnboardingOverlay() {
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
                       transition={{ type: 'spring', delay: 0.1 }}
-                      className="w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-electric/20 to-violet-vivid/20 border border-cyan-electric/30 flex items-center justify-center"
+                      className="w-16 h-16 rounded-2xl bg-surface-2 border border-cyan-electric/20 flex items-center justify-center shadow-glow-cyan-sm"
                     >
                       <Icon className="w-8 h-8 text-cyan-electric" />
                     </motion.div>
@@ -158,17 +158,17 @@ export function OnboardingOverlay() {
 
                   {/* Title & Description */}
                   <div className="text-center space-y-3">
-                    <h2 className="text-xl font-bold text-white">{step.title}</h2>
-                    <p className="text-gray-400 text-sm leading-relaxed">{step.description}</p>
-                    
+                    <h2 className="text-xl font-bold text-text-primary tracking-tight">{step.title}</h2>
+                    <p className="text-text-secondary text-sm leading-relaxed">{step.description}</p>
+
                     {step.highlight && (
                       <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.2 }}
-                        className="mt-4 p-3 rounded-lg bg-cyan-electric/10 border border-cyan-electric/20"
+                        className="mt-4 p-3 rounded-lg bg-cyan-electric/5 border border-cyan-electric/10"
                       >
-                        <p className="text-xs text-cyan-electric flex items-center justify-center gap-2">
+                        <p className="text-xs text-cyan-electric flex items-center justify-center gap-2 font-medium">
                           <Sparkles className="w-3 h-3" />
                           {step.highlight}
                         </p>
@@ -182,13 +182,12 @@ export function OnboardingOverlay() {
                       <button
                         key={i}
                         onClick={() => setCurrentStep(i)}
-                        className={`w-2 h-2 rounded-full transition-all ${
-                          i === currentStep
-                            ? 'bg-cyan-electric w-6'
+                        className={`transition-all duration-300 rounded-full h-1.5 ${i === currentStep
+                            ? 'bg-cyan-electric w-6 shadow-glow-cyan-sm'
                             : i < currentStep
-                            ? 'bg-cyan-electric/50'
-                            : 'bg-white/20'
-                        }`}
+                              ? 'bg-cyan-electric/50 w-1.5'
+                              : 'bg-white/10 w-1.5 hover:bg-white/20'
+                          }`}
                       />
                     ))}
                   </div>
@@ -201,7 +200,7 @@ export function OnboardingOverlay() {
               {currentStep > 0 && (
                 <button
                   onClick={() => setCurrentStep(currentStep - 1)}
-                  className="flex-1 py-3 rounded-xl bg-white/5 text-gray-400 font-medium hover:bg-white/10 transition-all"
+                  className="flex-1 py-2.5 rounded-xl text-text-secondary font-medium hover:text-text-primary hover:bg-surface-2 transition-all text-sm"
                 >
                   Back
                 </button>
@@ -210,7 +209,7 @@ export function OnboardingOverlay() {
                 onClick={handleNext}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className="flex-1 py-3 rounded-xl bg-gradient-to-r from-cyan-electric to-cyan-electric/80 text-charcoal font-semibold flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-cyan-electric/20 transition-all"
+                className="flex-1 py-2.5 rounded-xl bg-cyan-electric text-charcoal font-semibold flex items-center justify-center gap-2 hover:shadow-glow-cyan text-sm transition-all"
               >
                 {currentStep === onboardingSteps.length - 1 ? (
                   <>

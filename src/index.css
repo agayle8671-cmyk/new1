@@ -649,3 +649,25 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* ============================================
+   SCREENSHOT MODE
+   ============================================ */
+/* Hide elements when body has 'screenshot-mode' class */
+body.screenshot-mode .hide-on-screenshot {
+  display: none !important;
+}
+
+/* Hide scrollbars in screenshot mode for cleaner capture */
+body.screenshot-mode ::-webkit-scrollbar {
+  display: none;
+}
+
+/* ============================================
+   SCREENSHOT UTILITIES
+   ============================================ */
+@layer utilities {
+  .screenshot-hide {
+    @apply opacity-0 pointer-events-none;
+  }
+}

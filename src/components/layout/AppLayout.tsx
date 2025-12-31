@@ -4,6 +4,7 @@ import FloatingOrbs from './FloatingOrbs';
 import FloatingSidebar from './FloatingSidebar';
 import { OnboardingOverlay } from '../ui/OnboardingOverlay';
 import { AIChat } from '../ui/AIChat';
+import { ScreenshotControl } from '../dev/ScreenshotControl';
 
 // Page transition variants for mac-native feel
 const pageVariants = {
@@ -37,15 +38,20 @@ export default function AppLayout() {
 
   return (
     <div className="min-h-screen bg-charcoal relative">
+      <ScreenshotControl />
       <FloatingOrbs />
       <FloatingSidebar />
-      
-      {/* First-time user onboarding */}
-      <OnboardingOverlay />
-      
-      {/* Floating AI Chat Bubble */}
-      <AIChat />
-      
+
+      {/* First-time user onboarding - hide in screenshots */}
+      <div className="hide-on-screenshot">
+        <OnboardingOverlay />
+      </div>
+
+      {/* Floating AI Chat Bubble - hide in screenshots */}
+      <div className="hide-on-screenshot">
+        <AIChat />
+      </div>
+
       <main className="ml-72 p-4 min-h-screen relative z-10">
         <div className="max-w-7xl mx-auto">
           {/* Animated page transitions */}
