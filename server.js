@@ -11,6 +11,37 @@ const PORT = process.env.PORT || 3000;
 // Cache for financial summaries
 const financialSummaryCache = new Map();
 
+// Rate limiting
+const rateLimitMap = new Map();
+
+function checkRateLimit(userId) {
+  const now = Date.now();
+  const userRequests = rateLimitMap.get(userId) || [];
+  
+  // Remove requests older than 1 minute
+  const recentRequests = userRequests.filter(t => now - t < 60000);
+  
+  if (recentRequests.length >= 20) { // 20 requests per minute
+    throw new Error('Rate limit exceeded: Maximum 20 requests per minute');
+  }
+  
+  recentRequests.push(now);
+  rateLimitMap.set(userId, recentRequests);
+}
+
+// Clean up old rate limit entries periodically (every 5 minutes)
+setInterval(() => {
+  const now = Date.now();
+  for (const [userId, requests] of rateLimitMap.entries()) {
+    const recentRequests = requests.filter(t => now - t < 60000);
+    if (recentRequests.length === 0) {
+      rateLimitMap.delete(userId);
+    } else {
+      rateLimitMap.set(userId, recentRequests);
+    }
+  }
+}, 5 * 60 * 1000); // Every 5 minutes
+
 app.use(express.json());
 
 // Function declarations for Gemini
@@ -254,6 +285,18 @@ async function retryWithBackoff(fn, maxRetries = 3, initialDelay = 1000) {
 
 app.post('/api/chat', async (req, res) => {
   try {
+    // Rate limiting: use IP address as userId
+    const userId = req.ip || req.connection.remoteAddress || 'unknown';
+    
+    try {
+      checkRateLimit(userId);
+    } catch (rateLimitError) {
+      return res.status(429).json({ 
+        error: rateLimitError.message,
+        hint: 'Please wait a moment before making another request'
+      });
+    }
+
     const { message, prompt, context, conversationHistory, stream } = req.body;
     const userMessage = message || prompt;
     const useStreaming = stream === true;
