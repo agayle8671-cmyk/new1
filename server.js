@@ -220,9 +220,11 @@ When the user asks questions, analyze the data deeply and provide strategic guid
       parts: [{ text: fullPrompt }]
     });
 
-    const apiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+    // Stage 4: Use v1beta endpoint for function calling support
+    // v1 endpoint doesn't support function calling, need v1beta
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
     
-    console.log('[Chat API] Calling Gemini API with function calling...');
+    console.log('[Chat API] Calling Gemini API with function calling (v1beta)...');
     
     // Stage 4: Add function calling support
     let requestBody = {
