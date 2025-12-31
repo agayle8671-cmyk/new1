@@ -8,6 +8,9 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Cache for financial summaries
+const financialSummaryCache = new Map();
+
 app.use(express.json());
 
 // Function declarations for Gemini
