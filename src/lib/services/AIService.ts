@@ -385,6 +385,17 @@ export async function askAI(
 }
 
 /**
+ * Perform a specific type of financial analysis
+ */
+export async function performAnalysis(
+  analysisType: AnalysisType,
+  context: AIContext
+): Promise<string> {
+  const prompt = ANALYSIS_TYPES[analysisType];
+  return callGemini(prompt, context, []);
+}
+
+/**
  * Generate board deck content
  */
 export async function generateBoardDeck(context: AIContext): Promise<BoardDeckSection[]> {
