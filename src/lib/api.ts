@@ -746,6 +746,105 @@ export async function fetchAlerts(
 /**
  * Fetch only critical alerts
  */
+// ============================================================================
+// AI CONVERSATION MEMORY (Stage 3)
+// ============================================================================
+
+export interface ConversationMemoryRecord {
+  id: string;
+  user_id: string | null;
+  summary: string | null;
+  key_insights: string[];
+  created_at: string;
+}
+
+export interface ConversationMemoryInput {
+  summary: string;
+  key_insights?: string[];
+}
+
+/**
+ * Save AI conversation memory to the database
+ */
+export async function saveConversationMemory(
+  input: ConversationMemoryInput,
+  showToast: boolean = false
+): Promise<ApiResponse<ConversationMemoryRecord>> {
+  if (!isSupabaseConfigured) {
+    return { data: null, error: 'Database not configured', loading: false };
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('ai_conversation_memory')
+      .insert({
+        summary: input.summary,
+        key_insights: input.key_insights || [],
+      })
+      .select()
+      .maybeSingle();
+
+    if (error) {
+      if (showToast) {
+        toast.error('Failed to Save Conversation', {
+          description: error.message,
+        });
+      }
+      return { data: null, error: error.message, loading: false };
+    }
+
+    if (showToast) {
+      toast.success('Conversation Saved', {
+        description: 'Key insights archived for future reference.',
+      });
+    }
+
+    return { data: data as ConversationMemoryRecord, error: null, loading: false };
+  } catch (err) {
+    const errorMsg = err instanceof Error ? err.message : 'An unexpected error occurred';
+    return { data: null, error: errorMsg, loading: false };
+  }
+}
+
+/**
+ * Fetch conversation memory history
+ */
+export async function fetchConversationMemory(
+  limit: number = 20,
+  showToast: boolean = false
+): Promise<ApiResponse<ConversationMemoryRecord[]>> {
+  if (!isSupabaseConfigured) {
+    return { data: [], error: 'Database not configured', loading: false };
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('ai_conversation_memory')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      if (showToast) {
+        toast.error('Failed to Load Conversations', {
+          description: error.message,
+        });
+      }
+      return { data: null, error: error.message, loading: false };
+    }
+
+    return { data: data as ConversationMemoryRecord[], error: null, loading: false };
+  } catch (err) {
+    const errorMsg = err instanceof Error ? err.message : 'An unexpected error occurred';
+    if (showToast) {
+      toast.error('Load Failed', {
+        description: errorMsg,
+      });
+    }
+    return { data: null, error: errorMsg, loading: false };
+  }
+}
+
 export async function fetchCriticalAlerts(
   limit: number = 10,
   showToast: boolean = false

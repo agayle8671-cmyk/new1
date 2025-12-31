@@ -1,14 +1,12 @@
--- Create AI conversation memory table
+-- Create AI conversation memory table (Stage 3)
 -- Stores summaries and key insights from AI conversations for each user
 
 create table if not exists ai_conversation_memory (
   id uuid primary key default uuid_generate_v4(),
   user_id uuid references auth.users(id) on delete cascade,
-  analysis_type text check (analysis_type in ('runway', 'fundraising', 'growth', 'risk', 'breakeven')),
-  summary text not null,
+  summary text,
   key_insights jsonb default '[]'::jsonb,
-  created_at timestamp with time zone default now(),
-  updated_at timestamp with time zone default now()
+  created_at timestamp default now()
 );
 
 -- Create index for faster user lookups

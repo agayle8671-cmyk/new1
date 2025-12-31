@@ -34,6 +34,7 @@ import AIService, {
   getDebugInfo,
 } from '../lib/services/AIService';
 import { useAppStore } from '../lib/store';
+import { saveConversationMemory } from '../lib/api';
 
 const cardVariants = {
   hidden: { opacity: 0, y: 20 },
