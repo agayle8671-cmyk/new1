@@ -78,10 +78,6 @@ export default function AIAdvisor() {
   
   const [benchmarks, setBenchmarks] = useState<string | null>(null);
   const [isBenchmarksLoading, setIsBenchmarksLoading] = useState(false);
-  
-  const [runwayPlan, setRunwayPlan] = useState<string | null>(null);
-  const [isPlanLoading, setIsPlanLoading] = useState(false);
-  const [targetRunway, setTargetRunway] = useState<number>(24);
 
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus | null>(null);
@@ -499,7 +495,7 @@ export default function AIAdvisor() {
       </header>
 
               {/* Quick Actions Grid */}
-              <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                 <MotionButton
                   onClick={fetchInsights}
                   disabled={isInsightsLoading}
@@ -548,36 +544,7 @@ export default function AIAdvisor() {
                   {isBenchmarksLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <BarChart3 className="w-5 h-5" />}
                   <span className="text-xs">Benchmarks</span>
                 </MotionButton>
-                
-                <MotionButton
-                  onClick={generateRunwayPlan}
-                  disabled={isPlanLoading}
-                  variant="secondary"
-                  className="flex flex-col items-center gap-2 p-4 h-auto"
-                >
-                  {isPlanLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Calendar className="w-5 h-5" />}
-                  <span className="text-xs">90-Day Plan</span>
-                </MotionButton>
               </div>
-              
-              {/* Target Runway Input */}
-              {currentAnalysis && (
-                <div className="flex items-center gap-3 glass-card p-3">
-                  <label className="text-sm text-gray-400">Target Runway:</label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="60"
-                    value={targetRunway}
-                    onChange={(e) => setTargetRunway(Number(e.target.value))}
-                    className="w-20 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-cyan-electric/50"
-                  />
-                  <span className="text-sm text-gray-400">months</span>
-                  <span className="text-xs text-gray-500 ml-auto">
-                    Current: {currentAnalysis.runwayMonths.toFixed(1)} months
-                  </span>
-                </div>
-              )}
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
