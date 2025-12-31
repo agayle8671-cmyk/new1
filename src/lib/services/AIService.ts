@@ -498,6 +498,37 @@ export async function performAnalysis(
 }
 
 /**
+ * Generate a 90-day action plan to improve runway
+ */
+export async function generateRunwayPlan(
+  context: AIContext,
+  targetRunway: number
+): Promise<string> {
+  const currentRunway = context.runway || 
+    (context.cashOnHand && context.monthlyBurn 
+      ? context.cashOnHand / context.monthlyBurn 
+      : 0);
+  
+  const planningPrompt = `Create a 90-day action plan to improve our runway from ${currentRunway.toFixed(1)} to ${targetRunway} months. Include:
+1. Specific tactics (with timeline)
+2. Expected impact on metrics
+3. Resources needed
+4. Success milestones
+
+Current financial context:
+- Cash on hand: $${(context.cashOnHand || 0).toLocaleString()}
+- Monthly burn: $${(context.monthlyBurn || 0).toLocaleString()}
+- Monthly revenue: $${(context.monthlyRevenue || 0).toLocaleString()}
+- Revenue growth: ${context.revenueGrowthRate ? (context.revenueGrowthRate * 100).toFixed(1) + '%' : 'N/A'} monthly
+${context.burnIncreasing ? '- ⚠️ Burn is increasing' : ''}
+${context.revenueGrowthSlowing ? '- ⚠️ Revenue growth is slowing' : ''}
+
+Provide a detailed, actionable plan with specific steps, timelines, and expected outcomes.`;
+
+  return callGemini(planningPrompt, context, []);
+}
+
+/**
  * Generate board deck content
  */
 export async function generateBoardDeck(context: AIContext): Promise<BoardDeckSection[]> {
@@ -758,6 +789,7 @@ const AIService = {
   chat,
   askAI,
   performAnalysis,
+  generateRunwayPlan,
   getStrategicInsights,
   generateBoardDeck,
   explainAnomaly,
