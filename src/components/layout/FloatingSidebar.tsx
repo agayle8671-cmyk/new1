@@ -56,11 +56,10 @@ export default function FloatingSidebar() {
 
   return (
     <aside
-      className={`fixed top-4 left-4 bottom-4 z-50 glass-sidebar flex flex-col transition-all duration-300 ${
-        collapsed ? 'w-20' : 'w-64'
-      }`}
+      className={`fixed top-4 left-4 bottom-4 z-50 glass-sidebar flex flex-col transition-all duration-300 ${collapsed ? 'w-20' : 'w-64'
+        }`}
     >
-      <div className="p-4 border-b border-white/10">
+      <div className="p-4 border-b border-border">
         <div className="flex items-center justify-between">
           <div className={`flex items-center gap-3 ${collapsed ? 'justify-center w-full' : ''}`}>
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-electric to-violet-vivid flex items-center justify-center">
@@ -69,14 +68,14 @@ export default function FloatingSidebar() {
             {!collapsed && (
               <div>
                 <h1 className="font-bold text-lg gradient-text-mixed">Runway</h1>
-                <p className="text-xs text-gray-500">v2.0</p>
+                <p className="text-xs text-text-muted">v2.0</p>
               </div>
             )}
           </div>
           {!collapsed && (
             <button
               onClick={() => setCollapsed(true)}
-              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-colors"
+              className="p-2 rounded-lg hover:bg-surface-1 text-text-muted hover:text-text-primary transition-colors"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -87,33 +86,31 @@ export default function FloatingSidebar() {
       {collapsed && (
         <button
           onClick={() => setCollapsed(false)}
-          className="p-4 border-b border-white/10 flex justify-center text-gray-400 hover:text-white transition-colors"
+          className="p-4 border-b border-border flex justify-center text-text-muted hover:text-text-primary transition-colors"
         >
           <ChevronRight className="w-4 h-4" />
         </button>
       )}
 
-      <div className={`p-4 border-b border-white/10 ${collapsed ? 'px-2' : ''}`}>
+      <div className={`p-4 border-b border-border ${collapsed ? 'px-2' : ''}`}>
         {!collapsed ? (
           <div className="glass-card p-1 flex gap-1">
             <button
               onClick={() => setContextMode('growth')}
-              className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm font-medium transition-all ${
-                contextMode === 'growth'
+              className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm font-medium transition-all ${contextMode === 'growth'
                   ? 'bg-cyan-electric/20 text-cyan-electric'
                   : 'text-gray-400 hover:text-white'
-              }`}
+                }`}
             >
               <TrendingUp className="w-4 h-4" />
               Growth
             </button>
             <button
               onClick={() => setContextMode('strategy')}
-              className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm font-medium transition-all ${
-                contextMode === 'strategy'
+              className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm font-medium transition-all ${contextMode === 'strategy'
                   ? 'bg-violet-vivid/20 text-violet-vivid'
                   : 'text-gray-400 hover:text-white'
-              }`}
+                }`}
             >
               <Zap className="w-4 h-4" />
               Strategy
@@ -122,9 +119,8 @@ export default function FloatingSidebar() {
         ) : (
           <button
             onClick={() => setContextMode(contextMode === 'growth' ? 'strategy' : 'growth')}
-            className={`w-full p-2 rounded-lg transition-all ${
-              contextMode === 'growth' ? 'bg-cyan-electric/20' : 'bg-violet-vivid/20'
-            }`}
+            className={`w-full p-2 rounded-lg transition-all ${contextMode === 'growth' ? 'bg-cyan-electric/20' : 'bg-violet-vivid/20'
+              }`}
           >
             {contextMode === 'growth' ? (
               <TrendingUp className="w-5 h-5 text-cyan-electric mx-auto" />
@@ -151,8 +147,8 @@ export default function FloatingSidebar() {
       </nav>
 
       {/* System Health Feed */}
-      <div className={`p-4 border-t border-white/10 ${collapsed ? 'px-2' : ''}`}>
-        <motion.div 
+      <div className={`p-4 border-t border-border ${collapsed ? 'px-2' : ''}`}>
+        <motion.div
           className={`glass-card ${collapsed ? 'p-2' : 'p-4'} ${hasCriticalAlerts ? `shadow-lg ${glowColor}` : ''}`}
           animate={hasCriticalAlerts ? {
             boxShadow: ['0 0 0 0 rgba(255, 68, 68, 0)', '0 0 15px 5px rgba(255, 68, 68, 0.2)', '0 0 0 0 rgba(255, 68, 68, 0)'],
@@ -177,7 +173,7 @@ export default function FloatingSidebar() {
                   <span className="badge bg-white/10 text-gray-400">No Data</span>
                 )}
               </div>
-              
+
               {hasData && runwayMonths !== null ? (
                 <>
                   {/* Runway Value */}
@@ -190,15 +186,14 @@ export default function FloatingSidebar() {
                     {runwayMonths >= 999 ? '∞' : runwayMonths.toFixed(1)}
                   </motion.div>
                   <div className="text-sm text-gray-400 mt-1">months runway</div>
-                  
+
                   {/* Progress Bar with Grade Colors */}
                   <div className="mt-3 h-2 bg-white/10 rounded-full overflow-hidden">
                     <motion.div
-                      className={`h-full rounded-full ${
-                        grade === 'A' ? 'bg-gradient-to-r from-cyan-electric to-success' :
-                        grade === 'B' ? 'bg-gradient-to-r from-warning to-orange-400' :
-                        'bg-gradient-to-r from-danger to-red-600'
-                      }`}
+                      className={`h-full rounded-full ${grade === 'A' ? 'bg-gradient-to-r from-cyan-electric to-success' :
+                          grade === 'B' ? 'bg-gradient-to-r from-warning to-orange-400' :
+                            'bg-gradient-to-r from-danger to-red-600'
+                        }`}
                       initial={{ width: 0 }}
                       animate={{ width: `${runwayPercent}%` }}
                       transition={{ duration: 0.8, ease: 'easeOut' }}
@@ -210,11 +205,10 @@ export default function FloatingSidebar() {
 
                   {/* Burn Trend Indicator */}
                   {healthAnalysis && (
-                    <div className={`flex items-center gap-1 mt-2 text-xs ${
-                      healthAnalysis.burnTrend === 'decreasing' ? 'text-success' :
-                      healthAnalysis.burnTrend === 'increasing' ? 'text-danger' :
-                      'text-gray-400'
-                    }`}>
+                    <div className={`flex items-center gap-1 mt-2 text-xs ${healthAnalysis.burnTrend === 'decreasing' ? 'text-success' :
+                        healthAnalysis.burnTrend === 'increasing' ? 'text-danger' :
+                          'text-gray-400'
+                      }`}>
                       <Activity className="w-3 h-3" />
                       <span>Burn {healthAnalysis.burnTrend}</span>
                     </div>
