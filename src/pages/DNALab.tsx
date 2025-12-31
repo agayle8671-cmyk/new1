@@ -1,13 +1,11 @@
 import { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { TrendingUp, TrendingDown, DollarSign, Calendar, Download, Sparkles, Loader2, Check, Database, Copy, CheckCheck, Plane, Target, BarChart3, AlertTriangle, Heart, Zap } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Download, Sparkles, Loader2, Check, Database, Copy, CheckCheck, Plane, Target, BarChart3, AlertTriangle, Heart } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { toast } from 'sonner';
 import {
   FinancialAnalysis,
   ProcessingProgress,
-  processFinancialData,
-  getGradeColor,
   sanitizeFinancialData,
 } from '../lib/dna-processor';
 import { formatCurrency } from '../lib/simulator-engine';
@@ -19,8 +17,7 @@ import { useFirstSnapshotCelebration } from '../components/ui/SuccessConfetti';
 import { performAnalysis, type AnalysisType, type AIContext } from '../lib/services/AIService';
 import SmartUpload from '../components/ui/SmartUpload';
 import type { ExtractedFinancials } from '../lib/universal-parser';
-import { Card, CardHeader } from '../components/design-system';
-import { GradeBadge, Badge } from '../components/design-system';
+import { GradeBadge } from '../components/design-system';
 import { cn } from '../lib/utils';
 
 const DEFAULT_CASH = 1200000;
@@ -516,46 +513,58 @@ export default function DNALab() {
             </MotionCard>
 
             <div className="col-span-4 space-y-4">
+              {/* Hero Grade Display */}
               <MotionCard
-                className="p-6 text-center"
+                className="p-8 text-center bg-surface-1"
                 custom={1}
                 initial="hidden"
                 animate="visible"
                 variants={cardVariants}
               >
-                <div className="text-sm text-gray-400 uppercase tracking-wider mb-2">DNA Grade</div>
+                <div className="text-xs text-text-tertiary uppercase tracking-widest font-medium mb-4">Financial Health Grade</div>
                 <motion.div
-                  className={`text-7xl font-black ${getGradeColor(analysis.grade)}`}
                   key={analysis.grade}
-                  initial={{ scale: 0.5, opacity: 0 }}
+                  initial={{ scale: 0.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                  className="flex justify-center"
                 >
-                  {analysis.grade}
+                  <GradeBadge grade={analysis.grade as 'A' | 'B' | 'C' | 'D' | 'F'} size="xl" showLabel />
                 </motion.div>
-                <div className="text-sm text-gray-400 mt-2">{analysis.gradeLabel}</div>
               </MotionCard>
+
+              {/* Hero Runway Display */}
               <MotionCard
-                className="p-6"
+                className="p-6 bg-surface-1"
                 custom={2}
                 initial="hidden"
                 animate="visible"
                 variants={cardVariants}
               >
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-cyan-electric/20 flex items-center justify-center">
-                    <Calendar className="w-5 h-5 text-cyan-electric" />
-                  </div>
-                  <div>
-                    <div className="text-sm text-gray-400">Runway</div>
-                    <div className="text-2xl font-bold">
-                      {analysis.runwayMonths >= 999 ? 'Infinite' : `${analysis.runwayMonths.toFixed(1)} mo`}
-                    </div>
-                  </div>
-                </div>
-                <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                <div className="text-center">
+                  <div className="text-xs text-text-tertiary uppercase tracking-widest font-medium mb-2">Runway</div>
                   <motion.div
-                    className="h-full bg-gradient-to-r from-cyan-electric to-success rounded-full"
+                    className="text-5xl font-bold text-text-primary tabular-nums"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                  >
+                    {analysis.runwayMonths >= 999 ? '∞' : analysis.runwayMonths.toFixed(1)}
+                    <span className="text-xl text-text-tertiary font-medium ml-1">
+                      {analysis.runwayMonths >= 999 ? '' : 'months'}
+                    </span>
+                  </motion.div>
+                </div>
+
+                {/* Progress bar */}
+                <div className="mt-4 h-2 bg-surface-2 rounded-full overflow-hidden">
+                  <motion.div
+                    className={cn(
+                      "h-full rounded-full",
+                      analysis.runwayMonths >= 18 ? "bg-gradient-to-r from-success to-success-light" :
+                        analysis.runwayMonths >= 12 ? "bg-gradient-to-r from-cyan-electric to-cyan-glow" :
+                          analysis.runwayMonths >= 6 ? "bg-gradient-to-r from-warning to-warning-light" :
+                            "bg-gradient-to-r from-danger to-danger-light"
+                    )}
                     initial={{ width: 0 }}
                     animate={{ width: `${runwayPercent}%` }}
                     transition={{ duration: 0.8, ease: 'easeOut' }}
