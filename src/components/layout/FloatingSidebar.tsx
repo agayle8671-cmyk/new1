@@ -63,7 +63,7 @@ export default function FloatingSidebar() {
         <div className="flex items-center justify-between">
           <div className={`flex items-center gap-3 ${collapsed ? 'justify-center w-full' : ''}`}>
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-electric to-violet-vivid flex items-center justify-center">
-              <Dna className="w-5 h-5 text-charcoal" />
+              <Dna className="w-5 h-5 text-white" />
             </div>
             {!collapsed && (
               <div>
@@ -75,7 +75,7 @@ export default function FloatingSidebar() {
           {!collapsed && (
             <button
               onClick={() => setCollapsed(true)}
-              className="p-2 rounded-lg hover:bg-surface-1 text-text-muted hover:text-text-primary transition-colors"
+              className="p-2 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -86,7 +86,7 @@ export default function FloatingSidebar() {
       {collapsed && (
         <button
           onClick={() => setCollapsed(false)}
-          className="p-4 border-b border-border flex justify-center text-text-muted hover:text-text-primary transition-colors"
+          className="p-4 border-b border-gray-200 flex justify-center text-gray-400 hover:text-gray-700 transition-colors"
         >
           <ChevronRight className="w-4 h-4" />
         </button>
@@ -98,8 +98,8 @@ export default function FloatingSidebar() {
             <button
               onClick={() => setContextMode('growth')}
               className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm font-medium transition-all ${contextMode === 'growth'
-                  ? 'bg-cyan-electric/20 text-cyan-electric'
-                  : 'text-gray-400 hover:text-white'
+                ? 'bg-cyan-electric/20 text-cyan-electric'
+                : 'text-gray-500 hover:text-gray-800'
                 }`}
             >
               <TrendingUp className="w-4 h-4" />
@@ -108,8 +108,8 @@ export default function FloatingSidebar() {
             <button
               onClick={() => setContextMode('strategy')}
               className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm font-medium transition-all ${contextMode === 'strategy'
-                  ? 'bg-violet-vivid/20 text-violet-vivid'
-                  : 'text-gray-400 hover:text-white'
+                ? 'bg-violet-vivid/20 text-violet-vivid'
+                : 'text-gray-500 hover:text-gray-800'
                 }`}
             >
               <Zap className="w-4 h-4" />
@@ -191,8 +191,8 @@ export default function FloatingSidebar() {
                   <div className="mt-3 h-2 bg-white/10 rounded-full overflow-hidden">
                     <motion.div
                       className={`h-full rounded-full ${grade === 'A' ? 'bg-gradient-to-r from-cyan-electric to-success' :
-                          grade === 'B' ? 'bg-gradient-to-r from-warning to-orange-400' :
-                            'bg-gradient-to-r from-danger to-red-600'
+                        grade === 'B' ? 'bg-gradient-to-r from-warning to-orange-400' :
+                          'bg-gradient-to-r from-danger to-red-600'
                         }`}
                       initial={{ width: 0 }}
                       animate={{ width: `${runwayPercent}%` }}
@@ -206,8 +206,8 @@ export default function FloatingSidebar() {
                   {/* Burn Trend Indicator */}
                   {healthAnalysis && (
                     <div className={`flex items-center gap-1 mt-2 text-xs ${healthAnalysis.burnTrend === 'decreasing' ? 'text-success' :
-                        healthAnalysis.burnTrend === 'increasing' ? 'text-danger' :
-                          'text-gray-400'
+                      healthAnalysis.burnTrend === 'increasing' ? 'text-danger' :
+                        'text-gray-400'
                       }`}>
                       <Activity className="w-3 h-3" />
                       <span>Burn {healthAnalysis.burnTrend}</span>

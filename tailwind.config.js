@@ -27,19 +27,19 @@ export default {
       // PREMIUM COLOR SYSTEM (Linear/Stripe inspired)
       // ============================================
       colors: {
-        // Base blacks with depth
+        // Base light grays (Light Theme)
         charcoal: {
-          DEFAULT: '#0A0A0B',     // True black for backgrounds
-          50: '#18181B',          // Elevated surface
-          100: '#141416',         // Slightly elevated
-          200: '#0F0F11',         // Subtle elevation
+          DEFAULT: '#F8F9FA',     // Light background
+          50: '#F1F3F5',          // Slightly darker
+          100: '#E9ECEF',         // More contrast
+          200: '#DEE2E6',         // Even more
         },
-        // Surface layers (for card stacking)
+        // Surface layers (for card stacking) - Light Theme
         surface: {
-          0: '#0A0A0B',           // Background
-          1: '#141416',           // Card level 1
-          2: '#1C1C1F',           // Card level 2 (elevated)
-          3: '#242428',           // Card level 3 (modal/popover)
+          0: '#F8F9FA',           // Background
+          1: '#FFFFFF',           // Card level 1 (white)
+          2: '#F1F3F5',           // Card level 2 (subtle gray)
+          3: '#E9ECEF',           // Card level 3 (modal/popover)
         },
         // Primary accent - Electric Cyan
         cyan: {
@@ -94,18 +94,18 @@ export default {
           dark: '#2563EB',
           muted: 'rgba(59, 130, 246, 0.15)',
         },
-        // Text colors
+        // Text colors (Light Theme)
         text: {
-          primary: '#FAFAFA',     // Headings, important
-          secondary: '#A1A1AA',   // Body text
-          tertiary: '#71717A',    // Subdued
-          muted: '#52525B',       // Very subdued
+          primary: '#1A1A1A',     // Headings, important (dark)
+          secondary: '#4B5563',   // Body text (gray-600)
+          tertiary: '#6B7280',    // Subdued (gray-500)
+          muted: '#9CA3AF',       // Very subdued (gray-400)
         },
-        // Border colors
+        // Border colors (Light Theme)
         border: {
-          DEFAULT: 'rgba(255, 255, 255, 0.08)',
-          subtle: 'rgba(255, 255, 255, 0.05)',
-          strong: 'rgba(255, 255, 255, 0.15)',
+          DEFAULT: 'rgba(0, 0, 0, 0.08)',
+          subtle: 'rgba(0, 0, 0, 0.05)',
+          strong: 'rgba(0, 0, 0, 0.12)',
         },
       },
       // ============================================

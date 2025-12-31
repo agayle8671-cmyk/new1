@@ -9,11 +9,11 @@
    ============================================ */
 @layer base {
   :root {
-    /* Color Tokens */
-    --color-bg: #0A0A0B;
-    --color-surface-1: #141416;
-    --color-surface-2: #1C1C1F;
-    --color-surface-3: #242428;
+    /* Color Tokens - Light Theme */
+    --color-bg: #F8F9FA;
+    --color-surface-1: #FFFFFF;
+    --color-surface-2: #F1F3F5;
+    --color-surface-3: #E9ECEF;
 
     --color-cyan: #00D4FF;
     --color-violet: #8B5CF6;
@@ -21,12 +21,12 @@
     --color-warning: #F59E0B;
     --color-danger: #EF4444;
 
-    --color-text-primary: #FAFAFA;
-    --color-text-secondary: #A1A1AA;
-    --color-text-tertiary: #71717A;
+    --color-text-primary: #1A1A1A;
+    --color-text-secondary: #4B5563;
+    --color-text-tertiary: #6B7280;
 
-    --color-border: rgba(255, 255, 255, 0.08);
-    --color-border-strong: rgba(255, 255, 255, 0.15);
+    --color-border: rgba(0, 0, 0, 0.08);
+    --color-border-strong: rgba(0, 0, 0, 0.12);
 
     /* Spacing Tokens */
     --space-xs: 0.25rem;
@@ -62,9 +62,20 @@
   }
 
   body {
-    @apply bg-charcoal text-text-secondary font-sans;
+    @apply bg-[#F8F9FA] text-text-secondary font-sans;
     line-height: 1.6;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  /* Viewport Cosmic Glow - Light Theme */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(ellipse at 50% 0%, rgba(0, 212, 255, 0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 100% 100%, rgba(139, 92, 246, 0.04) 0%, transparent 40%);
+    z-index: -1;
   }
 
   /* Scrollbar Styling */
@@ -78,17 +89,17 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-white/10 rounded-full;
+    @apply bg-gray-300 rounded-full;
     transition: background var(--transition-fast);
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-white/20;
+    @apply bg-gray-400;
   }
 
   /* Selection */
   ::selection {
-    @apply bg-cyan-electric/30 text-white;
+    @apply bg-cyan-electric/30 text-gray-900;
   }
 }
 
@@ -99,7 +110,7 @@
 
   /* ----- CARDS ----- */
   .card {
-    @apply bg-surface-1 border border-border rounded-2xl;
+    @apply bg-white border border-gray-200 rounded-2xl shadow-sm;
     transition: all var(--transition-normal);
   }
 
@@ -108,32 +119,32 @@
   }
 
   .card-interactive:hover {
-    @apply bg-surface-2 border-border-strong;
+    @apply bg-gray-50 border-gray-300 shadow-md;
     transform: translateY(-2px);
   }
 
   .card-elevated {
-    @apply bg-surface-2 border border-border rounded-2xl shadow-card;
+    @apply bg-white border border-gray-200 rounded-2xl shadow-md;
   }
 
   .card-glass {
-    @apply backdrop-blur-glass bg-white/[0.03] border border-white/[0.06] rounded-2xl;
+    @apply backdrop-blur-xl bg-white/70 border border-gray-200/50 rounded-2xl shadow-sm;
   }
 
   .card-glass-elevated {
-    @apply backdrop-blur-glass bg-white/[0.05] border border-white/[0.08] rounded-2xl shadow-card;
+    @apply backdrop-blur-xl bg-white/80 border border-gray-200/60 rounded-2xl shadow-md;
   }
 
   /* ----- BUTTONS ----- */
   .btn {
     @apply inline-flex items-center justify-center gap-2 font-semibold rounded-xl;
     @apply transition-all duration-200 ease-out-expo;
-    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-charcoal;
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-white;
   }
 
   .btn-primary {
     @apply btn px-6 py-3;
-    @apply bg-gradient-to-r from-cyan-electric to-cyan-glow text-charcoal;
+    @apply bg-gradient-to-r from-cyan-electric to-cyan-glow text-white;
     @apply hover:shadow-glow-cyan hover:scale-[1.02];
     @apply active:scale-[0.98];
     @apply focus-visible:ring-cyan-electric;
@@ -141,16 +152,16 @@
 
   .btn-secondary {
     @apply btn px-6 py-3;
-    @apply bg-surface-2 text-text-primary border border-border;
-    @apply hover:bg-surface-3 hover:border-border-strong;
+    @apply bg-white text-gray-700 border border-gray-200 shadow-sm;
+    @apply hover:bg-gray-50 hover:border-gray-300;
     @apply active:scale-[0.98];
-    @apply focus-visible:ring-white/20;
+    @apply focus-visible:ring-gray-400;
   }
 
   .btn-ghost {
     @apply btn px-4 py-2;
-    @apply bg-transparent text-text-secondary;
-    @apply hover:bg-white/5 hover:text-text-primary;
+    @apply bg-transparent text-gray-600;
+    @apply hover:bg-gray-100 hover:text-gray-900;
     @apply active:scale-[0.98];
   }
 
@@ -164,8 +175,8 @@
 
   .btn-icon {
     @apply btn p-2.5;
-    @apply bg-white/5 text-text-secondary rounded-lg;
-    @apply hover:bg-white/10 hover:text-text-primary;
+    @apply bg-gray-100 text-gray-600 rounded-lg;
+    @apply hover:bg-gray-200 hover:text-gray-900;
   }
 
   /* Button sizes */
@@ -180,14 +191,14 @@
   /* ----- INPUTS ----- */
   .input {
     @apply w-full px-4 py-3 rounded-xl;
-    @apply bg-surface-1 border border-border text-text-primary;
-    @apply placeholder:text-text-muted;
-    @apply focus:outline-none focus:border-cyan-electric/50 focus:ring-1 focus:ring-cyan-electric/20;
+    @apply bg-white border border-gray-200 text-gray-900 shadow-sm;
+    @apply placeholder:text-gray-400;
+    @apply focus:outline-none focus:border-cyan-electric/50 focus:ring-2 focus:ring-cyan-electric/20;
     @apply transition-all duration-200;
   }
 
   .input-glass {
-    @apply input bg-white/5 backdrop-blur-sm;
+    @apply input bg-white/80 backdrop-blur-sm;
   }
 
   /* ----- BADGES ----- */
@@ -222,14 +233,14 @@
   /* ----- NAVIGATION ----- */
   .nav-item {
     @apply flex items-center gap-3 px-4 py-2.5 rounded-xl;
-    @apply text-text-secondary font-medium;
+    @apply text-gray-600 font-medium;
     @apply transition-all duration-200;
-    @apply hover:bg-white/5 hover:text-text-primary;
+    @apply hover:bg-gray-100 hover:text-gray-900;
   }
 
   .nav-item-active {
     @apply nav-item;
-    @apply bg-white/10 text-text-primary border border-white/10;
+    @apply bg-cyan-electric/10 text-cyan-electric border border-cyan-electric/20;
   }
 
   /* ----- METRICS ----- */
@@ -325,18 +336,18 @@
 
   /* ----- SIDEBAR ----- */
   .sidebar {
-    @apply bg-surface-1 border-r border-border;
+    @apply bg-white border-r border-gray-200;
   }
 
   .sidebar-glass {
-    @apply backdrop-blur-xl bg-charcoal-50/80 border-r border-white/10;
+    @apply backdrop-blur-xl bg-white/80 border-r border-gray-200/50;
   }
 
   /* ----- TOOLTIP ----- */
   .tooltip {
     @apply px-3 py-2 rounded-lg;
-    @apply bg-surface-3 text-text-primary text-sm;
-    @apply border border-border shadow-card-elevated;
+    @apply bg-gray-900 text-white text-sm;
+    @apply border border-gray-700 shadow-lg;
   }
 
   /* ----- DIVIDER ----- */
@@ -350,7 +361,7 @@
 
   /* ----- SKELETON LOADERS ----- */
   .skeleton {
-    @apply relative overflow-hidden bg-surface-2 rounded-lg;
+    @apply relative overflow-hidden bg-gray-200 rounded-lg;
   }
 
   .skeleton::after {
@@ -359,7 +370,7 @@
     inset: 0;
     background: linear-gradient(90deg,
         transparent 0%,
-        rgba(255, 255, 255, 0.04) 50%,
+        rgba(255, 255, 255, 0.6) 50%,
         transparent 100%);
     animation: skeleton-shimmer 1.5s ease-in-out infinite;
   }
@@ -480,7 +491,7 @@
 
   /* Focus visible ring */
   .focus-ring {
-    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-electric/50 focus-visible:ring-offset-2 focus-visible:ring-offset-charcoal;
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-electric/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white;
   }
 
   /* Screen reader only - visually hidden but accessible */
@@ -513,13 +524,13 @@
     @apply sr-only focus:not-sr-only;
     @apply fixed top-4 left-4 z-[9999];
     @apply px-4 py-2 rounded-lg;
-    @apply bg-cyan-electric text-charcoal font-semibold;
-    @apply focus:outline-none focus:ring-2 focus:ring-white;
+    @apply bg-cyan-electric text-white font-semibold;
+    @apply focus:outline-none focus:ring-2 focus:ring-gray-900;
   }
 
   /* Focus indicators for keyboard navigation */
   .focus-visible-ring:focus-visible {
-    @apply outline-none ring-2 ring-cyan-electric/50 ring-offset-2 ring-offset-charcoal;
+    @apply outline-none ring-2 ring-cyan-electric/50 ring-offset-2 ring-offset-white;
   }
 }
 
