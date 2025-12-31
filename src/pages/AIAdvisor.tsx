@@ -84,28 +84,42 @@ export default function AIAdvisor() {
   useEffect(() => {
     try {
       setIsConfigured(AIService.isConfigured());
-      // Auto-test connection on mount
-      if (AIService.isConfigured()) {
-        testAIConnection();
-      }
+      // Don't auto-test on mount to avoid rate limits
+      // User can manually test via the "Test Connection" button
+      // This prevents hitting rate limits when multiple users visit the page
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
       console.error('[AIAdvisor] Error on mount:', err);
     }
   }, []);
 
-  const testAIConnection = async () => {
+  const testAIConnection = async (force: boolean = false) => {
     setIsTestingConnection(true);
     try {
-      const status = await AIService.testConnection();
+      const status = await AIService.testConnection(force);
       setConnectionStatus(status);
       if (status.connected) {
-        toast.success('AI Connected', { description: `${status.model} • ${status.latency}ms latency` });
+        toast.success('AI Connected', { 
+          description: `${status.model} • ${status.latency}ms latency`,
+          duration: 3000,
+        });
       } else {
-        toast.error('AI Connection Failed', { description: status.error });
+        // Don't show error toast if it's a rate limit - just show info
+        if (status.error?.includes('rate limit')) {
+          toast.warning('Rate Limit', { 
+            description: 'Please wait 60 seconds before testing again to avoid rate limits.',
+            duration: 5000,
+          });
+        } else {
+          toast.error('AI Connection Failed', { 
+            description: status.error,
+            duration: 5000,
+          });
+        }
       }
-    } catch {
-      toast.error('Connection test failed');
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Connection test failed';
+      toast.error('Connection Test Failed', { description: errorMsg });
     } finally {
       setIsTestingConnection(false);
     }
@@ -348,10 +362,10 @@ export default function AIAdvisor() {
               'Disconnected'}
           </div>
           <button
-            onClick={testAIConnection}
+            onClick={() => testAIConnection(true)}
             disabled={isTestingConnection}
             className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors disabled:opacity-50"
-            title="Test AI Connection"
+            title="Test AI Connection (60s cooldown to avoid rate limits)"
           >
             <RefreshCw className={`w-4 h-4 text-gray-400 ${isTestingConnection ? 'animate-spin' : ''}`} />
           </button>

@@ -139,7 +139,18 @@ export interface ConnectionStatus {
 /**
  * Test the AI connection and return status
  */
-export async function testConnection(): Promise<ConnectionStatus> {
+// Cache connection test results to avoid rate limits
+let lastConnectionTest: { timestamp: number; result: ConnectionStatus } | null = null;
+const CONNECTION_TEST_COOLDOWN = 60000; // 60 seconds cooldown between tests
+
+export async function testConnection(force: boolean = false): Promise<ConnectionStatus> {
+  // Check cache - don't test too frequently to avoid rate limits
+  const now = Date.now();
+  if (!force && lastConnectionTest && (now - lastConnectionTest.timestamp) < CONNECTION_TEST_COOLDOWN) {
+    console.log('[AI] Using cached connection test (cooldown active)');
+    return lastConnectionTest.result;
+  }
+
   console.log('[AI] Testing connection via Express server...');
   const startTime = Date.now();
 
@@ -192,33 +203,48 @@ export async function testConnection(): Promise<ConnectionStatus> {
     
     console.log('[AI] ✅ Connection successful!', { latency, response: text?.substring(0, 50) });
     
-    return {
+    const result: ConnectionStatus = {
       connected: true,
       model: 'gemini-2.5-flash',
       latency,
     };
+    
+    // Cache successful result
+    lastConnectionTest = { timestamp: now, result };
+    
+    return result;
   } catch (err) {
     const latency = Date.now() - startTime;
     const errorMessage = err instanceof Error ? err.message : 'Network error';
     
     console.error('[AI] Connection error:', errorMessage);
     
+    // Check for rate limit errors
+    const isRateLimit = errorMessage.includes('rate limit') || 
+                       errorMessage.includes('429') || 
+                       errorMessage.includes('quota');
+    
     // Check for timeout
-    if (errorMessage.includes('timeout') || errorMessage.includes('AbortError')) {
-      return {
-        connected: false,
-        model: 'gemini-2.5-flash',
-        latency,
-        error: 'Connection timeout - server may be cold starting. Try again in a moment.',
-      };
+    const isTimeout = errorMessage.includes('timeout') || errorMessage.includes('AbortError');
+    
+    let finalError = errorMessage;
+    if (isRateLimit) {
+      finalError = 'Rate limit exceeded. Please wait a moment before testing again.';
+    } else if (isTimeout) {
+      finalError = 'Connection timeout - server may be cold starting. Try again in a moment.';
     }
     
-    return {
+    const result: ConnectionStatus = {
       connected: false,
       model: 'gemini-2.5-flash',
       latency,
-      error: errorMessage,
+      error: finalError,
     };
+    
+    // Cache failed result too (but with shorter cooldown for retries)
+    lastConnectionTest = { timestamp: now, result };
+    
+    return result;
   }
 }
 
