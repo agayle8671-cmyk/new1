@@ -406,6 +406,18 @@ Example scenarios:
 
 Always ground scenario analysis in the actual current financial data provided.
 
+COMPETITIVE BENCHMARKING:
+When users ask about competitive position or benchmarking, compare against:
+- Competitor 1: 18 months runway, 20% monthly growth
+- Competitor 2: 12 months runway, 30% monthly growth
+- Industry Median: 15 months runway, 18% monthly growth
+
+Provide specific comparisons on:
+- Runway position (better/worse than competitors)
+- Growth rate ranking
+- Overall competitive standing
+- Strategic recommendations to improve position
+
 INDUSTRY BENCHMARKS (B2B SaaS):
 Use these benchmarks to compare the company's metrics:
 - Typical monthly burn: $75,000 (for similar stage companies)

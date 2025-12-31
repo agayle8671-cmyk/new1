@@ -52,6 +52,13 @@ export const SCENARIOS = {
   pessimistic: { revenueGrowth: 0.05, churn: 0.10 }
 };
 
+// Competitive benchmarking data
+export const COMPETITOR_DATA = {
+  competitor1: { runway: 18, growth: 0.20 },
+  competitor2: { runway: 12, growth: 0.30 },
+  industry_median: { runway: 15, growth: 0.18 }
+};
+
 export interface AIContext {
   analysis?: FinancialAnalysis | null;
   simulatorParams?: SimParams | null;
@@ -855,6 +862,7 @@ const AIService = {
   performAnalysis,
   generateRunwayPlan,
   analyzeScenario,
+  competitiveBenchmark,
   getStrategicInsights,
   generateBoardDeck,
   explainAnomaly,
@@ -865,6 +873,7 @@ const AIService = {
   ANALYSIS_TYPES,
   BENCHMARKS,
   SCENARIOS,
+  COMPETITOR_DATA,
 };
 
 export default AIService;
