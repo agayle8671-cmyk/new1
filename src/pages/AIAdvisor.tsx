@@ -170,7 +170,7 @@ export default function AIAdvisor() {
     return context;
   }, [currentAnalysis, simulatorParams]);
 
-  // Chat handler
+  // Chat handler (Stage 3: Save conversation memory)
   const sendMessage = useCallback(async () => {
     if (!chatInput.trim() || isChatLoading) return;
 
@@ -182,11 +182,12 @@ export default function AIAdvisor() {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const userQuestion = chatInput.trim();
     setChatInput('');
     setIsChatLoading(true);
 
     try {
-      const response = await AIService.chat(chatInput, getContext(), messages);
+      const response = await AIService.chat(userQuestion, getContext(), messages);
       const assistantMessage: AIMessage = {
         id: `assistant-${Date.now()}`,
         role: 'assistant',
@@ -194,6 +195,25 @@ export default function AIAdvisor() {
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, assistantMessage]);
+
+      // Stage 3: Save conversation memory (async, don't block UI)
+      try {
+        // Extract key insights from the response (simple extraction)
+        const insights: string[] = [];
+        const sentences = response.split(/[.!?]+/).filter(s => s.trim().length > 20);
+        if (sentences.length > 0) {
+          // Take first 2-3 meaningful sentences as insights
+          insights.push(...sentences.slice(0, 3).map(s => s.trim()).filter(s => s.length > 0));
+        }
+
+        await saveConversationMemory({
+          summary: `${userQuestion}: ${response.substring(0, 200)}${response.length > 200 ? '...' : ''}`,
+          key_insights: insights.length > 0 ? insights : [response.substring(0, 150)],
+        }, false); // Don't show toast for auto-saves
+      } catch (memoryError) {
+        // Silently fail - memory saving shouldn't break the chat
+        console.warn('[AIAdvisor] Failed to save conversation memory:', memoryError);
+      }
     } catch (error) {
       toast.error('AI Error', { description: error instanceof Error ? error.message : 'Unknown error' });
     } finally {
