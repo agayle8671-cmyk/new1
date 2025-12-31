@@ -45,6 +45,13 @@ export const BENCHMARKS: IndustryBenchmarks = {
   seriesASizeAvg: 8000000 // $8M average Series A
 };
 
+// Scenario definitions for "what if" analysis
+export const SCENARIOS = {
+  optimistic: { revenueGrowth: 0.25, churn: 0.02 },
+  realistic: { revenueGrowth: 0.15, churn: 0.05 },
+  pessimistic: { revenueGrowth: 0.05, churn: 0.10 }
+};
+
 export interface AIContext {
   analysis?: FinancialAnalysis | null;
   simulatorParams?: SimParams | null;
@@ -808,6 +815,7 @@ const AIService = {
   askAI,
   performAnalysis,
   generateRunwayPlan,
+  analyzeScenario,
   getStrategicInsights,
   generateBoardDeck,
   explainAnomaly,
@@ -817,6 +825,7 @@ const AIService = {
   benchmarkAnalysis,
   ANALYSIS_TYPES,
   BENCHMARKS,
+  SCENARIOS,
 };
 
 export default AIService;
