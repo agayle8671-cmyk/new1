@@ -158,7 +158,11 @@ app.post('/api/chat', async (req, res) => {
       });
     }
 
-    // Enhanced system prompt with context
+    // Enhanced system prompt with context (Stage 1: Enhanced Context)
+    const formatCurrency = (value) => value ? `$${Number(value).toLocaleString()}` : 'N/A';
+    const formatPercent = (value) => value ? `${(Number(value) * 100).toFixed(1)}%` : 'N/A';
+    const formatDate = (dateStr) => dateStr ? new Date(dateStr).toLocaleDateString() : 'N/A';
+    
     const systemPrompt = `You are the Runway DNA Strategic CFO, an expert financial advisor for startups.
 
 YOUR ROLE:
@@ -175,13 +179,31 @@ RESPONSE STYLE:
 
 ${context ? `
 CURRENT COMPANY DATA:
-- Cash on hand: $${context.cashOnHand?.toLocaleString() || 'N/A'}
-- Monthly burn: $${context.monthlyBurn?.toLocaleString() || 'N/A'}
-- Monthly revenue: $${context.monthlyRevenue?.toLocaleString() || 'N/A'}
-- Runway: ${context.runway || 'N/A'} months
-- Revenue growth: ${context.revenueGrowthRate ? (context.revenueGrowthRate * 100).toFixed(0) + '%' : 'N/A'} monthly
-- Customer count: ${context.customerCount?.toLocaleString() || 'N/A'}
-- Churn rate: ${context.churnRate ? (context.churnRate * 100).toFixed(1) + '%' : 'N/A'}
+**Financials:**
+- Cash on hand: ${formatCurrency(context.cashOnHand)}
+- Monthly burn: ${formatCurrency(context.monthlyBurn)}
+- Monthly revenue: ${formatCurrency(context.monthlyRevenue)}
+- Runway: ${context.runway ? context.runway.toFixed(1) : 'N/A'} months
+- Revenue growth: ${formatPercent(context.revenueGrowthRate)} monthly
+
+**Growth Metrics:**
+${context.customerCount ? `- Customer count: ${Number(context.customerCount).toLocaleString()}` : ''}
+${context.avgRevenuePerCustomer ? `- Avg revenue per customer: ${formatCurrency(context.avgRevenuePerCustomer)}` : ''}
+${context.churnRate ? `- Churn rate: ${formatPercent(context.churnRate)} monthly` : ''}
+
+**Fundraising:**
+${context.lastRoundAmount ? `- Last round: ${formatCurrency(context.lastRoundAmount)} on ${formatDate(context.lastRoundDate)}` : ''}
+${context.investorsCount ? `- Investors: ${context.investorsCount}` : ''}
+${context.targetNextRound ? `- Target next round: ${formatCurrency(context.targetNextRound)}` : ''}
+
+**Team:**
+${context.employeeCount ? `- Team size: ${context.employeeCount} employees` : ''}
+${context.monthlyPayroll ? `- Monthly payroll: ${formatCurrency(context.monthlyPayroll)}` : ''}
+
+**Alerts:**
+${context.burnIncreasing !== undefined ? `- Burn increasing: ${context.burnIncreasing ? '⚠️ Yes' : '✅ No'}` : ''}
+${context.revenueGrowthSlowing !== undefined ? `- Revenue growth slowing: ${context.revenueGrowthSlowing ? '⚠️ Yes' : '✅ No'}` : ''}
+${context.approachingBreakeven !== undefined ? `- Approaching breakeven: ${context.approachingBreakeven ? '✅ Yes' : 'No'}` : ''}
 ` : 'No financial data provided'}
 
 Provide strategic guidance as a trusted CFO would.`;

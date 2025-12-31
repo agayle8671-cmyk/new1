@@ -125,10 +125,49 @@ export default function AIAdvisor() {
     }
   };
 
-  const getContext = useCallback((): AIContext => ({
-    analysis: currentAnalysis,
-    simulatorParams: simulatorParams,
-  }), [currentAnalysis, simulatorParams]);
+  const getContext = useCallback((): AIContext => {
+    // Build enhanced context from available data (Stage 1)
+    const context: AIContext = {
+      analysis: currentAnalysis,
+      simulatorParams: simulatorParams,
+    };
+
+    // Extract enhanced financial data from analysis
+    if (currentAnalysis) {
+      context.cashOnHand = currentAnalysis.cashOnHand;
+      context.monthlyBurn = currentAnalysis.monthlyBurn;
+      context.monthlyRevenue = currentAnalysis.monthlyRevenue;
+      context.runway = currentAnalysis.runwayMonths;
+      context.revenueGrowthRate = currentAnalysis.revenueGrowth;
+      
+      // Calculate derived metrics
+      if (currentAnalysis.monthlyRevenue > 0 && currentAnalysis.monthlyBurn > 0) {
+        context.approachingBreakeven = currentAnalysis.monthlyRevenue >= currentAnalysis.monthlyBurn * 0.9;
+      }
+      
+      // Check if burn is increasing (from expense growth)
+      context.burnIncreasing = currentAnalysis.expenseGrowth > 0;
+      
+      // Check if revenue growth is slowing (negative growth rate or low)
+      context.revenueGrowthSlowing = currentAnalysis.revenueGrowth < 0.1; // Less than 10% monthly
+    }
+
+    // Extract data from simulator params
+    if (simulatorParams) {
+      // Override with simulator params if available (more current)
+      context.cashOnHand = simulatorParams.cashOnHand;
+      context.monthlyBurn = simulatorParams.monthlyExpenses;
+      context.monthlyRevenue = simulatorParams.monthlyRevenue;
+      context.revenueGrowthRate = simulatorParams.revenueGrowth;
+      
+      // Calculate runway from simulator params
+      if (simulatorParams.monthlyExpenses > 0) {
+        context.runway = simulatorParams.cashOnHand / simulatorParams.monthlyExpenses;
+      }
+    }
+
+    return context;
+  }, [currentAnalysis, simulatorParams]);
 
   // Chat handler
   const sendMessage = useCallback(async () => {

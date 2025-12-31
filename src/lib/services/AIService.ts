@@ -50,6 +50,33 @@ export interface AIContext {
   simulatorParams?: SimParams | null;
   projections?: ProjectionMonth[];
   additionalContext?: string;
+  
+  // Enhanced financial context (Stage 1)
+  cashOnHand?: number;
+  monthlyBurn?: number;
+  monthlyRevenue?: number;
+  runway?: number; // months
+  
+  // Growth metrics
+  revenueGrowthRate?: number; // monthly growth rate (decimal)
+  customerCount?: number;
+  avgRevenuePerCustomer?: number;
+  churnRate?: number; // monthly churn rate (decimal)
+  
+  // Fundraising
+  lastRoundAmount?: number;
+  lastRoundDate?: string;
+  investorsCount?: number;
+  targetNextRound?: number;
+  
+  // Team
+  employeeCount?: number;
+  monthlyPayroll?: number;
+  
+  // Alerts
+  burnIncreasing?: boolean;
+  revenueGrowthSlowing?: boolean;
+  approachingBreakeven?: boolean;
 }
 
 export interface AIInsight {
