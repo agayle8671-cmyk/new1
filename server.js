@@ -203,7 +203,10 @@ You have access to functions to get detailed financial summaries and revenue for
       parts: [{ text: fullPrompt }]
     });
 
-    const apiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+    // Choose endpoint based on streaming preference
+    // Note: Function calling doesn't work with streaming, so disable streaming if functions are needed
+    const endpoint = useStreaming ? 'streamGenerateContent' : 'generateContent';
+    const apiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:${endpoint}?key=${apiKey}`;
     
     // First API call with function declarations
     let requestBody = {
@@ -215,6 +218,13 @@ You have access to functions to get detailed financial summaries and revenue for
       }
     };
 
+    // Set up streaming response headers if needed
+    if (useStreaming) {
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+    }
+
     let geminiResponse = await fetch(apiUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -224,9 +234,57 @@ You have access to functions to get detailed financial summaries and revenue for
     if (!geminiResponse.ok) {
       const errorText = await geminiResponse.text();
       console.error('Gemini error:', errorText);
-      return res.status(500).json({ error: 'AI request failed' });
+      if (useStreaming) {
+        res.write(`data: ${JSON.stringify({ error: 'AI request failed' })}\n\n`);
+        res.end();
+      } else {
+        return res.status(500).json({ error: 'AI request failed' });
+      }
+      return;
     }
 
+    // Handle streaming response
+    if (useStreaming && geminiResponse.body) {
+      const reader = geminiResponse.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              try {
+                const data = JSON.parse(line.slice(6));
+                const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (text) {
+                  res.write(`data: ${JSON.stringify({ text, done: false })}\n\n`);
+                }
+              } catch (e) {
+                // Skip invalid JSON
+              }
+            }
+          }
+        }
+
+        res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+        res.end();
+        return;
+      } catch (error) {
+        console.error('Streaming error:', error);
+        res.write(`data: ${JSON.stringify({ error: error.message })}\n\n`);
+        res.end();
+        return;
+      }
+    }
+
+    // Non-streaming response
     let data = await geminiResponse.json();
     let responseText = data.candidates?.[0]?.content?.parts?.[0]?.text;
     const functionCalls = data.candidates?.[0]?.content?.parts?.filter(part => part.functionCall);
