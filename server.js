@@ -10,6 +10,115 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
+// Function declarations for Gemini
+const functionDeclarations = [
+  {
+    name: 'get_financial_summary',
+    description: 'Get current financial metrics including runway, burn rate, and revenue',
+    parameters: {
+      type: 'object',
+      properties: {
+        timeframe: {
+          type: 'string',
+          description: 'Time period: current, last_month, last_quarter',
+          enum: ['current', 'last_month', 'last_quarter']
+        }
+      }
+    }
+  },
+  {
+    name: 'get_revenue_forecast',
+    description: 'Get revenue projections based on current growth rate',
+    parameters: {
+      type: 'object',
+      properties: {
+        months_ahead: {
+          type: 'number',
+          description: 'Number of months to forecast (1-24)',
+          minimum: 1,
+          maximum: 24
+        }
+      },
+      required: ['months_ahead']
+    }
+  }
+];
+
+// Function implementations
+function executeFunction(functionName, args, context) {
+  switch (functionName) {
+    case 'get_financial_summary': {
+      const timeframe = args?.timeframe || 'current';
+      
+      if (!context) {
+        return {
+          error: 'No financial data available',
+          timeframe
+        };
+      }
+
+      const monthlyBurn = context.monthlyBurn || 0;
+      const monthlyRevenue = context.monthlyRevenue || 0;
+      const cashOnHand = context.cashOnHand || 0;
+      const runway = context.runway || (cashOnHand && monthlyBurn ? cashOnHand / monthlyBurn : 0);
+      const netBurn = monthlyBurn - monthlyRevenue;
+      const burnMultiple = monthlyRevenue > 0 ? netBurn / monthlyRevenue : null;
+      const profitMargin = monthlyRevenue > 0 ? ((monthlyRevenue - monthlyBurn) / monthlyRevenue) * 100 : null;
+
+      return {
+        timeframe,
+        cashOnHand: cashOnHand,
+        monthlyBurn: monthlyBurn,
+        monthlyRevenue: monthlyRevenue,
+        netBurn: netBurn,
+        runwayMonths: Math.round(runway * 10) / 10,
+        burnMultiple: burnMultiple ? Math.round(burnMultiple * 100) / 100 : null,
+        profitMargin: profitMargin ? Math.round(profitMargin * 10) / 10 : null,
+        revenueGrowthRate: context.revenueGrowthRate ? (context.revenueGrowthRate * 100).toFixed(1) + '%' : null,
+        churnRate: context.churnRate ? (context.churnRate * 100).toFixed(1) + '%' : null,
+        customerCount: context.customerCount || null,
+        employeeCount: context.employeeCount || null
+      };
+    }
+
+    case 'get_revenue_forecast': {
+      const monthsAhead = args?.months_ahead || 12;
+      
+      if (!context || !context.monthlyRevenue || !context.revenueGrowthRate) {
+        return {
+          error: 'Insufficient data for revenue forecast',
+          required: ['monthlyRevenue', 'revenueGrowthRate']
+        };
+      }
+
+      const currentRevenue = context.monthlyRevenue;
+      const growthRate = context.revenueGrowthRate;
+      const forecast = [];
+
+      for (let i = 1; i <= monthsAhead; i++) {
+        const projectedRevenue = currentRevenue * Math.pow(1 + growthRate, i);
+        forecast.push({
+          month: i,
+          revenue: Math.round(projectedRevenue),
+          growth: (growthRate * 100).toFixed(1) + '%'
+        });
+      }
+
+      return {
+        currentRevenue: currentRevenue,
+        growthRate: (growthRate * 100).toFixed(1) + '%',
+        monthsAhead: monthsAhead,
+        forecast: forecast,
+        projectedRevenue12Months: forecast[11]?.revenue || null,
+        projectedRevenue24Months: forecast[23]?.revenue || null
+      };
+    }
+
+    default:
+      return { error: `Unknown function: ${functionName}` };
+  }
+}
+
 app.post('/api/chat', async (req, res) => {
   try {
     const { message, prompt, context, conversationHistory } = req.body;
@@ -24,6 +133,10 @@ app.post('/api/chat', async (req, res) => {
       return res.status(500).json({ error: 'API key not configured' });
     }
 
+    // Format context values for display
+    const formatCurrency = (value) => value ? `$${Number(value).toLocaleString()}` : 'N/A';
+    const formatPercent = (value) => value ? `${(Number(value) * 100).toFixed(0)}%` : 'N/A';
+    
     const systemPrompt = `You are the Runway DNA Strategic CFO, an expert financial advisor for startups.
 
 YOUR ROLE:
@@ -47,18 +160,19 @@ EXPERTISE AREAS:
 
 CURRENT COMPANY CONTEXT:
 ${context ? `
-- Cash on hand: ${context.cashOnHand ? `$${Number(context.cashOnHand).toLocaleString()}` : 'N/A'}
-- Monthly burn: ${context.monthlyBurn ? `$${Number(context.monthlyBurn).toLocaleString()}` : 'N/A'}
-- Monthly revenue: ${context.monthlyRevenue ? `$${Number(context.monthlyRevenue).toLocaleString()}` : 'N/A'}
+- Cash on hand: ${formatCurrency(context.cashOnHand)}
+- Monthly burn: ${formatCurrency(context.monthlyBurn)}
+- Monthly revenue: ${formatCurrency(context.monthlyRevenue)}
 - Runway: ${context.runway || 'N/A'} months
-- Revenue growth: ${context.revenueGrowthRate ? `${(Number(context.revenueGrowthRate) * 100).toFixed(0)}%` : 'N/A'}
+- Revenue growth: ${formatPercent(context.revenueGrowthRate)}
 ${context.customerCount ? `- Customers: ${Number(context.customerCount).toLocaleString()}` : ''}
-${context.churnRate ? `- Churn rate: ${(Number(context.churnRate) * 100).toFixed(1)}%` : ''}
+${context.churnRate ? `- Churn rate: ${formatPercent(context.churnRate)}` : ''}
 ${context.employeeCount ? `- Team size: ${context.employeeCount} employees` : ''}
-${context.monthlyPayroll ? `- Monthly payroll: $${Number(context.monthlyPayroll).toLocaleString()}` : ''}
+${context.monthlyPayroll ? `- Monthly payroll: ${formatCurrency(context.monthlyPayroll)}` : ''}
 ` : 'No financial data provided'}
 
-When the user asks questions, analyze the data deeply and provide strategic guidance as a trusted CFO would.`;
+When the user asks questions, analyze the data deeply and provide strategic guidance as a trusted CFO would.
+You have access to functions to get detailed financial summaries and revenue forecasts. Use them when needed.`;
     
     let fullPrompt = `${systemPrompt}\n\nUser Question: ${userMessage}`;
 
@@ -80,10 +194,20 @@ When the user asks questions, analyze the data deeply and provide strategic guid
 
     const apiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
     
-    const geminiResponse = await fetch(apiUrl, {
+    // First API call with function declarations
+    let requestBody = {
+      contents,
+      tools: [{ functionDeclarations }],
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 2048,
+      }
+    };
+
+    let geminiResponse = await fetch(apiUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents })
+      body: JSON.stringify(requestBody)
     });
 
     if (!geminiResponse.ok) {
@@ -92,8 +216,64 @@ When the user asks questions, analyze the data deeply and provide strategic guid
       return res.status(500).json({ error: 'AI request failed' });
     }
 
-    const data = await geminiResponse.json();
-    const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response';
+    let data = await geminiResponse.json();
+    let responseText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    const functionCalls = data.candidates?.[0]?.content?.parts?.filter(part => part.functionCall);
+
+    // Handle function calls
+    if (functionCalls && functionCalls.length > 0) {
+      // Add the model's response with function calls to conversation
+      contents.push({
+        role: 'model',
+        parts: data.candidates[0].content.parts
+      });
+
+      // Execute functions and add results
+      for (const functionCall of functionCalls) {
+        const functionName = functionCall.functionCall.name;
+        const args = JSON.parse(functionCall.functionCall.args || '{}');
+        
+        console.log(`[Function Call] ${functionName}`, args);
+        
+        const functionResult = executeFunction(functionName, args, context);
+        
+        // Add function result to conversation
+        contents.push({
+          role: 'function',
+          parts: [{
+            functionResponse: {
+              name: functionName,
+              response: functionResult
+            }
+          }]
+        });
+      }
+
+      // Second API call with function results
+      requestBody = {
+        contents,
+        tools: [{ functionDeclarations }],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 2048,
+        }
+      };
+
+      geminiResponse = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody)
+      });
+
+      if (!geminiResponse.ok) {
+        const errorText = await geminiResponse.text();
+        console.error('Gemini error (function response):', errorText);
+        return res.status(500).json({ error: 'AI request failed' });
+      }
+
+      data = await geminiResponse.json();
+      responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response';
+    }
 
     return res.json({ response: responseText, text: responseText });
   } catch (error) {
