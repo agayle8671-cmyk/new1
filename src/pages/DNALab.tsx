@@ -336,36 +336,31 @@ export default function DNALab() {
                 mode: 'runway' as AnalysisType, 
                 label: 'Runway Analysis', 
                 icon: Plane,
-                color: 'bg-cyan-electric/20 hover:bg-cyan-electric/30 text-cyan-electric border-cyan-electric/30',
-                activeColor: 'bg-cyan-electric text-charcoal border-cyan-electric'
+                activeColor: 'bg-cyan-electric text-charcoal'
               },
               { 
                 mode: 'fundraising' as AnalysisType, 
                 label: 'Fundraising Readiness', 
                 icon: Target,
-                color: 'bg-violet-vivid/20 hover:bg-violet-vivid/30 text-violet-vivid border-violet-vivid/30',
-                activeColor: 'bg-violet-vivid text-white border-violet-vivid'
+                activeColor: 'bg-violet-vivid text-white'
               },
               { 
                 mode: 'growth' as AnalysisType, 
                 label: 'Growth Assessment', 
                 icon: BarChart3,
-                color: 'bg-success/20 hover:bg-success/30 text-success border-success/30',
-                activeColor: 'bg-success text-charcoal border-success'
+                activeColor: 'bg-success text-charcoal'
               },
               { 
                 mode: 'risk' as AnalysisType, 
                 label: 'Risk Analysis', 
                 icon: AlertTriangle,
-                color: 'bg-warning/20 hover:bg-warning/30 text-warning border-warning/30',
-                activeColor: 'bg-warning text-charcoal border-warning'
+                activeColor: 'bg-warning text-charcoal'
               },
               { 
                 mode: 'breakeven' as AnalysisType, 
                 label: 'Path to Profitability', 
                 icon: Heart,
-                color: 'bg-pink-500/20 hover:bg-pink-500/30 text-pink-400 border-pink-500/30',
-                activeColor: 'bg-pink-500 text-white border-pink-500'
+                activeColor: 'bg-cyan-electric text-charcoal'
               }
             ].map(btn => {
               const IconComponent = btn.icon;
@@ -375,12 +370,13 @@ export default function DNALab() {
                   key={btn.mode}
                   onClick={() => runAnalysis(btn.mode)}
                   disabled={isAnalysisRunning}
-                  className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg border transition-all ${
+                  variant="secondary"
+                  className={`flex items-center gap-2 px-4 py-2 text-sm transition-all ${
                     isActive 
                       ? btn.activeColor 
                       : isAnalysisRunning
-                        ? 'bg-white/5 text-gray-500 border-white/10 cursor-not-allowed'
-                        : `${btn.color} border hover:scale-105`
+                        ? 'opacity-50 cursor-not-allowed'
+                        : 'hover:bg-white/10'
                   }`}
                 >
                   {isAnalysisRunning && isActive ? (
