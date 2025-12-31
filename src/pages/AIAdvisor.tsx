@@ -421,10 +421,10 @@ export default function AIAdvisor() {
       {/* Header */}
       <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold">
+          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">
             <span className="gradient-text-mixed">AI Financial Advisor</span>
           </h1>
-          <p className="text-gray-400 mt-1">
+          <p className="text-text-secondary mt-1">
             Powered by Gemini • {currentAnalysis ? 'Using your financial data' : 'Upload data in DNA Lab for personalized insights'}
           </p>
         </div>
@@ -519,9 +519,14 @@ export default function AIAdvisor() {
           animate="visible"
           variants={cardVariants}
         >
-          <div className="p-4 border-b border-white/10 flex items-center gap-2">
-            <MessageSquare className="w-5 h-5 text-cyan-electric" />
-            <h3 className="font-semibold">Chat with AI</h3>
+          <div className="p-4 border-b border-border flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-electric to-violet-vivid flex items-center justify-center">
+              <MessageSquare className="w-4 h-4 text-charcoal" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-text-primary">Chat with Runa</h3>
+              <p className="text-xs text-text-tertiary">Your AI CFO</p>
+            </div>
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -565,7 +570,7 @@ export default function AIAdvisor() {
               value={chatInput}
               onChange={(e) => setChatInput(e.target.value)}
               placeholder="Ask anything about your finances..."
-              className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-cyan-electric/50"
+              className="flex-1 bg-surface-1 border border-border rounded-xl px-4 py-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-cyan-electric/50 focus:ring-1 focus:ring-cyan-electric/20 transition-all"
             />
             <button
               type="submit"
