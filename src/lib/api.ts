@@ -44,6 +44,13 @@ export async function saveAnalysisSnapshot(
   }
 
   try {
+    // Log the attempt for debugging
+    console.log('[API] Attempting to save analysis snapshot...', {
+      hasSupabase: isSupabaseConfigured,
+      snapshotType: 'analysis',
+      grade: analysis.grade,
+    });
+
     const { data, error } = await supabase
       .from('dna_snapshots')
       .insert({
@@ -63,7 +70,26 @@ export async function saveAnalysisSnapshot(
       .select()
       .maybeSingle();
 
+    console.log('[API] Supabase response:', { hasData: !!data, hasError: !!error, errorCode: error?.code, errorMessage: error?.message });
+
     if (error) {
+      // Check for the specific "secret API key" error
+      const isSecretKeyError = error.message?.toLowerCase().includes('secret') || 
+                              error.message?.toLowerCase().includes('forbidden');
+      
+      if (isSecretKeyError) {
+        const errorMsg = 'Wrong API key type. Use the "anon" (public) key in Railway, not the service role key. Check Railway → Variables → VITE_SUPABASE_ANON_KEY';
+        if (showToast) {
+          toast.error('Failed to Save Analysis', {
+            description: errorMsg,
+            duration: 8000, // Show longer for important errors
+          });
+        }
+        console.error('❌ Supabase Error:', error.message);
+        console.error('💡 Fix: In Railway, set VITE_SUPABASE_ANON_KEY to your Supabase "anon" key (from Settings → API → anon/public key), NOT the service_role key');
+        return { data: null, error: errorMsg, loading: false };
+      }
+      
       if (showToast) {
         toast.error('Failed to Save Analysis', {
           description: error.message,
@@ -133,6 +159,23 @@ export async function saveSimulationSnapshot(
       .maybeSingle();
 
     if (error) {
+      // Check for the specific "secret API key" error
+      const isSecretKeyError = error.message?.toLowerCase().includes('secret') || 
+                              error.message?.toLowerCase().includes('forbidden');
+      
+      if (isSecretKeyError) {
+        const errorMsg = 'Wrong API key type. Use the "anon" (public) key in Railway, not the service role key. Check Railway → Variables → VITE_SUPABASE_ANON_KEY';
+        if (showToast) {
+          toast.error('Failed to Save Simulation', {
+            description: errorMsg,
+            duration: 8000,
+          });
+        }
+        console.error('❌ Supabase Error:', error.message);
+        console.error('💡 Fix: In Railway, set VITE_SUPABASE_ANON_KEY to your Supabase "anon" key (from Settings → API → anon/public key), NOT the service_role key');
+        return { data: null, error: errorMsg, loading: false };
+      }
+      
       if (showToast) {
         toast.error('Failed to Save Simulation', {
           description: error.message,
