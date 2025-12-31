@@ -336,30 +336,35 @@ export default function DNALab() {
                 mode: 'runway' as AnalysisType, 
                 label: 'Runway Analysis', 
                 icon: Plane,
+                iconColor: 'text-cyan-electric',
                 activeColor: 'bg-cyan-electric text-charcoal'
               },
               { 
                 mode: 'fundraising' as AnalysisType, 
                 label: 'Fundraising Readiness', 
                 icon: Target,
+                iconColor: 'text-violet-vivid',
                 activeColor: 'bg-violet-vivid text-white'
               },
               { 
                 mode: 'growth' as AnalysisType, 
                 label: 'Growth Assessment', 
                 icon: BarChart3,
+                iconColor: 'text-success',
                 activeColor: 'bg-success text-charcoal'
               },
               { 
                 mode: 'risk' as AnalysisType, 
                 label: 'Risk Analysis', 
                 icon: AlertTriangle,
+                iconColor: 'text-warning',
                 activeColor: 'bg-warning text-charcoal'
               },
               { 
                 mode: 'breakeven' as AnalysisType, 
                 label: 'Path to Profitability', 
                 icon: Heart,
+                iconColor: 'text-pink-400',
                 activeColor: 'bg-cyan-electric text-charcoal'
               }
             ].map(btn => {
@@ -386,7 +391,7 @@ export default function DNALab() {
                     </>
                   ) : (
                     <>
-                      <IconComponent className="w-4 h-4" />
+                      <IconComponent className={`w-4 h-4 ${isActive ? '' : btn.iconColor}`} />
                       {btn.label}
                     </>
                   )}
