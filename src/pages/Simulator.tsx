@@ -764,8 +764,23 @@ function TopLineChart({ currentMRR }: TopLineChartProps) {
   if (isLoading) {
     return (
       <MotionCard variant="elevated" className="p-6" custom={7} initial="hidden" animate="visible" variants={cardVariants}>
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="w-8 h-8 animate-spin text-cyan-electric" />
+        <div className="space-y-6">
+          {/* Header skeleton */}
+          <div className="flex items-center gap-3">
+            <div className="skeleton w-10 h-10 rounded-xl" />
+            <div className="flex-1 space-y-2">
+              <div className="skeleton-text w-48" />
+              <div className="skeleton-text-sm w-64" />
+            </div>
+          </div>
+          {/* Chart skeleton */}
+          <div className="skeleton h-64 rounded-xl" />
+          {/* Metrics skeleton */}
+          <div className="grid grid-cols-3 gap-4">
+            <div className="skeleton h-20 rounded-xl" />
+            <div className="skeleton h-20 rounded-xl" />
+            <div className="skeleton h-20 rounded-xl" />
+          </div>
         </div>
       </MotionCard>
     );
