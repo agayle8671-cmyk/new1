@@ -56,6 +56,14 @@ const functionDeclarations = [
       },
       required: ['analysis_type']
     }
+  },
+  {
+    name: 'get_industry_benchmarks',
+    description: 'Get B2B SaaS industry benchmarks for comparison (burn rate, growth, churn, Series A size)',
+    parameters: {
+      type: 'object',
+      properties: {}
+    }
   }
 ];
 
