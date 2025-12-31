@@ -1,7 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
-  // Safelist ensures these classes are never purged (for dynamic usage)
   safelist: [
     // Grade colors
     'text-success', 'text-warning', 'text-danger', 'text-cyan-electric', 'text-violet-vivid',
@@ -19,40 +18,167 @@ export default {
     'from-success', 'to-success', 'from-warning', 'to-warning', 'from-danger', 'to-danger',
     // Badges
     'badge-success', 'badge-warning', 'badge-danger', 'badge-cyan', 'badge-violet',
+    // Surface colors
+    'bg-surface-0', 'bg-surface-1', 'bg-surface-2', 'bg-surface-3',
   ],
   theme: {
     extend: {
+      // ============================================
+      // PREMIUM COLOR SYSTEM (Linear/Stripe inspired)
+      // ============================================
       colors: {
+        // Base blacks with depth
         charcoal: {
-          DEFAULT: '#0D0D0D',
-          50: '#1A1A1A',
-          100: '#141414',
-          200: '#0D0D0D',
+          DEFAULT: '#0A0A0B',     // True black for backgrounds
+          50: '#18181B',          // Elevated surface
+          100: '#141416',         // Slightly elevated
+          200: '#0F0F11',         // Subtle elevation
         },
+        // Surface layers (for card stacking)
+        surface: {
+          0: '#0A0A0B',           // Background
+          1: '#141416',           // Card level 1
+          2: '#1C1C1F',           // Card level 2 (elevated)
+          3: '#242428',           // Card level 3 (modal/popover)
+        },
+        // Primary accent - Electric Cyan
         cyan: {
-          electric: '#00D4FF',
-          glow: '#00E5FF',
+          50: '#E6FBFF',
+          100: '#B3F4FF',
+          200: '#80EDFF',
+          300: '#4DE6FF',
+          400: '#1ADFFF',
+          electric: '#00D4FF',    // Primary
+          glow: '#00E5FF',        // Lighter variant
+          600: '#00A8CC',
+          700: '#007A99',
+          800: '#004D66',
+          900: '#002633',
         },
+        // Secondary accent - Vivid Violet
         violet: {
-          vivid: '#8B5CF6',
-          glow: '#A78BFA',
+          50: '#F5F3FF',
+          100: '#EDE9FE',
+          200: '#DDD6FE',
+          300: '#C4B5FD',
+          400: '#A78BFA',
+          vivid: '#8B5CF6',       // Primary
+          glow: '#A78BFA',        // Lighter variant
+          600: '#7C3AED',
+          700: '#6D28D9',
+          800: '#5B21B6',
+          900: '#4C1D95',
         },
-        success: '#00FF88',
-        warning: '#FFB800',
-        danger: '#E53935',
+        // Semantic colors
+        success: {
+          DEFAULT: '#10B981',     // Softer than pure green
+          light: '#34D399',
+          dark: '#059669',
+          muted: 'rgba(16, 185, 129, 0.15)',
+        },
+        warning: {
+          DEFAULT: '#F59E0B',
+          light: '#FBBF24',
+          dark: '#D97706',
+          muted: 'rgba(245, 158, 11, 0.15)',
+        },
+        danger: {
+          DEFAULT: '#EF4444',
+          light: '#F87171',
+          dark: '#DC2626',
+          muted: 'rgba(239, 68, 68, 0.15)',
+        },
+        info: {
+          DEFAULT: '#3B82F6',
+          light: '#60A5FA',
+          dark: '#2563EB',
+          muted: 'rgba(59, 130, 246, 0.15)',
+        },
+        // Text colors
+        text: {
+          primary: '#FAFAFA',     // Headings, important
+          secondary: '#A1A1AA',   // Body text
+          tertiary: '#71717A',    // Subdued
+          muted: '#52525B',       // Very subdued
+        },
+        // Border colors
+        border: {
+          DEFAULT: 'rgba(255, 255, 255, 0.08)',
+          subtle: 'rgba(255, 255, 255, 0.05)',
+          strong: 'rgba(255, 255, 255, 0.15)',
+        },
       },
+      // ============================================
+      // TYPOGRAPHY SYSTEM
+      // ============================================
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-        mono: ['JetBrains Mono', 'monospace'],
+        mono: ['JetBrains Mono', 'Menlo', 'monospace'],
+        display: ['Inter', 'system-ui', 'sans-serif'], // For large headlines
       },
+      fontSize: {
+        // Display sizes (for hero metrics)
+        'display-2xl': ['4.5rem', { lineHeight: '1', letterSpacing: '-0.02em', fontWeight: '700' }],
+        'display-xl': ['3.75rem', { lineHeight: '1', letterSpacing: '-0.02em', fontWeight: '700' }],
+        'display-lg': ['3rem', { lineHeight: '1.1', letterSpacing: '-0.02em', fontWeight: '700' }],
+        'display-md': ['2.25rem', { lineHeight: '1.2', letterSpacing: '-0.01em', fontWeight: '600' }],
+        'display-sm': ['1.875rem', { lineHeight: '1.2', letterSpacing: '-0.01em', fontWeight: '600' }],
+        // Metric sizes (tabular numbers)
+        'metric-hero': ['5rem', { lineHeight: '1', letterSpacing: '-0.03em', fontWeight: '700' }],
+        'metric-lg': ['2.5rem', { lineHeight: '1', letterSpacing: '-0.02em', fontWeight: '600' }],
+        'metric-md': ['1.5rem', { lineHeight: '1', letterSpacing: '-0.01em', fontWeight: '600' }],
+      },
+      // ============================================
+      // SPACING & LAYOUT
+      // ============================================
+      spacing: {
+        '18': '4.5rem',
+        '22': '5.5rem',
+        '30': '7.5rem',
+      },
+      borderRadius: {
+        '4xl': '2rem',
+        '5xl': '2.5rem',
+      },
+      // ============================================
+      // SHADOWS (Layered depth system)
+      // ============================================
+      boxShadow: {
+        // Ambient shadows (soft, large)
+        'ambient-sm': '0 2px 8px -2px rgba(0, 0, 0, 0.3)',
+        'ambient-md': '0 4px 16px -4px rgba(0, 0, 0, 0.4)',
+        'ambient-lg': '0 8px 32px -8px rgba(0, 0, 0, 0.5)',
+        'ambient-xl': '0 16px 48px -12px rgba(0, 0, 0, 0.6)',
+        // Glow shadows
+        'glow-cyan': '0 0 20px rgba(0, 212, 255, 0.3), 0 0 40px rgba(0, 212, 255, 0.1)',
+        'glow-violet': '0 0 20px rgba(139, 92, 246, 0.3), 0 0 40px rgba(139, 92, 246, 0.1)',
+        'glow-success': '0 0 20px rgba(16, 185, 129, 0.3), 0 0 40px rgba(16, 185, 129, 0.1)',
+        // Card shadows
+        'card': '0 1px 3px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.2)',
+        'card-hover': '0 4px 12px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3)',
+        'card-elevated': '0 8px 24px rgba(0, 0, 0, 0.4), 0 16px 48px rgba(0, 0, 0, 0.3)',
+      },
+      // ============================================
+      // BACKDROP BLUR
+      // ============================================
       backdropBlur: {
+        xs: '2px',
         glass: '40px',
       },
+      // ============================================
+      // ANIMATIONS
+      // ============================================
       animation: {
         'orb-float': 'orbFloat 20s ease-in-out infinite',
         'orb-float-reverse': 'orbFloatReverse 25s ease-in-out infinite',
         'fade-in': 'fadeIn 0.5s ease-out',
+        'fade-in-up': 'fadeInUp 0.5s ease-out',
         'slide-up': 'slideUp 0.5s ease-out',
+        'slide-in-right': 'slideInRight 0.3s ease-out',
+        'scale-in': 'scaleIn 0.2s ease-out',
+        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'shimmer': 'shimmer 2s ease-in-out infinite',
+        'bounce-subtle': 'bounceSubtle 0.4s ease-out',
       },
       keyframes: {
         orbFloat: {
@@ -71,10 +197,43 @@ export default {
           '0%': { opacity: '0' },
           '100%': { opacity: '1' },
         },
+        fadeInUp: {
+          '0%': { opacity: '0', transform: 'translateY(10px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
         slideUp: {
           '0%': { opacity: '0', transform: 'translateY(20px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
+        slideInRight: {
+          '0%': { opacity: '0', transform: 'translateX(-10px)' },
+          '100%': { opacity: '1', transform: 'translateX(0)' },
+        },
+        scaleIn: {
+          '0%': { opacity: '0', transform: 'scale(0.95)' },
+          '100%': { opacity: '1', transform: 'scale(1)' },
+        },
+        shimmer: {
+          '0%': { backgroundPosition: '-200% 0' },
+          '100%': { backgroundPosition: '200% 0' },
+        },
+        bounceSubtle: {
+          '0%': { transform: 'scale(1)' },
+          '50%': { transform: 'scale(1.02)' },
+          '100%': { transform: 'scale(1)' },
+        },
+      },
+      // ============================================
+      // TRANSITIONS
+      // ============================================
+      transitionDuration: {
+        '250': '250ms',
+        '350': '350ms',
+        '400': '400ms',
+      },
+      transitionTimingFunction: {
+        'out-expo': 'cubic-bezier(0.16, 1, 0.3, 1)',
+        'in-out-expo': 'cubic-bezier(0.87, 0, 0.13, 1)',
       },
     },
   },
