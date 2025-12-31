@@ -121,9 +121,8 @@ function executeFunction(functionName, args, context) {
 
 app.post('/api/chat', async (req, res) => {
   try {
-    const { message, prompt, context, conversationHistory, stream } = req.body;
+    const { message, prompt, context, conversationHistory } = req.body;
     const userMessage = message || prompt;
-    const useStreaming = stream === true;
 
     if (!userMessage) {
       return res.status(400).json({ error: 'Message required' });
@@ -134,10 +133,7 @@ app.post('/api/chat', async (req, res) => {
       return res.status(500).json({ error: 'API key not configured' });
     }
 
-    // Format context values for display
-    const formatCurrency = (value) => value ? `$${Number(value).toLocaleString()}` : 'N/A';
-    const formatPercent = (value) => value ? `${(Number(value) * 100).toFixed(0)}%` : 'N/A';
-    
+    // Enhanced system prompt with context
     const systemPrompt = `You are the Runway DNA Strategic CFO, an expert financial advisor for startups.
 
 YOUR ROLE:
@@ -147,50 +143,23 @@ YOUR ROLE:
 - Think like a seasoned CFO with 20 years of startup experience
 
 RESPONSE STYLE:
-- Be concise (under 3 sentences for simple questions)
+- Be concise but thorough
 - Lead with the most important insight
 - Include specific numbers when relevant
 - End with one clear actionable recommendation
 
-EXPERTISE AREAS:
-- Runway analysis and burn rate optimization
-- Revenue forecasting and growth strategy
-- Fundraising timing and strategy
-- Unit economics and profitability paths
-- Risk assessment and mitigation
-
-INDUSTRY BENCHMARKS (B2B SaaS):
-- Typical monthly burn: $75,000
-- Typical monthly growth: 15% MoM
-- Typical monthly churn: 5%
-- Average Series A size: $8,000,000
-- Healthy burn multiple: < 2x
-- Ideal runway: 18-24 months
-- Target gross margin: > 70%
-- Good NRR: > 100%
-
-CURRENT COMPANY CONTEXT:
 ${context ? `
-- Cash on hand: ${formatCurrency(context.cashOnHand)}
-- Monthly burn: ${formatCurrency(context.monthlyBurn)}
-- Monthly revenue: ${formatCurrency(context.monthlyRevenue)}
+CURRENT COMPANY DATA:
+- Cash on hand: $${context.cashOnHand?.toLocaleString() || 'N/A'}
+- Monthly burn: $${context.monthlyBurn?.toLocaleString() || 'N/A'}
+- Monthly revenue: $${context.monthlyRevenue?.toLocaleString() || 'N/A'}
 - Runway: ${context.runway || 'N/A'} months
-- Revenue growth: ${formatPercent(context.revenueGrowthRate)}
-${context.customerCount ? `- Customers: ${Number(context.customerCount).toLocaleString()}` : ''}
-${context.churnRate ? `- Churn rate: ${formatPercent(context.churnRate)}` : ''}
-${context.employeeCount ? `- Team size: ${context.employeeCount} employees` : ''}
-${context.monthlyPayroll ? `- Monthly payroll: ${formatCurrency(context.monthlyPayroll)}` : ''}
+- Revenue growth: ${context.revenueGrowthRate ? (context.revenueGrowthRate * 100).toFixed(0) + '%' : 'N/A'} monthly
+- Customer count: ${context.customerCount?.toLocaleString() || 'N/A'}
+- Churn rate: ${context.churnRate ? (context.churnRate * 100).toFixed(1) + '%' : 'N/A'}
 ` : 'No financial data provided'}
 
-When the user asks questions, analyze the data deeply and provide strategic guidance as a trusted CFO would.
-You have access to functions to get detailed financial summaries and revenue forecasts. Use them when needed.
-
-ALWAYS end your response with a confidence indicator:
-- 🟢 High confidence (based on clear data)
-- 🟡 Medium confidence (some assumptions)
-- 🔴 Low confidence (need more data)`;
-    
-    let fullPrompt = `${systemPrompt}\n\nUser Question: ${userMessage}`;
+Provide strategic guidance as a trusted CFO would.`;
 
     const contents = [];
     
@@ -203,178 +172,36 @@ ALWAYS end your response with a confidence indicator:
       }
     }
     
+    const fullPrompt = `${systemPrompt}\n\nUser: ${userMessage}`;
+    
     contents.push({
       role: 'user',
       parts: [{ text: fullPrompt }]
     });
 
-    // Choose endpoint based on streaming preference
-    // Note: Function calling doesn't work with streaming, so disable streaming if functions are needed
-    const endpoint = useStreaming ? 'streamGenerateContent' : 'generateContent';
-    const apiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:${endpoint}?key=${apiKey}`;
+    const apiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
     
-    // First API call with function declarations
-    let requestBody = {
-      contents,
-      tools: [{ functionDeclarations }],
-      generationConfig: {
-        temperature: 0.7,
-        maxOutputTokens: 2048,
-      }
-    };
-
-    // Set up streaming response headers if needed
-    if (useStreaming) {
-      res.setHeader('Content-Type', 'text/event-stream');
-      res.setHeader('Cache-Control', 'no-cache');
-      res.setHeader('Connection', 'keep-alive');
-    }
-
-    let geminiResponse = await fetch(apiUrl, {
+    const geminiResponse = await fetch(apiUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(requestBody)
-    });
-
-    if (!geminiResponse.ok) {
-      const errorText = await geminiResponse.text();
-      console.error('[Chat API] Gemini API error:', errorText);
-      console.error('[Chat API] Status:', geminiResponse.status);
-      console.error('[Chat API] URL:', apiUrl);
-      if (useStreaming) {
-        res.write(`data: ${JSON.stringify({ error: 'AI request failed', details: errorText })}\n\n`);
-        res.end();
-      } else {
-        return res.status(500).json({ 
-          error: 'AI request failed',
-          details: errorText,
-          status: geminiResponse.status
-        });
-      }
-      return;
-    }
-
-    // Handle streaming response
-    if (useStreaming && geminiResponse.body) {
-      const reader = geminiResponse.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = '';
-
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || '';
-
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              try {
-                const data = JSON.parse(line.slice(6));
-                const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (text) {
-                  res.write(`data: ${JSON.stringify({ text, done: false })}\n\n`);
-                }
-              } catch (e) {
-                // Skip invalid JSON
-              }
-            }
-          }
-        }
-
-        res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
-        res.end();
-        return;
-      } catch (error) {
-        console.error('Streaming error:', error);
-        res.write(`data: ${JSON.stringify({ error: error.message })}\n\n`);
-        res.end();
-        return;
-      }
-    }
-
-    // Non-streaming response
-    let data = await geminiResponse.json();
-    console.log('[Chat API] Response structure:', {
-      hasCandidates: !!data.candidates,
-      candidatesLength: data.candidates?.length,
-      hasParts: !!data.candidates?.[0]?.content?.parts,
-      partsLength: data.candidates?.[0]?.content?.parts?.length
-    });
-    
-    let responseText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    const functionCalls = data.candidates?.[0]?.content?.parts?.filter(part => part.functionCall);
-    
-    console.log('[Chat API] Response text length:', responseText?.length || 0);
-    console.log('[Chat API] Function calls:', functionCalls?.length || 0);
-
-    // Handle function calls
-    if (functionCalls && functionCalls.length > 0) {
-      // Add the model's response with function calls to conversation
-      contents.push({
-        role: 'model',
-        parts: data.candidates[0].content.parts
-      });
-
-      // Execute functions and add results
-      for (const functionCall of functionCalls) {
-        const functionName = functionCall.functionCall.name;
-        const args = JSON.parse(functionCall.functionCall.args || '{}');
-        
-        console.log(`[Function Call] ${functionName}`, args);
-        
-        const functionResult = executeFunction(functionName, args, context);
-        
-        // Add function result to conversation
-        contents.push({
-          role: 'function',
-          parts: [{
-            functionResponse: {
-              name: functionName,
-              response: functionResult
-            }
-          }]
-        });
-      }
-
-      // Second API call with function results
-      requestBody = {
+      body: JSON.stringify({
         contents,
-        tools: [{ functionDeclarations }],
         generationConfig: {
           temperature: 0.7,
           maxOutputTokens: 2048,
         }
-      };
+      })
+    });
 
-      geminiResponse = await fetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody)
-      });
-
-      if (!geminiResponse.ok) {
-        const errorText = await geminiResponse.text();
-        console.error('Gemini error (function response):', errorText);
-        return res.status(500).json({ error: 'AI request failed' });
-      }
-
-      data = await geminiResponse.json();
-      responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response';
-      console.log('[Chat API] Final response after function calls:', responseText?.length || 0);
+    if (!geminiResponse.ok) {
+      const errorText = await geminiResponse.text();
+      console.error('Gemini error:', errorText);
+      return res.status(500).json({ error: 'AI request failed' });
     }
 
-    if (!responseText) {
-      console.error('[Chat API] No response text found in data:', JSON.stringify(data, null, 2));
-      return res.status(500).json({ 
-        error: 'No response from AI',
-        debug: 'Check server logs for details'
-      });
-    }
+    const data = await geminiResponse.json();
+    const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response';
 
-    console.log('[Chat API] ✅ Success, returning response');
     return res.json({ response: responseText, text: responseText });
   } catch (error) {
     console.error('Error:', error);
