@@ -1,6 +1,7 @@
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import cron from 'node-cron';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -717,6 +718,176 @@ When the user asks questions, analyze the data deeply and provide strategic guid
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
 });
+
+// Weekly report generation endpoint
+app.post('/api/weekly-report', async (req, res) => {
+  try {
+    const { context, email } = req.body;
+    
+    if (!context) {
+      return res.status(400).json({ error: 'Financial context required' });
+    }
+
+    const apiKey = process.env.GOOGLE_AI_KEY || process.env.GOOGLE_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({ error: 'API key not configured' });
+    }
+
+    const formatCurrency = (value) => value ? `$${Number(value).toLocaleString()}` : 'N/A';
+    const formatPercent = (value) => value ? `${(Number(value) * 100).toFixed(0)}%` : 'N/A';
+
+    const weeklyReportPrompt = `Analyze last week's performance and highlight key changes.
+
+Current financial context:
+- Cash on hand: ${formatCurrency(context.cashOnHand)}
+- Monthly burn: ${formatCurrency(context.monthlyBurn)}
+- Monthly revenue: ${formatCurrency(context.monthlyRevenue)}
+- Runway: ${context.runway ? context.runway.toFixed(1) : 'N/A'} months
+- Revenue growth: ${formatPercent(context.revenueGrowthRate)} monthly
+${context.churnRate ? `- Churn rate: ${formatPercent(context.churnRate)} monthly` : ''}
+${context.burnIncreasing ? '- ⚠️ Burn is increasing' : ''}
+${context.revenueGrowthSlowing ? '- ⚠️ Revenue growth is slowing' : ''}
+${context.approachingBreakeven ? '- ✅ Approaching breakeven' : ''}
+
+Provide a weekly performance report with:
+1. Key metrics changes (vs. previous week if available)
+2. Top 3 highlights (positive developments)
+3. Top 3 concerns (areas needing attention)
+4. Runway trajectory (improving/stable/declining)
+5. Action items for the coming week
+
+Format as a professional weekly update suitable for email.`;
+
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+    
+    const contents = [{
+      role: 'user',
+      parts: [{ text: weeklyReportPrompt }]
+    }];
+
+    const geminiResponse = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents,
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 2048,
+        }
+      }),
+      signal: AbortSignal.timeout(30000)
+    });
+
+    if (!geminiResponse.ok) {
+      const errorText = await geminiResponse.text();
+      throw new Error(`Gemini API error: ${errorText}`);
+    }
+
+    const data = await geminiResponse.json();
+    const report = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No report generated';
+
+    console.log('[Weekly Report] Generated report:', report.substring(0, 100) + '...');
+    
+    if (email) {
+      console.log('[Weekly Report] Email would be sent to:', email);
+      // TODO: Implement email sending (Resend, SendGrid, etc.)
+    }
+
+    return res.json({ 
+      success: true, 
+      report,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('[Weekly Report] Error:', error);
+    return res.status(500).json({ 
+      error: error.message || 'Failed to generate weekly report'
+    });
+  }
+});
+
+// Weekly report generation function (for cron)
+async function generateWeeklyReport() {
+  try {
+    console.log('[Cron] Starting weekly report generation...');
+    
+    // Get latest financial snapshot from Supabase
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.warn('[Cron] Supabase not configured for weekly reports. Skipping.');
+      return;
+    }
+
+    // Import Supabase client dynamically
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Get most recent snapshot
+    const { data: snapshot, error } = await supabase
+      .from('dna_snapshots')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error || !snapshot) {
+      console.error('[Cron] Failed to fetch snapshot:', error);
+      return;
+    }
+
+    // Build context from snapshot
+    const context = {
+      cashOnHand: snapshot.cash_on_hand,
+      monthlyBurn: snapshot.monthly_burn,
+      monthlyRevenue: snapshot.monthly_revenue,
+      runway: snapshot.runway_months,
+      revenueGrowthRate: snapshot.revenue_growth,
+      churnRate: null,
+      burnIncreasing: (snapshot.expense_growth || 0) > 0,
+      revenueGrowthSlowing: (snapshot.revenue_growth || 0) < 0.1,
+      approachingBreakeven: snapshot.monthly_revenue >= (snapshot.monthly_burn * 0.9),
+    };
+
+    // Call the weekly report endpoint
+    const reportUrl = process.env.RAILWAY_PUBLIC_DOMAIN 
+      ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}/api/weekly-report`
+      : `http://localhost:${PORT}/api/weekly-report`;
+
+    const response = await fetch(reportUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        context, 
+        email: process.env.REPORT_EMAIL 
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Report generation failed: ${response.status}`);
+    }
+
+    const result = await response.json();
+    console.log('[Cron] Weekly report generated successfully');
+    return result;
+  } catch (error) {
+    console.error('[Cron] Weekly report generation failed:', error);
+  }
+}
+
+// Schedule weekly report (every Monday at 9 AM)
+// Cron format: minute hour day-of-month month day-of-week
+// '0 9 * * 1' = 9:00 AM every Monday
+if (process.env.ENABLE_WEEKLY_REPORTS === 'true') {
+  cron.schedule('0 9 * * 1', generateWeeklyReport, {
+    scheduled: true,
+    timezone: 'America/New_York' // Adjust to your timezone
+  });
+  console.log('[Cron] Weekly report scheduled: Every Monday at 9:00 AM');
+} else {
+  console.log('[Cron] Weekly reports disabled (set ENABLE_WEEKLY_REPORTS=true to enable)');
+}
 
 app.use(express.static(path.join(__dirname, 'dist')));
 
