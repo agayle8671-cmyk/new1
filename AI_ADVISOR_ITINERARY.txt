@@ -1,0 +1,1087 @@
+================================================================================
+                    RUNWAY DNA - AI ADVISOR COMPLETE ITINERARY
+                    Comprehensive Feature & Technical Documentation
+                              For Review & Improvement
+================================================================================
+
+Document Version: 1.0
+Last Updated: January 2025
+Purpose: Complete technical and feature documentation for AI Advisor review
+
+================================================================================
+                            TABLE OF CONTENTS
+================================================================================
+
+1. EXECUTIVE OVERVIEW
+2. ARCHITECTURE & TECHNICAL STACK
+3. CORE FEATURES & CAPABILITIES
+4. USER INTERFACE COMPONENTS
+5. AI PERSONA & SYSTEM PROMPT
+6. DATA CONTEXT & INTEGRATION
+7. FUNCTION CALLING SYSTEM
+8. CACHING & PERFORMANCE
+9. ERROR HANDLING & RESILIENCE
+10. METRICS & ANALYTICS
+11. CONFIGURATION & DEPLOYMENT
+12. KNOWN LIMITATIONS & IMPROVEMENT OPPORTUNITIES
+
+================================================================================
+                        1. EXECUTIVE OVERVIEW
+================================================================================
+
+The AI Advisor is a comprehensive financial intelligence system powered by Google
+Gemini 2.5 Flash, designed to provide strategic CFO-level insights for SaaS founders.
+It combines natural language chat, structured financial analysis, and automated
+reporting capabilities.
+
+KEY CHARACTERISTICS:
+- Real-time financial data integration
+- Multi-modal AI interactions (chat, structured analysis, reports)
+- Context-aware responses using company financial data
+- Function calling for dynamic data retrieval
+- Conversation memory and sentiment analysis
+- Competitive benchmarking and scenario planning
+
+PRIMARY USE CASES:
+1. Natural language Q&A about financial health
+2. Strategic insights generation
+3. Board deck creation
+4. Fundraising readiness assessment
+5. Risk identification and mitigation
+6. Industry benchmarking
+7. Scenario analysis ("what if" questions)
+8. Competitive positioning
+
+================================================================================
+                    2. ARCHITECTURE & TECHNICAL STACK
+================================================================================
+
+FRONTEND:
+- Framework: React 18 with TypeScript
+- UI Library: Tailwind CSS + Framer Motion
+- State Management: Zustand (useAppStore)
+- Routing: React Router DOM
+- Icons: Lucide React
+- Notifications: Sonner (toast notifications)
+
+BACKEND:
+- Server: Express.js on Railway
+- AI Provider: Google Gemini 2.5 Flash (via REST API)
+- API Endpoint: /api/chat (POST)
+- Database: Supabase (PostgreSQL)
+- Deployment: Railway (Docker-based)
+
+AI INTEGRATION:
+- Model: gemini-2.5-flash
+- API Version: v1beta (for function calling support)
+- Endpoint: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash
+- Authentication: Server-side API key (GOOGLE_AI_KEY in Railway)
+
+KEY FILES:
+- Frontend UI: src/pages/AIAdvisor.tsx (806 lines)
+- AI Service Logic: src/lib/services/AIService.ts (941 lines)
+- Server API: server.js (lines 313-730)
+- API Functions: src/lib/api.ts (conversation memory, sentiment)
+
+================================================================================
+                    3. CORE FEATURES & CAPABILITIES
+================================================================================
+
+3.1 NATURAL LANGUAGE CHAT
+-------------------------
+Location: src/pages/AIAdvisor.tsx (lines 184-234)
+Function: AIService.chat()
+
+Capabilities:
+- Real-time conversation with AI CFO
+- Full conversation history support
+- Context-aware responses using financial data
+- Automatic conversation memory saving
+- Streaming support (optional, via stream parameter)
+
+User Experience:
+- Chat interface with message bubbles
+- User messages: Cyan background, right-aligned
+- AI messages: Glassmorphic background, left-aligned
+- Loading indicator during AI processing
+- Auto-scroll to latest message
+
+Technical Details:
+- Messages stored in React state (AIMessage[])
+- Conversation history passed to API for context
+- Each response automatically saved to ai_conversation_memory table
+- Key insights extracted and stored (first 2-3 sentences)
+
+3.2 STRATEGIC INSIGHTS
+----------------------
+Location: src/lib/services/AIService.ts (lines 469-499)
+Function: AIService.getStrategicInsights()
+
+Capabilities:
+- Generates 3-5 strategic insights based on financial data
+- Categorizes insights: success, warning, danger, info
+- Priority ranking (1-5, highest to lowest)
+- Color-coded display in UI
+
+Output Format:
+{
+  title: string (5-7 words),
+  content: string (2-3 sentences),
+  type: 'success' | 'warning' | 'danger' | 'info',
+  priority: number (1-5)
+}
+
+UI Display:
+- Grid layout with color-coded cards
+- Icons: Check (success), AlertTriangle (warning/danger), Sparkles (info)
+- Refresh button to regenerate insights
+- Copy to clipboard functionality
+
+3.3 BOARD DECK GENERATOR
+-------------------------
+Location: src/lib/services/AIService.ts (lines 587-623)
+Function: AIService.generateBoardDeck()
+
+Capabilities:
+- Generates professional board deck update
+- 7 sections: Executive Summary, Financial Performance, Growth Metrics,
+  Key Wins, Challenges & Mitigations, Next Quarter Priorities, Ask/Support
+
+Output Format:
+{
+  title: string,
+  content: string (main paragraph),
+  bullets: string[],
+  metrics: [{label: string, value: string, trend: 'up'|'down'|'neutral'}]
+}
+
+UI Display:
+- Expandable sections with metrics badges
+- Copy all functionality
+- Professional formatting for investor presentations
+
+3.4 FUNDRAISING READINESS ASSESSMENT
+-------------------------------------
+Location: src/lib/services/AIService.ts (lines 673-721)
+Function: AIService.assessFundraisingReadiness()
+
+Capabilities:
+- Scores readiness 0-100
+- Assigns grade: A, B, C, D, F
+- Identifies top 3 strengths
+- Identifies top 3 weaknesses
+- Provides 5 action items
+- Summary paragraph
+
+Output Format:
+{
+  score: number (0-100),
+  grade: 'A' | 'B' | 'C' | 'D' | 'F',
+  strengths: string[],
+  weaknesses: string[],
+  actionItems: string[],
+  summary: string
+}
+
+Evaluation Criteria:
+- Revenue growth trajectory
+- Burn rate efficiency
+- Runway remaining
+- Unit economics indicators
+- Overall financial health
+
+UI Display:
+- Large score display with grade
+- Two-column layout: Strengths vs. Weaknesses
+- Color-coded grade (A=green, B=cyan, C=yellow, D/F=red)
+- Summary paragraph in highlighted box
+
+3.5 RISK ASSESSMENT
+-------------------
+Location: src/lib/services/AIService.ts (lines 726-774)
+Function: AIService.assessRisks()
+
+Capabilities:
+- Identifies 4-6 key risks across categories
+- Risk categories: Runway/Cash, Revenue, Operational, Market
+- Likelihood scoring (1-5)
+- Impact scoring (1-5)
+- Mitigation strategies for each risk
+- Overall risk level: low, medium, high, critical
+
+Output Format:
+{
+  riskLevel: 'low' | 'medium' | 'high' | 'critical',
+  risks: [{
+    category: string,
+    description: string,
+    likelihood: number (1-5),
+    impact: number (1-5),
+    mitigation: string
+  }],
+  overallSummary: string
+}
+
+UI Display:
+- Risk level badge (color-coded)
+- Grid layout showing all risks
+- Impact/Likelihood scores displayed
+- Mitigation strategies highlighted in green
+
+3.6 INDUSTRY BENCHMARKING
+--------------------------
+Location: src/lib/services/AIService.ts (lines 884-941)
+Function: AIService.benchmarkAnalysis()
+
+Capabilities:
+- Compares company metrics to B2B SaaS industry standards
+- Benchmarks included:
+  * Typical monthly burn: $75,000
+  * Typical monthly growth: 15% MoM
+  * Typical monthly churn: 5%
+  * Average Series A size: $8,000,000
+  * Healthy burn multiple: < 2x
+  * Ideal runway: 18-24 months
+  * Target gross margin: > 70%
+  * Good NRR: > 100%
+
+Output:
+- Markdown-formatted comparison
+- Highlights strengths and weaknesses
+- Contextual analysis
+
+UI Display:
+- Pre-formatted text display
+- Scrollable content area
+
+3.7 SCENARIO ANALYSIS ("WHAT IF" QUESTIONS)
+--------------------------------------------
+Location: src/lib/services/AIService.ts (lines 779-813)
+Function: AIService.analyzeScenario()
+
+Capabilities:
+- Answers "what if" questions about financial scenarios
+- Predefined scenarios:
+  * Optimistic: 25% revenue growth, 2% churn
+  * Realistic: 15% revenue growth, 5% churn
+  * Pessimistic: 5% revenue growth, 10% churn
+
+Analysis Includes:
+1. Impact on runway (in months)
+2. Impact on burn rate and profitability timeline
+3. Revenue trajectory over next 12 months
+4. Key risks and opportunities
+5. Actionable recommendations
+
+Example Questions:
+- "What happens if revenue growth slows to 5%?"
+- "How would a pessimistic scenario affect our runway?"
+- "What if churn increases to 10%?"
+
+3.8 COMPETITIVE BENCHMARKING
+-----------------------------
+Location: src/lib/services/AIService.ts (lines 818-857)
+Function: AIService.competitiveBenchmark()
+
+Capabilities:
+- Compares company to competitors and industry median
+- Competitor data:
+  * Competitor 1: 18 months runway, 20% monthly growth
+  * Competitor 2: 12 months runway, 30% monthly growth
+  * Industry Median: 15 months runway, 18% monthly growth
+
+Analysis Includes:
+1. Runway comparison (ranking)
+2. Growth rate comparison
+3. Competitive position assessment
+4. Strengths vs. competitors
+5. Areas lagging behind
+6. Strategic recommendations
+
+3.9 CONNECTION TESTING
+----------------------
+Location: src/lib/services/AIService.ts (lines 208-310)
+Function: AIService.testConnection()
+
+Capabilities:
+- Tests AI API connectivity
+- Measures latency
+- 60-second cooldown to prevent rate limits
+- Visual connection status indicator
+
+UI Display:
+- Status badge: Connected/Disconnected/Not tested
+- Latency display (ms)
+- Manual test button with refresh icon
+- Loading state during test
+
+================================================================================
+                    4. USER INTERFACE COMPONENTS
+================================================================================
+
+4.1 HEADER SECTION
+------------------
+Location: src/pages/AIAdvisor.tsx (lines 412-450)
+
+Components:
+- Title: "AI Financial Advisor" with gradient text
+- Subtitle: "Powered by Gemini • Using your financial data"
+- Connection status badge (real-time)
+- Test connection button
+
+Connection Status States:
+- Connected: Green badge, shows latency
+- Disconnected: Red badge, shows error
+- Not tested: Gray badge, neutral state
+
+4.2 QUICK ACTIONS GRID
+----------------------
+Location: src/pages/AIAdvisor.tsx (lines 452-502)
+
+Five Action Buttons:
+1. Insights (Sparkles icon) - Generates strategic insights
+2. Board Deck (FileText icon) - Creates board presentation
+3. Fundraise (Target icon) - Assesses fundraising readiness
+4. Risks (Shield icon) - Performs risk assessment
+5. Benchmarks (BarChart3 icon) - Compares to industry
+
+Button States:
+- Default: Glassmorphic style
+- Loading: Spinning loader icon
+- Disabled: Opacity reduced, cursor not-allowed
+
+4.3 MAIN CONTENT GRID
+---------------------
+Location: src/pages/AIAdvisor.tsx (lines 504-622)
+
+Two-Column Layout (responsive):
+- Left: Chat interface (500px height)
+- Right: Strategic Insights panel (500px height)
+
+Chat Interface:
+- Message history (scrollable)
+- Input field with send button
+- Loading indicator
+- Auto-scroll to bottom
+
+Insights Panel:
+- Color-coded insight cards
+- Refresh button
+- Empty state with prompt
+
+4.4 FEATURE RESULT SECTIONS
+---------------------------
+Location: src/pages/AIAdvisor.tsx (lines 624-803)
+
+Dynamic Sections (AnimatePresence):
+- Fundraising Readiness (lines 624-679)
+- Risk Assessment (lines 681-721)
+- Board Deck (lines 723-780)
+- Benchmarks (lines 782-803)
+
+Each section:
+- Appears on-demand when feature is triggered
+- Smooth animations (fade + height)
+- Copy to clipboard functionality
+- Professional formatting
+
+4.5 DEBUG INFO PANEL
+--------------------
+Location: src/pages/AIAdvisor.tsx (lines 380-399)
+
+Shown when AI not configured:
+- Debug information (JSON format)
+- Setup instructions for Railway
+- API key configuration guide
+- Important warnings about VITE_ prefix
+
+================================================================================
+                    5. AI PERSONA & SYSTEM PROMPT
+================================================================================
+
+5.1 STRATEGIC CFO PERSONA
+--------------------------
+Location: server.js (lines 380-451)
+
+Role Definition:
+"You are the Runway DNA Strategic CFO, an expert financial advisor for startups."
+
+Core Characteristics:
+- 20 years of startup experience
+- Data-driven decision making
+- Proactive risk identification
+- Actionable strategy focus
+
+Response Style Guidelines:
+- Concise (under 3 sentences for simple questions)
+- Lead with most important insight
+- Include specific numbers when relevant
+- End with one clear actionable recommendation
+
+5.2 EXPERTISE AREAS
+-------------------
+1. Runway analysis and burn rate optimization
+2. Revenue forecasting and growth strategy
+3. Fundraising timing and strategy
+4. Unit economics and profitability paths
+5. Risk assessment and mitigation
+
+5.3 SYSTEM PROMPT STRUCTURE
+---------------------------
+1. Role definition
+2. Response style guidelines
+3. Expertise areas
+4. Analysis types available
+5. Scenario analysis instructions
+6. Competitive benchmarking data
+7. Industry benchmarks
+8. Current company context (dynamic)
+
+5.4 CONTEXT FORMATTING
+----------------------
+Financial data formatted for clarity:
+- Currency: $X,XXX format
+- Percentages: X% format
+- Dates: Locale-formatted
+- Alerts: Emoji indicators (⚠️, ✅)
+
+Context Includes:
+- Cash on hand
+- Monthly burn & revenue
+- Runway (months)
+- Revenue growth rate
+- Customer count & churn
+- Fundraising history
+- Team size & payroll
+- Alert flags (burn increasing, growth slowing, approaching breakeven)
+- Customer sentiment (if available)
+
+================================================================================
+                    6. DATA CONTEXT & INTEGRATION
+================================================================================
+
+6.1 CONTEXT BUILDING
+--------------------
+Location: src/pages/AIAdvisor.tsx (lines 129-182)
+Function: getContext()
+
+Data Sources:
+1. currentAnalysis (from DNA Lab upload)
+   - Cash on hand, monthly burn/revenue
+   - Runway months, growth rates
+   - Expense growth, profit margin
+   - Revenue trends
+
+2. simulatorParams (from Simulator page)
+   - More current/real-time data
+   - Overrides analysis data if available
+   - Includes expense growth, revenue growth
+
+3. Customer Feedback (from Supabase)
+   - Fetched from last 7 days
+   - Sentiment analysis (positive/neutral/negative)
+   - Trend analysis (improving/stable/declining)
+   - Counts: positive, negative, neutral
+
+6.2 ENHANCED CONTEXT FIELDS
+---------------------------
+Location: src/lib/services/AIService.ts (lines 62-105)
+
+Financial Context:
+- cashOnHand: number
+- monthlyBurn: number
+- monthlyRevenue: number
+- runway: number (months)
+
+Growth Metrics:
+- revenueGrowthRate: number (monthly, decimal)
+- customerCount: number
+- avgRevenuePerCustomer: number
+- churnRate: number (monthly, decimal)
+
+Fundraising:
+- lastRoundAmount: number
+- lastRoundDate: string
+- investorsCount: number
+- targetNextRound: number
+
+Team:
+- employeeCount: number
+- monthlyPayroll: number
+
+Alerts (boolean flags):
+- burnIncreasing: boolean
+- revenueGrowthSlowing: boolean
+- approachingBreakeven: boolean
+
+Customer Sentiment:
+- overall: 'positive' | 'neutral' | 'negative'
+- score: number (-1 to 1)
+- positiveCount: number
+- negativeCount: number
+- neutralCount: number
+- totalCount: number
+- recentTrend: 'improving' | 'stable' | 'declining' (optional)
+
+6.3 DATA FLOW
+-------------
+1. User uploads CSV in DNA Lab → FinancialAnalysis created
+2. User adjusts sliders in Simulator → SimParams updated
+3. AI Advisor page loads → getContext() called
+4. Context fetches:
+   - currentAnalysis from Zustand store
+   - simulatorParams from Zustand store
+   - customerFeedback from Supabase (async)
+5. Context object built with all available data
+6. Context passed to AI service functions
+7. AI receives formatted context in system prompt
+
+================================================================================
+                    7. FUNCTION CALLING SYSTEM
+================================================================================
+
+7.1 FUNCTION DECLARATIONS
+-------------------------
+Location: server.js (lines 120-190)
+
+Available Functions:
+1. get_financial_summary(timeframe: 'current'|'last_month'|'last_quarter')
+   - Returns current financial metrics
+   - Cached for 60 seconds
+   - Includes: cash, burn, revenue, runway, burn multiple, profit margin
+
+2. get_revenue_forecast(months_ahead: 1-24)
+   - Projects revenue based on current growth rate
+   - Returns month-by-month forecast
+   - Includes 12-month and 24-month projections
+
+3. perform_analysis(analysis_type: 'runway'|'fundraising'|'growth'|'risk'|'breakeven')
+   - Generates detailed analysis prompt
+   - Returns structured guidance for AI
+   - Context-aware analysis
+
+4. get_industry_benchmarks()
+   - Returns B2B SaaS benchmark data
+   - Used for comparison analysis
+   - Static data (can be enhanced)
+
+7.2 FUNCTION EXECUTION FLOW
+---------------------------
+1. User asks question requiring data
+2. AI decides to call function(s)
+3. Server executes function(s) with context
+4. Function results added to conversation
+5. AI makes second API call with function results
+6. Final response generated with data insights
+
+7.3 CACHING STRATEGY
+--------------------
+- Financial summaries: 60-second TTL
+- Response cache: 10-minute TTL (non-streaming, non-conversation)
+- Cache key: message + normalized context
+- Cache cleanup: Automatic every 10 minutes
+
+================================================================================
+                    8. CACHING & PERFORMANCE
+================================================================================
+
+8.1 RESPONSE CACHING
+--------------------
+Location: server.js (lines 15-70)
+
+Implementation:
+- Map-based cache (responseCache)
+- Key: message + normalized context
+- TTL: 10 minutes
+- Cleanup: Every 10 minutes
+
+Cache Conditions:
+- Only for non-streaming requests
+- Only for requests without conversation history
+- Cache hits return immediately (0ms response time)
+
+8.2 FINANCIAL SUMMARY CACHING
+------------------------------
+Location: server.js (lines 12-13, 143-189)
+
+Implementation:
+- Map-based cache (financialSummaryCache)
+- Key: timeframe + context hash
+- TTL: 60 seconds
+- Automatic expiration
+
+8.3 RATE LIMITING
+-----------------
+Location: server.js (lines 19-70)
+
+Implementation:
+- 20 requests per minute per user (IP-based)
+- Sliding window algorithm
+- Automatic cleanup of old entries
+- Returns 429 status on limit exceeded
+
+8.4 RETRY LOGIC
+---------------
+Location: server.js (lines 250-280), src/lib/services/AIService.ts (lines 350-390)
+
+Strategy:
+- Exponential backoff (1s, 2s, 4s delays)
+- Max 3 retries
+- Retries only for transient errors:
+  * Rate limits (429)
+  * Timeouts (AbortError)
+  * Server errors (5xx)
+- Non-retryable: 400, 401, 404 errors
+
+8.5 TIMEOUTS
+------------
+- Connection test: 15 seconds
+- Chat requests: 30 seconds
+- AbortController used for cancellation
+
+================================================================================
+                    9. ERROR HANDLING & RESILIENCE
+================================================================================
+
+9.1 ERROR TYPES HANDLED
+-----------------------
+1. API Key Not Configured
+   - Status: 500
+   - Message: "API key not configured"
+   - Hint: "Add GOOGLE_AI_KEY to Railway environment variables"
+
+2. Rate Limit Exceeded
+   - Status: 429
+   - Message: "Rate limit exceeded"
+   - Hint: "Please wait a moment before making another request"
+   - Retry-After: 60 seconds
+
+3. Request Timeout
+   - Status: 504
+   - Message: "Request timeout"
+   - Hint: "Server may be cold starting. Try again in a moment."
+
+4. Empty Response
+   - Status: 500
+   - Message: "Empty response from AI"
+   - Details: "Gemini API returned no text"
+
+5. Network Errors
+   - Retry with exponential backoff
+   - User-friendly error messages
+   - Logging for debugging
+
+9.2 GRACEFUL DEGRADATION
+------------------------
+- Customer sentiment: Silently fails if unavailable
+- Conversation memory: Silently fails if save fails
+- Context building: Works with partial data
+- Function calling: Falls back to direct analysis if functions fail
+
+9.3 USER-FACING ERROR DISPLAY
+-----------------------------
+- Toast notifications for errors
+- Connection status badge shows errors
+- Debug panel when not configured
+- Helpful setup instructions
+
+================================================================================
+                    10. METRICS & ANALYTICS
+================================================================================
+
+10.1 AI METRICS TRACKING
+-------------------------
+Location: server.js (lines 314-316, 345-364, 717-732)
+Database: ai_metrics table
+
+Tracked Metrics:
+- Query text
+- Response time (ms)
+- Function calls used
+- Cache hit status
+- Cost estimate (USD)
+- Satisfaction score (1-5, optional)
+
+10.2 METRICS AGGREGATION
+------------------------
+Location: src/lib/api.ts (fetchAIMetrics function)
+
+Calculated Metrics:
+- totalQueries: Total number of queries in period
+- avgResponseTime: Average response time (ms)
+- functionCallsUsed: Total function calls
+- topQuestions: Most frequently asked (top 10)
+- userSatisfactionScore: Average satisfaction (1-5)
+- costPerQuery: Average cost per query (USD)
+- cacheHitRate: Percentage of cache hits (0-1)
+
+10.3 CONVERSATION MEMORY
+------------------------
+Location: src/lib/api.ts (saveConversationMemory function)
+Database: ai_conversation_memory table
+
+Stored Data:
+- Summary: Question + response preview (200 chars)
+- Key insights: Array of extracted insights (first 2-3 sentences)
+- Timestamp: Auto-generated
+- User ID: For multi-user support (future)
+
+10.4 CUSTOMER SENTIMENT TRACKING
+--------------------------------
+Location: src/lib/api.ts (fetchAndAnalyzeCustomerFeedback function)
+Database: customer_feedback table
+
+Analysis:
+- Keyword-based sentiment analysis
+- Positive/negative/neutral classification
+- Score calculation (-1 to 1)
+- Trend analysis (improving/stable/declining)
+- Aggregate metrics over time period
+
+================================================================================
+                    11. CONFIGURATION & DEPLOYMENT
+================================================================================
+
+11.1 ENVIRONMENT VARIABLES
+---------------------------
+Required (Railway):
+- GOOGLE_AI_KEY: Google Gemini API key (server-side)
+- PORT: Server port (default: 3000)
+- SUPABASE_URL: Supabase project URL (for metrics/sentiment)
+- SUPABASE_SERVICE_ROLE_KEY: Service role key (for server-side access)
+
+Optional:
+- ENABLE_WEEKLY_REPORTS: 'true' to enable cron jobs
+- REPORT_EMAIL: Email for weekly reports
+- RAILWAY_PUBLIC_DOMAIN: Domain for cron self-calling
+
+Build-time (Vite):
+- VITE_SUPABASE_URL: Supabase URL (client-side)
+- VITE_SUPABASE_ANON_KEY: Supabase anon key (client-side)
+
+11.2 API KEY SETUP
+------------------
+Critical: API key must be server-side only
+- Variable name: GOOGLE_AI_KEY (NOT VITE_GOOGLE_AI_KEY)
+- Location: Railway → Service → Settings → Variables
+- Security: Never exposed to browser/client
+
+11.3 DEPLOYMENT ARCHITECTURE
+----------------------------
+- Frontend: Built with Vite, served as static files
+- Backend: Express.js server on Railway
+- Database: Supabase (PostgreSQL)
+- AI API: Google Gemini (direct REST calls)
+
+Request Flow:
+1. User → React App (frontend)
+2. React App → /api/chat (Express server)
+3. Express Server → Google Gemini API
+4. Express Server → Supabase (metrics, memory)
+5. Response → React App → User
+
+11.4 DATABASE TABLES
+--------------------
+1. ai_metrics: Query tracking and analytics
+2. ai_conversation_memory: Conversation summaries
+3. customer_feedback: Customer sentiment data
+4. dna_snapshots: Financial analysis snapshots (context source)
+
+================================================================================
+            12. KNOWN LIMITATIONS & IMPROVEMENT OPPORTUNITIES
+================================================================================
+
+12.1 CURRENT LIMITATIONS
+------------------------
+1. No user authentication (all metrics anonymous)
+2. Simple keyword-based sentiment analysis (could use AI)
+3. Limited competitor data (hardcoded, could be dynamic)
+4. No conversation history persistence (only summaries)
+5. No multi-turn function calling (single round only)
+6. Cost estimation is rough (token counting approximation)
+7. No streaming UI implementation (streaming supported but not used)
+8. Limited error recovery (basic retry logic)
+9. No A/B testing for prompts
+10. No feedback loop for prompt improvement
+
+12.2 IMPROVEMENT OPPORTUNITIES
+-------------------------------
+
+A. USER EXPERIENCE
+------------------
+1. Conversation History Persistence
+   - Save full conversation threads
+   - Allow users to resume previous conversations
+   - Search through past conversations
+
+2. Streaming Response Display
+   - Implement real-time streaming UI
+   - Show tokens as they arrive
+   - Better perceived performance
+
+3. Response Rating System
+   - Thumbs up/down on responses
+   - Collect feedback for improvement
+   - Update satisfaction scores
+
+4. Export Functionality
+   - Export conversations as PDF
+   - Export insights as reports
+   - Share board decks directly
+
+B. AI CAPABILITIES
+------------------
+1. Enhanced Function Calling
+   - Multi-turn function calling
+   - Chain of function calls
+   - Dynamic function discovery
+
+2. Advanced Sentiment Analysis
+   - Use AI for sentiment (instead of keywords)
+   - More nuanced sentiment detection
+   - Emotion analysis
+
+3. Predictive Analytics
+   - Forecast future scenarios
+   - Trend prediction
+   - Anomaly detection
+
+4. Custom Prompts
+   - Allow users to customize AI personality
+   - Industry-specific prompts
+   - Role-specific advisors (CFO, CEO, Investor)
+
+C. DATA INTEGRATION
+-------------------
+1. Real-time Data Sync
+   - Connect to accounting software (QuickBooks, Xero)
+   - Bank account integration
+   - CRM integration (HubSpot, Salesforce)
+
+2. Enhanced Context
+   - Historical trend analysis
+   - Seasonal patterns
+   - Market conditions
+
+3. Competitive Intelligence
+   - Dynamic competitor data
+   - Industry reports integration
+   - Market research data
+
+D. PERFORMANCE & SCALABILITY
+-----------------------------
+1. Response Optimization
+   - Better caching strategies
+   - Pre-computed insights
+   - Background processing
+
+2. Rate Limit Management
+   - Queue system for requests
+   - Priority-based processing
+   - User-tier rate limits
+
+3. Cost Optimization
+   - Smarter caching
+   - Response compression
+   - Model selection (flash vs pro)
+
+E. ANALYTICS & INSIGHTS
+-----------------------
+1. Usage Analytics Dashboard
+   - Query patterns
+   - Feature usage statistics
+   - User engagement metrics
+
+2. AI Performance Monitoring
+   - Response quality metrics
+   - Latency tracking
+   - Error rate monitoring
+
+3. Business Intelligence
+   - Correlation analysis
+   - Predictive insights
+   - Trend identification
+
+F. SECURITY & PRIVACY
+---------------------
+1. User Authentication
+   - Multi-user support
+   - Role-based access
+   - Data isolation
+
+2. Data Encryption
+   - Encrypt sensitive financial data
+   - Secure API key storage
+   - Audit logging
+
+3. Compliance
+   - GDPR compliance
+   - SOC 2 readiness
+   - Financial data regulations
+
+================================================================================
+                            TECHNICAL SPECIFICATIONS
+================================================================================
+
+API ENDPOINTS:
+--------------
+POST /api/chat
+  Body: {
+    message: string,
+    context?: AIContext,
+    conversationHistory?: AIMessage[],
+    stream?: boolean,
+    maxTokens?: number
+  }
+  Response: {
+    response: string,
+    text: string,
+    cached?: boolean
+  }
+
+POST /api/weekly-report
+  Body: {
+    context: AIContext,
+    email?: string
+  }
+  Response: {
+    success: boolean,
+    report: string,
+    timestamp: string
+  }
+
+GET /api/health
+  Response: {
+    status: 'ok',
+    timestamp: string
+  }
+
+DATA STRUCTURES:
+----------------
+AIMessage:
+  - id: string
+  - role: 'user' | 'assistant' | 'system'
+  - content: string
+  - timestamp: Date
+
+AIContext:
+  - analysis?: FinancialAnalysis
+  - simulatorParams?: SimParams
+  - cashOnHand?: number
+  - monthlyBurn?: number
+  - monthlyRevenue?: number
+  - runway?: number
+  - revenueGrowthRate?: number
+  - customerCount?: number
+  - churnRate?: number
+  - burnIncreasing?: boolean
+  - revenueGrowthSlowing?: boolean
+  - approachingBreakeven?: boolean
+  - customerSentiment?: SentimentAnalysis
+
+AIInsight:
+  - title: string
+  - content: string
+  - type: 'success' | 'warning' | 'danger' | 'info'
+  - priority: number (1-5)
+
+FundraisingReadiness:
+  - score: number (0-100)
+  - grade: 'A' | 'B' | 'C' | 'D' | 'F'
+  - strengths: string[]
+  - weaknesses: string[]
+  - actionItems: string[]
+  - summary: string
+
+RiskAssessment:
+  - riskLevel: 'low' | 'medium' | 'high' | 'critical'
+  - risks: Risk[]
+  - overallSummary: string
+
+BoardDeckSection:
+  - title: string
+  - content: string
+  - bullets?: string[]
+  - metrics?: Metric[]
+
+PERFORMANCE METRICS:
+--------------------
+- Average response time: ~1-2 seconds (non-cached)
+- Cache hit response: <50ms
+- Function calling overhead: +500-1000ms
+- Streaming: Real-time (depends on network)
+
+COST ESTIMATES:
+---------------
+- Gemini 2.5 Flash: ~$0.075/1M input tokens, $0.30/1M output tokens
+- Average query: ~100 input tokens, ~500 output tokens
+- Cost per query: ~$0.00015 (very low)
+- Cache hits: $0 (no API call)
+
+================================================================================
+                            TESTING & VALIDATION
+================================================================================
+
+MANUAL TESTING CHECKLIST:
+-------------------------
+1. Connection Test
+   - Verify connection status updates
+   - Check latency display
+   - Test rate limit handling
+
+2. Chat Functionality
+   - Send messages
+   - Verify responses
+   - Check conversation history
+   - Test error handling
+
+3. Feature Buttons
+   - Generate insights
+   - Create board deck
+   - Assess fundraising
+   - Run risk assessment
+   - Compare benchmarks
+
+4. Context Integration
+   - Test with financial data
+   - Test without data
+   - Verify customer sentiment inclusion
+
+5. Caching
+   - Verify cache hits
+   - Check cache expiration
+   - Test cache cleanup
+
+6. Error Scenarios
+   - API key missing
+   - Rate limit exceeded
+   - Network timeout
+   - Invalid responses
+
+================================================================================
+                            CONCLUSION
+================================================================================
+
+The AI Advisor is a comprehensive financial intelligence system with:
+- 9 major features (chat, insights, board deck, fundraising, risks, benchmarks,
+  scenarios, competitive analysis, connection testing)
+- Robust error handling and retry logic
+- Performance optimizations (caching, rate limiting)
+- Metrics tracking and analytics
+- Customer sentiment integration
+- Function calling for dynamic data
+
+The system is production-ready but has clear improvement opportunities in:
+- User experience enhancements
+- Advanced AI capabilities
+- Data integration
+- Performance optimization
+- Security and privacy
+
+This document serves as a complete reference for reviewers to understand every
+aspect of the AI Advisor system and identify areas for improvement.
+
+================================================================================
+                            END OF DOCUMENT
+================================================================================
+
