@@ -47,10 +47,15 @@ EXPERTISE AREAS:
 
 CURRENT COMPANY CONTEXT:
 ${context ? `
-- Cash on hand: $${context.cashOnHand?.toLocaleString() || 'N/A'}
-- Monthly burn: $${context.monthlyBurn?.toLocaleString() || 'N/A'}
+- Cash on hand: ${context.cashOnHand ? `$${Number(context.cashOnHand).toLocaleString()}` : 'N/A'}
+- Monthly burn: ${context.monthlyBurn ? `$${Number(context.monthlyBurn).toLocaleString()}` : 'N/A'}
+- Monthly revenue: ${context.monthlyRevenue ? `$${Number(context.monthlyRevenue).toLocaleString()}` : 'N/A'}
 - Runway: ${context.runway || 'N/A'} months
-- Revenue growth: ${context.revenueGrowthRate ? (context.revenueGrowthRate * 100).toFixed(0) + '%' : 'N/A'}
+- Revenue growth: ${context.revenueGrowthRate ? `${(Number(context.revenueGrowthRate) * 100).toFixed(0)}%` : 'N/A'}
+${context.customerCount ? `- Customers: ${Number(context.customerCount).toLocaleString()}` : ''}
+${context.churnRate ? `- Churn rate: ${(Number(context.churnRate) * 100).toFixed(1)}%` : ''}
+${context.employeeCount ? `- Team size: ${context.employeeCount} employees` : ''}
+${context.monthlyPayroll ? `- Monthly payroll: $${Number(context.monthlyPayroll).toLocaleString()}` : ''}
 ` : 'No financial data provided'}
 
 When the user asks questions, analyze the data deeply and provide strategic guidance as a trusted CFO would.`;
