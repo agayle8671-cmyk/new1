@@ -41,6 +41,21 @@ const functionDeclarations = [
       },
       required: ['months_ahead']
     }
+  },
+  {
+    name: 'perform_analysis',
+    description: 'Perform a specific type of financial analysis: runway, fundraising, growth, risk, or breakeven',
+    parameters: {
+      type: 'object',
+      properties: {
+        analysis_type: {
+          type: 'string',
+          description: 'Type of analysis to perform',
+          enum: ['runway', 'fundraising', 'growth', 'risk', 'breakeven']
+        }
+      },
+      required: ['analysis_type']
+    }
   }
 ];
 
@@ -182,6 +197,16 @@ EXPERTISE AREAS:
 - Fundraising timing and strategy
 - Unit economics and profitability paths
 - Risk assessment and mitigation
+
+ANALYSIS TYPES AVAILABLE:
+You can perform specific types of analysis using the perform_analysis function:
+- runway: Analyze cash runway and burn rate trajectory
+- fundraising: Assess fundraising readiness and timing
+- growth: Evaluate revenue growth and unit economics
+- risk: Identify top financial risks to address
+- breakeven: Calculate path to profitability
+
+When users ask for specific analysis types, use the perform_analysis function to get structured guidance.
 
 CURRENT COMPANY CONTEXT:
 ${context ? `
