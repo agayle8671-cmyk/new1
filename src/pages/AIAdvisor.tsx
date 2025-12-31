@@ -31,8 +31,6 @@ import AIService, {
   type RiskAssessment,
   type AIContext,
   type ConnectionStatus,
-  type AnalysisType,
-  performAnalysis,
   getDebugInfo,
 } from '../lib/services/AIService';
 import { useAppStore } from '../lib/store';
