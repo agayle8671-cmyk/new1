@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Upload, TrendingUp, TrendingDown, DollarSign, Calendar, Download, Sparkles, Loader2, Check, Database, Copy, CheckCheck } from 'lucide-react';
+import { Upload, TrendingUp, TrendingDown, DollarSign, Calendar, Download, Sparkles, Loader2, Check, Database, Copy, CheckCheck, Plane, Target, BarChart3, AlertTriangle, Heart } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { toast } from 'sonner';
 import {
@@ -16,6 +16,7 @@ import { MotionCard, MotionButton } from '../components/ui/MotionCard';
 import { SequencingLoader } from '../components/ui/Skeleton';
 import { useAppStore } from '../lib/store';
 import { useFirstSnapshotCelebration } from '../components/ui/SuccessConfetti';
+import { performAnalysis, type AnalysisType, type AIContext } from '../lib/services/AIService';
 
 const DEFAULT_CASH = 1200000;
 
@@ -106,6 +107,9 @@ export default function DNALab() {
   const [showSuccessPulse, setShowSuccessPulse] = useState(false);
   const [copied, setCopied] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isAnalysisRunning, setIsAnalysisRunning] = useState(false);
+  const [activeAnalysisMode, setActiveAnalysisMode] = useState<AnalysisType | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<string | null>(null);
   
   // Confetti celebration for first snapshot save
   const { celebrateFirstSnapshot, ConfettiComponent } = useFirstSnapshotCelebration();
@@ -156,6 +160,40 @@ export default function DNALab() {
   const handleUploadClick = () => {
     fileInputRef.current?.click();
   };
+
+  // Quick Analysis handler
+  const runAnalysis = useCallback(async (mode: AnalysisType) => {
+    if (isAnalysisRunning) return;
+    
+    setIsAnalysisRunning(true);
+    setActiveAnalysisMode(mode);
+    setAnalysisResult(null);
+
+    try {
+      // Build AI context from current analysis
+      const context: AIContext = {
+        analysis: analysis,
+        cashOnHand: analysis.cashOnHand,
+        monthlyBurn: analysis.monthlyBurn,
+        monthlyRevenue: analysis.monthlyRevenue,
+        runway: analysis.runwayMonths,
+        revenueGrowthRate: analysis.revenueGrowth,
+        burnIncreasing: analysis.expenseGrowth > 0,
+        revenueGrowthSlowing: analysis.revenueGrowth < 0.1,
+        approachingBreakeven: analysis.monthlyRevenue >= analysis.monthlyBurn * 0.9,
+      };
+
+      const response = await performAnalysis(mode, context);
+      setAnalysisResult(response);
+      toast.success('Analysis Complete', { description: `${mode} analysis finished` });
+    } catch (error) {
+      toast.error('Analysis Failed', { description: error instanceof Error ? error.message : 'Unknown error' });
+      setAnalysisResult(`Error: ${error instanceof Error ? error.message : 'Analysis failed'}`);
+    } finally {
+      setIsAnalysisRunning(false);
+      setActiveAnalysisMode(null);
+    }
+  }, [isAnalysisRunning, analysis]);
 
   const handleDownloadReport = () => {
     try {
@@ -280,6 +318,63 @@ export default function DNALab() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Quick Analysis Buttons */}
+      {!isProcessing && (
+        <MotionCard
+          variant="elevated"
+          className="p-4"
+          custom={-1}
+          initial="hidden"
+          animate="visible"
+          variants={cardVariants}
+        >
+          <h3 className="text-sm font-semibold mb-3 text-gray-300">Quick AI Analysis</h3>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { mode: 'runway' as AnalysisType, label: 'Runway Analysis', icon: Plane },
+              { mode: 'fundraising' as AnalysisType, label: 'Fundraising Readiness', icon: Target },
+              { mode: 'growth' as AnalysisType, label: 'Growth Assessment', icon: BarChart3 },
+              { mode: 'risk' as AnalysisType, label: 'Risk Analysis', icon: AlertTriangle },
+              { mode: 'breakeven' as AnalysisType, label: 'Path to Profitability', icon: Heart }
+            ].map(btn => {
+              const IconComponent = btn.icon;
+              return (
+                <MotionButton
+                  key={btn.mode}
+                  onClick={() => runAnalysis(btn.mode)}
+                  disabled={isAnalysisRunning}
+                  variant={activeAnalysisMode === btn.mode ? 'default' : 'secondary'}
+                  className={`flex items-center gap-2 px-4 py-2 text-sm ${
+                    activeAnalysisMode === btn.mode ? 'bg-cyan-electric text-charcoal' : ''
+                  }`}
+                >
+                  {isAnalysisRunning && activeAnalysisMode === btn.mode ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Running...
+                    </>
+                  ) : (
+                    <>
+                      <IconComponent className="w-4 h-4" />
+                      {btn.label}
+                    </>
+                  )}
+                </MotionButton>
+              );
+            })}
+          </div>
+          {analysisResult && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-4 p-4 bg-white/5 rounded-lg border border-white/10"
+            >
+              <p className="text-sm text-gray-300 whitespace-pre-wrap">{analysisResult}</p>
+            </motion.div>
+          )}
+        </MotionCard>
+      )}
 
       {isProcessing ? (
         <SequencingLoader />
