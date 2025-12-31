@@ -4,6 +4,7 @@
 create table if not exists ai_conversation_memory (
   id uuid primary key default uuid_generate_v4(),
   user_id uuid references auth.users(id) on delete cascade,
+  analysis_type text check (analysis_type in ('runway', 'fundraising', 'growth', 'risk', 'breakeven')),
   summary text not null,
   key_insights jsonb default '[]'::jsonb,
   created_at timestamp with time zone default now(),
@@ -17,6 +18,10 @@ create index if not exists idx_ai_conversation_memory_user_id
 -- Create index for faster date-based queries
 create index if not exists idx_ai_conversation_memory_created_at 
   on ai_conversation_memory(created_at desc);
+
+-- Create index for analysis type queries
+create index if not exists idx_ai_conversation_memory_analysis_type 
+  on ai_conversation_memory(analysis_type);
 
 -- Enable Row Level Security
 alter table ai_conversation_memory enable row level security;

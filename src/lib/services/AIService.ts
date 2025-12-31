@@ -19,6 +19,16 @@ export interface AIMessage {
   timestamp: Date;
 }
 
+export type AnalysisType = 'runway' | 'fundraising' | 'growth' | 'risk' | 'breakeven';
+
+export const ANALYSIS_TYPES: Record<AnalysisType, string> = {
+  runway: 'Analyze our cash runway and burn rate trajectory',
+  fundraising: 'Assess our fundraising readiness and timing',
+  growth: 'Evaluate revenue growth and unit economics',
+  risk: 'Identify top financial risks we should address',
+  breakeven: 'Calculate path to profitability'
+};
+
 export interface AIContext {
   analysis?: FinancialAnalysis | null;
   simulatorParams?: SimParams | null;
@@ -626,6 +636,7 @@ const AIService = {
   testConnection,
   chat,
   askAI,
+  performAnalysis,
   getStrategicInsights,
   generateBoardDeck,
   explainAnomaly,
@@ -633,6 +644,7 @@ const AIService = {
   assessRisks,
   narrateScenario,
   benchmarkAnalysis,
+  ANALYSIS_TYPES,
 };
 
 export default AIService;
