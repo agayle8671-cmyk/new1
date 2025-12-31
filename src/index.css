@@ -482,6 +482,45 @@
   .focus-ring {
     @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-electric/50 focus-visible:ring-offset-2 focus-visible:ring-offset-charcoal;
   }
+
+  /* Screen reader only - visually hidden but accessible */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+
+  /* Not screen reader only - make visible */
+  .not-sr-only {
+    position: static;
+    width: auto;
+    height: auto;
+    padding: 0;
+    margin: 0;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+  }
+
+  /* Skip to content link */
+  .skip-link {
+    @apply sr-only focus:not-sr-only;
+    @apply fixed top-4 left-4 z-[9999];
+    @apply px-4 py-2 rounded-lg;
+    @apply bg-cyan-electric text-charcoal font-semibold;
+    @apply focus:outline-none focus:ring-2 focus:ring-white;
+  }
+
+  /* Focus indicators for keyboard navigation */
+  .focus-visible-ring:focus-visible {
+    @apply outline-none ring-2 ring-cyan-electric/50 ring-offset-2 ring-offset-charcoal;
+  }
 }
 
 /* ============================================
