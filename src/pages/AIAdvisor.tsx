@@ -83,6 +83,8 @@ export default function AIAdvisor() {
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus | null>(null);
   const [isTestingConnection, setIsTestingConnection] = useState(false);
+  const [isAnalysisRunning, setIsAnalysisRunning] = useState(false);
+  const [activeAnalysisMode, setActiveAnalysisMode] = useState<AnalysisType | null>(null);
 
   useEffect(() => {
     try {
