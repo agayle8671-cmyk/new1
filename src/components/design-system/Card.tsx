@@ -30,7 +30,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
             glass: 'backdrop-blur-glass bg-white/[0.03] border border-white/[0.06]',
             interactive: `
         bg-surface-1 border border-border cursor-pointer
-        hover:bg-surface-2 hover:border-border-strong
+        hover:bg-surface-2 hover:border-border-strong hover-lift
         transition-all duration-200
       `,
         };
