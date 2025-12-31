@@ -363,6 +363,18 @@ export async function chat(
 }
 
 /**
+ * Alias for chat function - simpler API
+ */
+export async function askAI(
+  message: string,
+  context?: AIContext | Record<string, any>
+): Promise<string> {
+  // Convert plain object to AIContext if needed
+  const aiContext: AIContext = context as AIContext || {};
+  return callGemini(message, aiContext, []);
+}
+
+/**
  * Generate board deck content
  */
 export async function generateBoardDeck(context: AIContext): Promise<BoardDeckSection[]> {
