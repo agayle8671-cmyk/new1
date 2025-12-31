@@ -6,7 +6,6 @@ export default defineConfig({
   plugins: [react()],
   optimizeDeps: {
     exclude: ['lucide-react'],
-    include: ['xlsx'], // Pre-bundle xlsx for dynamic import
   },
   build: {
     rollupOptions: {
@@ -18,7 +17,6 @@ export default defineConfig({
           'vendor-motion': ['framer-motion'],
           'vendor-supabase': ['@supabase/supabase-js'],
           'vendor-ui': ['lucide-react', 'sonner', 'zustand'],
-          'vendor-xlsx': ['xlsx'], // Separate chunk for xlsx
         },
       },
     },

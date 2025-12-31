@@ -3,13 +3,11 @@
  * 
  * Accepts multiple file formats and extracts financial data:
  * - CSV files
- * - Excel files (.xlsx, .xls)
  * - JSON files
  * - Plain text / natural language
- * - PDF text extraction
+ * 
+ * Note: Excel files (.xlsx) should be saved as CSV for best results
  */
-
-// Note: xlsx is dynamically imported to avoid Rollup bundling issues
 
 // Supported file types
 export type SupportedFileType = 'csv' | 'excel' | 'json' | 'text' | 'pdf' | 'unknown';
@@ -101,45 +99,6 @@ function parseCSV(content: string): Record<string, unknown>[] {
 }
 
 /**
- * Parse Excel content - uses dynamic import to avoid bundling issues
- */
-async function parseExcel(file: File): Promise<{ rawText: string; structuredData: Record<string, unknown>[] }> {
-    // Dynamic import of xlsx library
-    const XLSX = await import('xlsx');
-
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-
-        reader.onload = (e) => {
-            try {
-                const data = new Uint8Array(e.target?.result as ArrayBuffer);
-                const workbook = XLSX.read(data, { type: 'array' });
-
-                // Get first sheet
-                const firstSheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert to JSON
-                const jsonData = XLSX.utils.sheet_to_json(worksheet) as Record<string, unknown>[];
-
-                // Also get as text for AI processing
-                const textData = XLSX.utils.sheet_to_csv(worksheet);
-
-                resolve({
-                    rawText: textData,
-                    structuredData: jsonData
-                });
-            } catch (error) {
-                reject(error);
-            }
-        };
-
-        reader.onerror = () => reject(new Error('Failed to read Excel file'));
-        reader.readAsArrayBuffer(file);
-    });
-}
-
-/**
  * Parse JSON content
  */
 function parseJSON(content: string): Record<string, unknown>[] {
@@ -159,14 +118,11 @@ export async function parseFile(file: File): Promise<ParsedContent> {
     const fileType = detectFileType(file);
 
     if (fileType === 'excel') {
-        const { rawText, structuredData } = await parseExcel(file);
-        return {
-            type: 'excel',
-            rawText,
-            structuredData,
-            confidence: 0.9,
-            source: 'file'
-        };
+        // Excel files are not supported - prompt user to save as CSV
+        throw new Error(
+            'Excel files (.xlsx/.xls) are not supported directly. ' +
+            'Please save your spreadsheet as CSV (File → Save As → CSV) and upload the CSV file instead.'
+        );
     }
 
     // For text-based files, read as text
