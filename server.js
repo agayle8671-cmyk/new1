@@ -608,7 +608,7 @@ When the user asks questions, analyze the data deeply and provide strategic guid
         tools: [{ functionDeclarations }],
         generationConfig: {
           temperature: 0.7,
-          maxOutputTokens: 2048,
+          maxOutputTokens: maxTokens, // Use same token limit as initial request
         }
       };
 
