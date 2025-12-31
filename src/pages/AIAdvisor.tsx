@@ -288,67 +288,6 @@ export default function AIAdvisor() {
     }
   }, [getContext]);
 
-  const generateRunwayPlan = useCallback(async () => {
-    setIsPlanLoading(true);
-    setRunwayPlan(null);
-    try {
-      const context = getContext();
-      console.log('[AIAdvisor] Generating runway plan with context:', { 
-        runway: context.runway, 
-        targetRunway,
-        hasContext: !!context 
-      });
-      
-      const result = await AIService.generateRunwayPlan(context, targetRunway);
-      
-      console.log('[AIAdvisor] Plan generated, length:', result?.length);
-      
-      if (!result || result.trim().length === 0) {
-        throw new Error('Empty response from AI');
-      }
-      
-      setRunwayPlan(result);
-      toast.success('90-Day Plan Generated', { 
-        description: 'Scroll down to see the plan',
-        duration: 5000 
-      });
-      
-      // Add to chat
-      const userMessage: AIMessage = {
-        id: `plan-${Date.now()}`,
-        role: 'user',
-        content: `Generate a 90-day plan to reach ${targetRunway} months runway`,
-        timestamp: new Date(),
-      };
-      const assistantMessage: AIMessage = {
-        id: `plan-response-${Date.now()}`,
-        role: 'assistant',
-        content: result,
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, userMessage, assistantMessage]);
-      
-      // Save to conversation memory
-      try {
-        await saveConversationMemory({
-          summary: `90-day runway plan: ${result.substring(0, 200)}${result.length > 200 ? '...' : ''}`,
-          key_insights: [result.substring(0, 150)],
-        }, false);
-      } catch (memoryError) {
-        console.warn('[AIAdvisor] Failed to save plan memory:', memoryError);
-      }
-    } catch (error) {
-      console.error('[AIAdvisor] Plan generation error:', error);
-      toast.error('Failed to generate plan', { 
-        description: error instanceof Error ? error.message : 'Unknown error',
-        duration: 5000 
-      });
-      setRunwayPlan(null);
-    } finally {
-      setIsPlanLoading(false);
-    }
-  }, [getContext, targetRunway, messages]);
-
   const copyToClipboard = (text: string, section: string) => {
     navigator.clipboard.writeText(text);
     setCopiedSection(section);
