@@ -311,6 +311,10 @@ async function retryWithBackoff(fn, maxRetries = 3, initialDelay = 1000) {
 }
 
 app.post('/api/chat', async (req, res) => {
+  const startTime = Date.now();
+  let cacheHit = false;
+  let functionCallsCount = 0;
+  
   try {
     // Rate limiting: use IP address as userId
     const userId = req.ip || req.connection.remoteAddress || 'unknown';

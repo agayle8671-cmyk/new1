@@ -188,6 +188,16 @@ export interface ConnectionStatus {
   error?: string;
 }
 
+export interface AIMetrics {
+  totalQueries: number;
+  avgResponseTime: number;
+  functionCallsUsed: number;
+  topQuestions: string[];
+  userSatisfactionScore: number;
+  costPerQuery: number; // Gemini API costs
+  cacheHitRate: number;
+}
+
 /**
  * Test the AI connection and return status
  */
