@@ -91,6 +91,17 @@ export interface AIContext {
   burnIncreasing?: boolean;
   revenueGrowthSlowing?: boolean;
   approachingBreakeven?: boolean;
+  
+  // Customer sentiment
+  customerSentiment?: {
+    overall: 'positive' | 'neutral' | 'negative';
+    score: number; // -1 to 1
+    positiveCount: number;
+    negativeCount: number;
+    neutralCount: number;
+    totalCount: number;
+    recentTrend?: 'improving' | 'stable' | 'declining';
+  };
 }
 
 export interface AIInsight {

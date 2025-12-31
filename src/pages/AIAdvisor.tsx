@@ -34,7 +34,7 @@ import AIService, {
   getDebugInfo,
 } from '../lib/services/AIService';
 import { useAppStore } from '../lib/store';
-import { saveConversationMemory } from '../lib/api';
+import { saveConversationMemory, fetchAndAnalyzeCustomerFeedback } from '../lib/api';
 
 const cardVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -126,7 +126,7 @@ export default function AIAdvisor() {
     }
   };
 
-  const getContext = useCallback((): AIContext => {
+  const getContext = useCallback(async (): Promise<AIContext> => {
     // Build enhanced context from available data (Stage 1)
     const context: AIContext = {
       analysis: currentAnalysis,
@@ -165,6 +165,17 @@ export default function AIAdvisor() {
       if (simulatorParams.monthlyExpenses > 0) {
         context.runway = simulatorParams.cashOnHand / simulatorParams.monthlyExpenses;
       }
+    }
+
+    // Fetch and analyze customer feedback sentiment
+    try {
+      const sentimentResult = await fetchAndAnalyzeCustomerFeedback(7, false);
+      if (sentimentResult.data) {
+        context.customerSentiment = sentimentResult.data;
+      }
+    } catch (error) {
+      // Silently fail - customer sentiment is optional
+      console.warn('[AIAdvisor] Failed to fetch customer sentiment:', error);
     }
 
     return context;
@@ -225,7 +236,8 @@ export default function AIAdvisor() {
   const fetchInsights = useCallback(async () => {
     setIsInsightsLoading(true);
     try {
-      const result = await AIService.getStrategicInsights(getContext());
+      const context = await getContext();
+      const result = await AIService.getStrategicInsights(context);
       setInsights(result);
       toast.success('Insights Generated');
     } catch (error) {
