@@ -20,6 +20,7 @@ import {
   RefreshCw,
   BarChart3,
   Send,
+  Calendar,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { MotionCard, MotionButton } from '../components/ui/MotionCard';
@@ -77,6 +78,10 @@ export default function AIAdvisor() {
   
   const [benchmarks, setBenchmarks] = useState<string | null>(null);
   const [isBenchmarksLoading, setIsBenchmarksLoading] = useState(false);
+  
+  const [runwayPlan, setRunwayPlan] = useState<string | null>(null);
+  const [isPlanLoading, setIsPlanLoading] = useState(false);
+  const [targetRunway, setTargetRunway] = useState<number>(24);
 
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus | null>(null);
@@ -432,57 +437,86 @@ export default function AIAdvisor() {
         </div>
       </header>
 
-      {/* Quick Actions Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <MotionButton
-          onClick={fetchInsights}
-          disabled={isInsightsLoading}
-          className="flex flex-col items-center gap-2 p-4 h-auto"
-        >
-          {isInsightsLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
-          <span className="text-xs">Insights</span>
-        </MotionButton>
-        
-        <MotionButton
-          onClick={fetchBoardDeck}
-          disabled={isBoardDeckLoading}
-          variant="secondary"
-          className="flex flex-col items-center gap-2 p-4 h-auto"
-        >
-          {isBoardDeckLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <FileText className="w-5 h-5" />}
-          <span className="text-xs">Board Deck</span>
-        </MotionButton>
-        
-        <MotionButton
-          onClick={fetchFundraisingScore}
-          disabled={isFundraisingLoading}
-          variant="secondary"
-          className="flex flex-col items-center gap-2 p-4 h-auto"
-        >
-          {isFundraisingLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Target className="w-5 h-5" />}
-          <span className="text-xs">Fundraise</span>
-        </MotionButton>
-        
-        <MotionButton
-          onClick={fetchRiskAssessment}
-          disabled={isRiskLoading}
-          variant="secondary"
-          className="flex flex-col items-center gap-2 p-4 h-auto"
-        >
-          {isRiskLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Shield className="w-5 h-5" />}
-          <span className="text-xs">Risks</span>
-        </MotionButton>
-        
-        <MotionButton
-          onClick={fetchBenchmarks}
-          disabled={isBenchmarksLoading}
-          variant="secondary"
-          className="flex flex-col items-center gap-2 p-4 h-auto"
-        >
-          {isBenchmarksLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <BarChart3 className="w-5 h-5" />}
-          <span className="text-xs">Benchmarks</span>
-        </MotionButton>
-      </div>
+              {/* Quick Actions Grid */}
+              <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+                <MotionButton
+                  onClick={fetchInsights}
+                  disabled={isInsightsLoading}
+                  className="flex flex-col items-center gap-2 p-4 h-auto"
+                >
+                  {isInsightsLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
+                  <span className="text-xs">Insights</span>
+                </MotionButton>
+                
+                <MotionButton
+                  onClick={fetchBoardDeck}
+                  disabled={isBoardDeckLoading}
+                  variant="secondary"
+                  className="flex flex-col items-center gap-2 p-4 h-auto"
+                >
+                  {isBoardDeckLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <FileText className="w-5 h-5" />}
+                  <span className="text-xs">Board Deck</span>
+                </MotionButton>
+                
+                <MotionButton
+                  onClick={fetchFundraisingScore}
+                  disabled={isFundraisingLoading}
+                  variant="secondary"
+                  className="flex flex-col items-center gap-2 p-4 h-auto"
+                >
+                  {isFundraisingLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Target className="w-5 h-5" />}
+                  <span className="text-xs">Fundraise</span>
+                </MotionButton>
+                
+                <MotionButton
+                  onClick={fetchRiskAssessment}
+                  disabled={isRiskLoading}
+                  variant="secondary"
+                  className="flex flex-col items-center gap-2 p-4 h-auto"
+                >
+                  {isRiskLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Shield className="w-5 h-5" />}
+                  <span className="text-xs">Risks</span>
+                </MotionButton>
+                
+                <MotionButton
+                  onClick={fetchBenchmarks}
+                  disabled={isBenchmarksLoading}
+                  variant="secondary"
+                  className="flex flex-col items-center gap-2 p-4 h-auto"
+                >
+                  {isBenchmarksLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <BarChart3 className="w-5 h-5" />}
+                  <span className="text-xs">Benchmarks</span>
+                </MotionButton>
+                
+                <MotionButton
+                  onClick={generateRunwayPlan}
+                  disabled={isPlanLoading}
+                  variant="secondary"
+                  className="flex flex-col items-center gap-2 p-4 h-auto"
+                >
+                  {isPlanLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Calendar className="w-5 h-5" />}
+                  <span className="text-xs">90-Day Plan</span>
+                </MotionButton>
+              </div>
+              
+              {/* Target Runway Input */}
+              {currentAnalysis && (
+                <div className="flex items-center gap-3 glass-card p-3">
+                  <label className="text-sm text-gray-400">Target Runway:</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="60"
+                    value={targetRunway}
+                    onChange={(e) => setTargetRunway(Number(e.target.value))}
+                    className="w-20 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-cyan-electric/50"
+                  />
+                  <span className="text-sm text-gray-400">months</span>
+                  <span className="text-xs text-gray-500 ml-auto">
+                    Current: {currentAnalysis.runwayMonths.toFixed(1)} months
+                  </span>
+                </div>
+              )}
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -699,6 +733,44 @@ export default function AIAdvisor() {
                 <p className="text-sm text-gray-300">{riskAssessment.overallSummary}</p>
               </div>
             </MotionCard>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 90-Day Runway Plan */}
+      <AnimatePresence>
+        {runwayPlan && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="glass-card p-6 border border-cyan-electric/30"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-cyan-electric" />
+                <h3 className="font-semibold">90-Day Runway Plan</h3>
+              </div>
+              <button
+                onClick={() => copyToClipboard(runwayPlan, 'plan')}
+                className="flex items-center gap-1 text-xs text-gray-400 hover:text-white"
+              >
+                {copiedSection === 'plan' ? (
+                  <>
+                    <Check className="w-4 h-4" />
+                    Copied
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-4 h-4" />
+                    Copy
+                  </>
+                )}
+              </button>
+            </div>
+            <div className="prose prose-invert max-w-none">
+              <p className="text-sm text-gray-300 whitespace-pre-wrap">{runwayPlan}</p>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
