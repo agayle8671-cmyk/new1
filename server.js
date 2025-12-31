@@ -446,6 +446,16 @@ ${context.employeeCount ? `- Team size: ${context.employeeCount} employees` : ''
 ${context.burnIncreasing ? `- ⚠️ Burn increasing` : ''}
 ${context.revenueGrowthSlowing ? `- ⚠️ Revenue growth slowing` : ''}
 ${context.approachingBreakeven ? `- ✅ Approaching breakeven` : ''}
+
+**Customer Sentiment:**
+${context.customerSentiment ? `
+- Overall sentiment: ${context.customerSentiment.overall} (score: ${context.customerSentiment.score.toFixed(2)})
+- Positive feedback: ${context.customerSentiment.positiveCount}
+- Negative feedback: ${context.customerSentiment.negativeCount}
+- Neutral feedback: ${context.customerSentiment.neutralCount}
+- Total feedback: ${context.customerSentiment.totalCount}
+${context.customerSentiment.recentTrend ? `- Recent trend: ${context.customerSentiment.recentTrend}` : ''}
+` : '- No customer feedback data available'}
 ` : 'No financial data provided'}
 
 When the user asks questions, analyze the data deeply and provide strategic guidance as a trusted CFO would.`;

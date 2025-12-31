@@ -198,7 +198,8 @@ export default function AIAdvisor() {
     setIsChatLoading(true);
 
     try {
-      const response = await AIService.chat(userQuestion, getContext(), messages);
+      const context = await getContext();
+      const response = await AIService.chat(userQuestion, context, messages);
       const assistantMessage: AIMessage = {
         id: `assistant-${Date.now()}`,
         role: 'assistant',
@@ -250,7 +251,8 @@ export default function AIAdvisor() {
   const fetchBoardDeck = useCallback(async () => {
     setIsBoardDeckLoading(true);
     try {
-      const result = await AIService.generateBoardDeck(getContext());
+      const context = await getContext();
+      const result = await AIService.generateBoardDeck(context);
       setBoardDeck(result);
       toast.success('Board Deck Generated');
     } catch (error) {
@@ -263,7 +265,8 @@ export default function AIAdvisor() {
   const fetchFundraisingScore = useCallback(async () => {
     setIsFundraisingLoading(true);
     try {
-      const result = await AIService.assessFundraisingReadiness(getContext());
+      const context = await getContext();
+      const result = await AIService.assessFundraisingReadiness(context);
       setFundraisingScore(result);
       toast.success('Fundraising Assessment Complete');
     } catch (error) {
@@ -276,7 +279,8 @@ export default function AIAdvisor() {
   const fetchRiskAssessment = useCallback(async () => {
     setIsRiskLoading(true);
     try {
-      const result = await AIService.assessRisks(getContext());
+      const context = await getContext();
+      const result = await AIService.assessRisks(context);
       setRiskAssessment(result);
       toast.success('Risk Assessment Complete');
     } catch (error) {
@@ -289,7 +293,8 @@ export default function AIAdvisor() {
   const fetchBenchmarks = useCallback(async () => {
     setIsBenchmarksLoading(true);
     try {
-      const result = await AIService.benchmarkAnalysis(getContext());
+      const context = await getContext();
+      const result = await AIService.benchmarkAnalysis(context);
       setBenchmarks(result);
       toast.success('Benchmark Analysis Complete');
     } catch (error) {
