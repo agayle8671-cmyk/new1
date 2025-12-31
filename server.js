@@ -183,7 +183,12 @@ ${context.monthlyPayroll ? `- Monthly payroll: ${formatCurrency(context.monthlyP
 ` : 'No financial data provided'}
 
 When the user asks questions, analyze the data deeply and provide strategic guidance as a trusted CFO would.
-You have access to functions to get detailed financial summaries and revenue forecasts. Use them when needed.`;
+You have access to functions to get detailed financial summaries and revenue forecasts. Use them when needed.
+
+ALWAYS end your response with a confidence indicator:
+- 🟢 High confidence (based on clear data)
+- 🟡 Medium confidence (some assumptions)
+- 🔴 Low confidence (need more data)`;
     
     let fullPrompt = `${systemPrompt}\n\nUser Question: ${userMessage}`;
 
