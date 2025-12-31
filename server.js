@@ -2,6 +2,7 @@ import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import cron from 'node-cron';
+import { createClient } from '@supabase/supabase-js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -612,8 +613,9 @@ When the user asks questions, analyze the data deeply and provide strategic guid
     const functionCalls = data.candidates?.[0]?.content?.parts?.filter(part => part.functionCall);
 
     // Stage 4: Handle function calls
-    if (functionCalls && functionCalls.length > 0) {
-      console.log('[Chat API] Function calls detected:', functionCalls.map(fc => fc.functionCall.name));
+            if (functionCalls && functionCalls.length > 0) {
+              console.log('[Chat API] Function calls detected:', functionCalls.map(fc => fc.functionCall.name));
+              functionCallsCount = functionCalls.length;
       
       // Add the model's response with function calls to conversation
       contents.push({
