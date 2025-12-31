@@ -121,8 +121,9 @@ function executeFunction(functionName, args, context) {
 
 app.post('/api/chat', async (req, res) => {
   try {
-    const { message, prompt, context, conversationHistory } = req.body;
+    const { message, prompt, context, conversationHistory, stream } = req.body;
     const userMessage = message || prompt;
+    const useStreaming = stream === true;
 
     if (!userMessage) {
       return res.status(400).json({ error: 'Message required' });
