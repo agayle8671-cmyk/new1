@@ -344,6 +344,18 @@ app.post('/api/chat', async (req, res) => {
       
       if (cached && (Date.now() - cached.timestamp < 10 * 60 * 1000)) { // 10 minute TTL
         console.log(`[Cache] Response cache hit for: ${userMessage.substring(0, 50)}...`);
+        cacheHit = true;
+        const responseTime = Date.now() - startTime;
+        
+        // Log metrics for cache hit (async, don't block response)
+        logAIMetrics({
+          queryText: userMessage,
+          responseTimeMs: responseTime,
+          functionCallsUsed: 0,
+          cacheHit: true,
+          costEstimate: 0, // Cache hits cost nothing
+        }).catch(err => console.error('[Metrics] Failed to log cache hit:', err));
+        
         return res.json({ 
           response: cached.response, 
           text: cached.response,
@@ -715,6 +727,24 @@ When the user asks questions, analyze the data deeply and provide strategic guid
       console.log(`[Cache] Response cached for: ${userMessage.substring(0, 50)}...`);
     }
     
+    // Calculate metrics
+    const responseTime = Date.now() - startTime;
+    
+    // Estimate cost (Gemini 2.5 Flash pricing: ~$0.075 per 1M input tokens, $0.30 per 1M output tokens)
+    // Rough estimate: assume ~4 characters per token
+    const estimatedInputTokens = (userMessage.length / 4) + (JSON.stringify(context || {}).length / 4);
+    const estimatedOutputTokens = responseText.length / 4;
+    const costEstimate = (estimatedInputTokens / 1000000 * 0.075) + (estimatedOutputTokens / 1000000 * 0.30);
+    
+    // Log metrics (async, don't block response)
+    logAIMetrics({
+      queryText: userMessage,
+      responseTimeMs: responseTime,
+      functionCallsUsed: functionCallsCount,
+      cacheHit: false,
+      costEstimate: costEstimate,
+    }).catch(err => console.error('[Metrics] Failed to log metrics:', err));
+    
     return res.json({ response: responseText, text: responseText });
   } catch (error) {
     console.error('[Chat API] ❌ Error:', error.message);
@@ -901,6 +931,37 @@ async function generateWeeklyReport() {
     return result;
   } catch (error) {
     console.error('[Cron] Weekly report generation failed:', error);
+  }
+}
+
+// Helper function to log AI metrics to Supabase
+async function logAIMetrics(metrics) {
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  
+  if (!supabaseUrl || !supabaseServiceKey) {
+    // Silently fail if Supabase not configured
+    return;
+  }
+
+  try {
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    
+    await supabase
+      .from('ai_metrics')
+      .insert({
+        user_id: null, // Anonymous for now (can be enhanced with auth)
+        query_text: metrics.queryText,
+        response_time_ms: metrics.responseTimeMs,
+        function_calls_used: metrics.functionCallsUsed,
+        cache_hit: metrics.cacheHit,
+        cost_estimate: metrics.costEstimate,
+        satisfaction_score: metrics.satisfactionScore || null,
+        metadata: metrics.metadata || {},
+      });
+  } catch (error) {
+    // Silently fail - metrics logging shouldn't break the API
+    console.error('[Metrics] Error logging metrics:', error.message);
   }
 }
 
