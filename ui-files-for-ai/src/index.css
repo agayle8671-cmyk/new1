@@ -1,0 +1,258 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply box-border;
+  }
+
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply bg-charcoal text-gray-100 font-sans antialiased;
+    line-height: 1.6;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-charcoal-50;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-700 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-600;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply backdrop-blur-md bg-white/5 border border-white/10 rounded-2xl;
+  }
+
+  .glass-card-elevated {
+    @apply backdrop-blur-md bg-white/[0.07] border border-white/10 rounded-2xl shadow-2xl;
+  }
+
+  .glass-sidebar {
+    @apply backdrop-blur-xl bg-charcoal-50/80 border border-white/10 rounded-2xl;
+  }
+
+  .gradient-text-cyan {
+    @apply bg-gradient-to-r from-cyan-electric to-cyan-glow bg-clip-text text-transparent;
+  }
+
+  .gradient-text-violet {
+    @apply bg-gradient-to-r from-violet-vivid to-violet-glow bg-clip-text text-transparent;
+  }
+
+  .gradient-text-mixed {
+    @apply bg-gradient-to-r from-cyan-electric via-violet-vivid to-cyan-glow bg-clip-text text-transparent;
+  }
+
+  .glow-cyan {
+    box-shadow: 0 0 40px rgba(0, 212, 255, 0.3), 0 0 80px rgba(0, 212, 255, 0.1);
+  }
+
+  .glow-violet {
+    box-shadow: 0 0 40px rgba(139, 92, 246, 0.3), 0 0 80px rgba(139, 92, 246, 0.1);
+  }
+
+  .bento-grid {
+    @apply grid gap-4;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+
+  .bento-item {
+    @apply glass-card p-6 transition-all duration-300 hover:border-white/20 hover:bg-white/[0.08];
+  }
+
+  .bento-item-lg {
+    @apply col-span-2 row-span-2;
+  }
+
+  .nav-item {
+    @apply flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200;
+    @apply text-gray-400 hover:text-white hover:bg-white/5;
+  }
+
+  .nav-item-active {
+    @apply text-white bg-white/10 border border-white/10;
+  }
+
+  .btn-primary {
+    @apply px-6 py-3 rounded-xl font-semibold transition-all duration-200;
+    @apply bg-gradient-to-r from-cyan-electric to-cyan-glow text-charcoal;
+    @apply hover:shadow-lg hover:shadow-cyan-electric/25 hover:scale-[1.02];
+  }
+
+  .btn-secondary {
+    @apply px-6 py-3 rounded-xl font-semibold transition-all duration-200;
+    @apply bg-white/10 text-white border border-white/10;
+    @apply hover:bg-white/15 hover:border-white/20;
+  }
+
+  .stat-value {
+    @apply text-4xl font-bold tracking-tight;
+  }
+
+  .stat-label {
+    @apply text-sm text-gray-400 uppercase tracking-wider;
+  }
+
+  .badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium;
+  }
+
+  .badge-cyan {
+    @apply bg-cyan-electric/20 text-cyan-electric;
+  }
+
+  .badge-violet {
+    @apply bg-violet-vivid/20 text-violet-vivid;
+  }
+
+  .badge-success {
+    @apply bg-success/20 text-success;
+  }
+
+  .badge-warning {
+    @apply bg-warning/20 text-warning;
+  }
+
+  .badge-danger {
+    @apply bg-danger/20 text-danger;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-success-pulse {
+    animation: successPulse 0.6s ease-out;
+  }
+
+  @keyframes successPulse {
+    0% {
+      box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.4);
+    }
+    50% {
+      box-shadow: 0 0 0 20px rgba(0, 255, 136, 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(0, 255, 136, 0);
+    }
+  }
+
+  .animate-glow-pulse {
+    animation: glowPulse 2s ease-in-out infinite;
+  }
+
+  @keyframes glowPulse {
+    0%, 100% {
+      filter: drop-shadow(0 0 4px rgba(0, 212, 255, 0.5));
+    }
+    50% {
+      filter: drop-shadow(0 0 12px rgba(0, 212, 255, 0.8));
+    }
+  }
+
+  /* Performance optimizations for LCP */
+  .gpu-accelerate {
+    transform: translateZ(0);
+    will-change: transform;
+    backface-visibility: hidden;
+  }
+
+  .content-hidden {
+    content-visibility: auto;
+    contain-intrinsic-size: 0 500px;
+  }
+
+  /* Optimized shimmer animation for skeletons */
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  .animate-shimmer {
+    animation: shimmer 2s ease-in-out infinite;
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.03) 0%,
+      rgba(255, 255, 255, 0.08) 50%,
+      rgba(255, 255, 255, 0.03) 100%
+    );
+    background-size: 200% 100%;
+  }
+}
+
+/* Critical LCP optimizations */
+@layer base {
+  /* Use CSS containment for better rendering performance */
+  main {
+    contain: layout style paint;
+  }
+
+  /* Optimize background rendering */
+  .bg-charcoal {
+    background-color: #0D0D0D;
+    /* Use solid color first, gradients load later */
+  }
+
+  /* Reduce paint complexity for orbs */
+  .floating-orb {
+    will-change: transform;
+    transform: translateZ(0);
+  }
+
+  /* Lazy render off-screen cards */
+  .bento-item:not(:focus-within) {
+    content-visibility: auto;
+    contain-intrinsic-size: 0 200px;
+  }
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
