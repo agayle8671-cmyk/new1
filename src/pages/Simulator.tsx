@@ -61,7 +61,7 @@ const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?:
         boxShadow: '0 4px 20px rgba(0,0,0,0.5), 0 0 40px rgba(0,212,255,0.1)'
       }}
     >
-      <p className="text-gray-400 text-xs font-medium mb-3 uppercase tracking-wider">{label}</p>
+      <p className="text-text-tertiary text-xs font-medium mb-3 uppercase tracking-wider">{label}</p>
       <div className="space-y-2">
         {payload.map((entry, i) => (
           <div key={i} className="flex items-center justify-between gap-4">
@@ -229,10 +229,10 @@ export default function Simulator() {
     >
       <header className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">
+          <h1 className="text-4xl font-bold tracking-tight">
             <span className="gradient-text-violet">Runway Simulator</span>
           </h1>
-          <p className="text-gray-400 mt-1">
+          <p className="text-text-secondary mt-1">
             {contextMode === 'growth'
               ? 'Model aggressive growth scenarios'
               : 'Plan strategic operational changes'}

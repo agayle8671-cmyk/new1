@@ -298,13 +298,13 @@ export default function Landing() {
                 <div className="max-w-6xl mx-auto text-center relative z-10">
                     {/* Badge */}
                     <motion.div
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 mb-8"
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-surface-1 border border-border mb-8"
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.6 }}
                     >
                         <Sparkles className="w-4 h-4 text-cyan-electric" />
-                        <span className="text-sm text-gray-300">Powered by AI Financial Intelligence</span>
+                        <span className="text-sm text-text-secondary">Powered by AI Financial Intelligence</span>
                     </motion.div>
 
                     {/* Main Headline */}
@@ -321,13 +321,13 @@ export default function Landing() {
 
                     {/* Subheadline */}
                     <motion.p
-                        className="text-xl md:text-2xl text-gray-400 max-w-3xl mx-auto mb-10 leading-relaxed"
+                        className="text-xl md:text-2xl text-text-secondary max-w-3xl mx-auto mb-10 leading-relaxed"
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8, delay: 0.4 }}
                     >
                         The AI-powered financial intelligence platform that tells SaaS founders
-                        <span className="text-white font-medium"> exactly </span>
+                        <span className="text-text-primary font-medium"> exactly </span>
                         how long their runway lasts—and how to extend it.
                     </motion.p>
 
