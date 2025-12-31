@@ -792,6 +792,45 @@ Provide specific numbers and clear comparisons to the current state.`;
 }
 
 /**
+ * Perform competitive benchmarking analysis
+ */
+export async function competitiveBenchmark(
+  context: AIContext
+): Promise<string> {
+  const currentRevenue = context.monthlyRevenue || 0;
+  const currentBurn = context.monthlyBurn || 0;
+  const currentCash = context.cashOnHand || 0;
+  const currentRunway = context.runway || (currentCash && currentBurn ? currentCash / currentBurn : 0);
+  const currentGrowth = context.revenueGrowthRate || 0;
+  
+  const prompt = `Perform a competitive benchmarking analysis comparing this company to competitors and industry standards.
+
+COMPANY METRICS:
+- Runway: ${currentRunway.toFixed(1)} months
+- Revenue growth: ${(currentGrowth * 100).toFixed(1)}% monthly
+- Monthly revenue: $${currentRevenue.toLocaleString()}
+- Monthly burn: $${currentBurn.toLocaleString()}
+- Cash on hand: $${currentCash.toLocaleString()}
+
+COMPETITOR BENCHMARKS:
+- Competitor 1: ${COMPETITOR_DATA.competitor1.runway} months runway, ${(COMPETITOR_DATA.competitor1.growth * 100).toFixed(0)}% growth
+- Competitor 2: ${COMPETITOR_DATA.competitor2.runway} months runway, ${(COMPETITOR_DATA.competitor2.growth * 100).toFixed(0)}% growth
+- Industry Median: ${COMPETITOR_DATA.industry_median.runway} months runway, ${(COMPETITOR_DATA.industry_median.growth * 100).toFixed(0)}% growth
+
+Provide analysis on:
+1. Runway comparison (how does our runway compare to competitors?)
+2. Growth rate comparison (are we growing faster or slower?)
+3. Competitive position (where do we rank?)
+4. Strengths vs. competitors
+5. Areas where we lag behind
+6. Strategic recommendations to improve competitive position
+
+Be specific with numbers and actionable insights.`;
+
+  return callGemini(prompt, context, []);
+}
+
+/**
  * Narrate a scenario in plain English
  */
 export async function narrateScenario(
