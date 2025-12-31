@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import AppLayout from './components/layout/AppLayout';
+import Landing from './pages/Landing';
 import DNALab from './pages/DNALab';
 import Simulator from './pages/Simulator';
 import Archive from './pages/Archive';
@@ -17,9 +18,9 @@ import { WelcomeOverlay } from './components/ui/WelcomeOverlay';
 export default function App() {
   return (
     <BrowserRouter>
-      <Toaster 
-        position="top-right" 
-        richColors 
+      <Toaster
+        position="top-right"
+        richColors
         theme="dark"
         toastOptions={{
           style: {
@@ -31,6 +32,10 @@ export default function App() {
       />
       <WelcomeOverlay />
       <Routes>
+        {/* Landing page - no layout wrapper */}
+        <Route path="/" element={<Landing />} />
+
+        {/* App pages with sidebar layout */}
         <Route element={<AppLayout />}>
           <Route path="/dna-lab" element={<DNALab />} />
           <Route path="/simulator" element={<Simulator />} />
@@ -43,8 +48,7 @@ export default function App() {
           <Route path="/env-debug" element={<EnvDebug />} />
           <Route path="/api-test" element={<APITest />} />
           <Route path="/archive" element={<Archive />} />
-          <Route path="/" element={<Navigate to="/dna-lab" replace />} />
-          <Route path="*" element={<Navigate to="/dna-lab" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>
     </BrowserRouter>
