@@ -299,12 +299,7 @@ ${context.revenueGrowthSlowing ? `- ⚠️ Revenue growth slowing` : ''}
 ${context.approachingBreakeven ? `- ✅ Approaching breakeven` : ''}
 ` : 'No financial data provided'}
 
-When the user asks questions, analyze the data deeply and provide strategic guidance as a trusted CFO would.
-
-ALWAYS end your response with a confidence indicator:
-- 🟢 High confidence (based on clear data)
-- 🟡 Medium confidence (some assumptions)
-- 🔴 Low confidence (need more data)`;
+When the user asks questions, analyze the data deeply and provide strategic guidance as a trusted CFO would.`;
 
     const contents = [];
     
