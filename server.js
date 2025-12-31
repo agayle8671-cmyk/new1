@@ -43,7 +43,7 @@ app.post('/api/chat', async (req, res) => {
       parts: [{ text: fullPrompt }]
     });
 
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=${apiKey}`;
     
     const geminiResponse = await fetch(apiUrl, {
       method: 'POST',
