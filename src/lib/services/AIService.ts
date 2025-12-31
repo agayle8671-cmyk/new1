@@ -29,6 +29,22 @@ export const ANALYSIS_TYPES: Record<AnalysisType, string> = {
   breakeven: 'Calculate path to profitability'
 };
 
+export interface IndustryBenchmarks {
+  industry: string;
+  typicalBurn: number;
+  typicalGrowth: number; // Monthly growth rate
+  typicalChurn: number; // Monthly churn rate
+  seriesASizeAvg: number;
+}
+
+export const BENCHMARKS: IndustryBenchmarks = {
+  industry: 'B2B SaaS',
+  typicalBurn: 75000, // for similar stage
+  typicalGrowth: 0.15, // 15% MoM
+  typicalChurn: 0.05, // 5% monthly
+  seriesASizeAvg: 8000000 // $8M average Series A
+};
+
 export interface AIContext {
   analysis?: FinancialAnalysis | null;
   simulatorParams?: SimParams | null;
@@ -656,6 +672,7 @@ const AIService = {
   narrateScenario,
   benchmarkAnalysis,
   ANALYSIS_TYPES,
+  BENCHMARKS,
 };
 
 export default AIService;

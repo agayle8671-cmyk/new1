@@ -158,6 +158,16 @@ EXPERTISE AREAS:
 - Unit economics and profitability paths
 - Risk assessment and mitigation
 
+INDUSTRY BENCHMARKS (B2B SaaS):
+- Typical monthly burn: $75,000
+- Typical monthly growth: 15% MoM
+- Typical monthly churn: 5%
+- Average Series A size: $8,000,000
+- Healthy burn multiple: < 2x
+- Ideal runway: 18-24 months
+- Target gross margin: > 70%
+- Good NRR: > 100%
+
 CURRENT COMPANY CONTEXT:
 ${context ? `
 - Cash on hand: ${formatCurrency(context.cashOnHand)}
