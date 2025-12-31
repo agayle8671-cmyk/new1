@@ -292,6 +292,46 @@ export default function AIAdvisor() {
     }
   }, [getContext]);
 
+  const generateRunwayPlan = useCallback(async () => {
+    setIsPlanLoading(true);
+    setRunwayPlan(null);
+    try {
+      const context = getContext();
+      const result = await AIService.generateRunwayPlan(context, targetRunway);
+      setRunwayPlan(result);
+      toast.success('90-Day Plan Generated');
+      
+      // Add to chat
+      const userMessage: AIMessage = {
+        id: `plan-${Date.now()}`,
+        role: 'user',
+        content: `Generate a 90-day plan to reach ${targetRunway} months runway`,
+        timestamp: new Date(),
+      };
+      const assistantMessage: AIMessage = {
+        id: `plan-response-${Date.now()}`,
+        role: 'assistant',
+        content: result,
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, userMessage, assistantMessage]);
+      
+      // Save to conversation memory
+      try {
+        await saveConversationMemory({
+          summary: `90-day runway plan: ${result.substring(0, 200)}${result.length > 200 ? '...' : ''}`,
+          key_insights: [result.substring(0, 150)],
+        }, false);
+      } catch (memoryError) {
+        console.warn('[AIAdvisor] Failed to save plan memory:', memoryError);
+      }
+    } catch (error) {
+      toast.error('Failed to generate plan', { description: error instanceof Error ? error.message : 'Unknown error' });
+    } finally {
+      setIsPlanLoading(false);
+    }
+  }, [getContext, targetRunway]);
+
   const copyToClipboard = (text: string, section: string) => {
     navigator.clipboard.writeText(text);
     setCopiedSection(section);
