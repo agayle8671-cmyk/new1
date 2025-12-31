@@ -21,3 +21,6 @@ export type { MetricProps, MetricCardProps, HeroMetricProps } from './Metric';
 // Inputs
 export { Input, Textarea, SearchInput } from './Input';
 export type { InputProps, TextareaProps, SearchInputProps } from './Input';
+
+// Skeletons & Loading
+export { Skeleton, SkeletonText, SkeletonCard, SkeletonMetric, LoadingDots } from './Skeleton';
