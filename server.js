@@ -222,20 +222,24 @@ When the user asks questions, analyze the data deeply and provide strategic guid
 
     const apiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
     
-    console.log('[Chat API] Calling Gemini API...');
+    console.log('[Chat API] Calling Gemini API with function calling...');
+    
+    // Stage 4: Add function calling support
+    let requestBody = {
+      contents,
+      tools: [{ functionDeclarations }],
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 2048,
+      }
+    };
     
     // Retry logic for transient failures (cold starts, rate limits, network issues)
-    const geminiResponse = await retryWithBackoff(async () => {
+    let geminiResponse = await retryWithBackoff(async () => {
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents,
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 2048,
-          }
-        }),
+        body: JSON.stringify(requestBody),
         // Add timeout to prevent hanging
         signal: AbortSignal.timeout(30000) // 30 second timeout
       });
