@@ -746,6 +746,45 @@ Only return JSON.`;
 }
 
 /**
+ * Analyze a "what if" scenario question
+ */
+export async function analyzeScenario(
+  question: string,
+  context: AIContext
+): Promise<string> {
+  const currentRevenue = context.monthlyRevenue || 0;
+  const currentBurn = context.monthlyBurn || 0;
+  const currentCash = context.cashOnHand || 0;
+  const currentGrowth = context.revenueGrowthRate || 0;
+  const currentChurn = context.churnRate || 0;
+  
+  const prompt = `The user is asking: "${question}"
+
+Analyze this scenario based on the current financial context:
+- Current monthly revenue: $${currentRevenue.toLocaleString()}
+- Current monthly burn: $${currentBurn.toLocaleString()}
+- Current cash on hand: $${currentCash.toLocaleString()}
+- Current revenue growth: ${(currentGrowth * 100).toFixed(1)}% monthly
+- Current churn rate: ${(currentChurn * 100).toFixed(1)}% monthly
+
+Available scenario templates:
+- Optimistic: 25% revenue growth, 2% churn
+- Realistic: 15% revenue growth, 5% churn
+- Pessimistic: 5% revenue growth, 10% churn
+
+Calculate and explain:
+1. How the scenario change affects runway (in months)
+2. Impact on burn rate and profitability timeline
+3. Revenue trajectory over next 12 months
+4. Key risks and opportunities
+5. Actionable recommendations
+
+Provide specific numbers and clear comparisons to the current state.`;
+
+  return callGemini(prompt, context, []);
+}
+
+/**
  * Narrate a scenario in plain English
  */
 export async function narrateScenario(
