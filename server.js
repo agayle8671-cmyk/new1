@@ -450,12 +450,18 @@ When the user asks questions, analyze the data deeply and provide strategic guid
     
     // Stage 4: Add function calling support
     // Stage 7: Note: Streaming and function calling are mutually exclusive
+    // Increase maxOutputTokens for longer responses (like 90-day plans)
+    const isLongFormRequest = userMessage.toLowerCase().includes('90-day') || 
+                              userMessage.toLowerCase().includes('action plan') ||
+                              userMessage.toLowerCase().includes('comprehensive plan');
+    const maxTokens = isLongFormRequest ? 4096 : 2048;
+    
     let requestBody = {
       contents,
       tools: useStreaming ? undefined : [{ functionDeclarations }], // Disable tools for streaming
       generationConfig: {
         temperature: 0.7,
-        maxOutputTokens: 2048,
+        maxOutputTokens: maxTokens,
       }
     };
     

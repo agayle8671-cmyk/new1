@@ -509,11 +509,14 @@ export async function generateRunwayPlan(
       ? context.cashOnHand / context.monthlyBurn 
       : 0);
   
-  const planningPrompt = `Create a 90-day action plan to improve our runway from ${currentRunway.toFixed(1)} to ${targetRunway} months. Include:
-1. Specific tactics (with timeline)
-2. Expected impact on metrics
-3. Resources needed
-4. Success milestones
+  const planningPrompt = `Create a comprehensive 90-day action plan to improve our runway from ${currentRunway.toFixed(1)} to ${targetRunway} months.
+
+REQUIREMENTS:
+- Provide a complete, detailed plan (do not truncate or cut off)
+- Include specific tactics with exact timelines (Days 1-30, 31-60, 61-90)
+- Show expected impact on metrics (burn reduction, revenue increase, runway extension)
+- List resources needed (team, tools, budget)
+- Define clear success milestones for each 30-day period
 
 Current financial context:
 - Cash on hand: $${(context.cashOnHand || 0).toLocaleString()}
@@ -523,7 +526,22 @@ Current financial context:
 ${context.burnIncreasing ? '- ⚠️ Burn is increasing' : ''}
 ${context.revenueGrowthSlowing ? '- ⚠️ Revenue growth is slowing' : ''}
 
-Provide a detailed, actionable plan with specific steps, timelines, and expected outcomes.`;
+Format the plan as:
+## 90-Day Runway Improvement Plan
+
+### Month 1 (Days 1-30)
+[Detailed tactics, expected impact, resources, milestones]
+
+### Month 2 (Days 31-60)
+[Detailed tactics, expected impact, resources, milestones]
+
+### Month 3 (Days 61-90)
+[Detailed tactics, expected impact, resources, milestones]
+
+### Overall Impact Summary
+[Total runway improvement, key metrics changes, success criteria]
+
+Provide the complete plan - do not stop mid-sentence.`;
 
   return callGemini(planningPrompt, context, []);
 }
