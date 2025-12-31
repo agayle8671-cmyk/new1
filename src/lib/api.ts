@@ -958,3 +958,249 @@ export async function clearAcknowledgedAlerts(
     return { data: null, error: errorMsg, loading: false };
   }
 }
+
+export interface CustomerFeedback {
+  id?: string;
+  user_id?: string;
+  feedback_text: string;
+  source?: string;
+  rating?: number;
+  sentiment_score?: number;
+  sentiment_label?: 'positive' | 'neutral' | 'negative';
+  created_at?: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface SentimentAnalysis {
+  overall: 'positive' | 'neutral' | 'negative';
+  score: number; // -1 to 1
+  positiveCount: number;
+  negativeCount: number;
+  neutralCount: number;
+  totalCount: number;
+  recentTrend?: 'improving' | 'stable' | 'declining';
+}
+
+/**
+ * Analyze sentiment from customer feedback text
+ * Simple keyword-based sentiment analysis (can be enhanced with AI/ML)
+ */
+export function analyzeSentiment(feedbackText: string): {
+  score: number; // -1 to 1
+  label: 'positive' | 'neutral' | 'negative';
+} {
+  const text = feedbackText.toLowerCase();
+  
+  // Positive keywords
+  const positiveWords = [
+    'love', 'great', 'excellent', 'amazing', 'fantastic', 'wonderful',
+    'perfect', 'awesome', 'good', 'happy', 'satisfied', 'pleased',
+    'impressed', 'recommend', 'best', 'outstanding', 'superb', 'brilliant'
+  ];
+  
+  // Negative keywords
+  const negativeWords = [
+    'hate', 'terrible', 'awful', 'horrible', 'bad', 'worst', 'disappointed',
+    'frustrated', 'angry', 'upset', 'poor', 'broken', 'bug', 'issue',
+    'problem', 'slow', 'crash', 'error', 'fail', 'unusable'
+  ];
+  
+  let positiveCount = 0;
+  let negativeCount = 0;
+  
+  positiveWords.forEach(word => {
+    if (text.includes(word)) positiveCount++;
+  });
+  
+  negativeWords.forEach(word => {
+    if (text.includes(word)) negativeCount++;
+  });
+  
+  // Calculate sentiment score (-1 to 1)
+  const totalWords = positiveCount + negativeCount;
+  let score = 0;
+  
+  if (totalWords > 0) {
+    score = (positiveCount - negativeCount) / Math.max(totalWords, 1);
+  } else {
+    // Neutral if no sentiment words found
+    score = 0;
+  }
+  
+  // Determine label
+  let label: 'positive' | 'neutral' | 'negative';
+  if (score > 0.2) {
+    label = 'positive';
+  } else if (score < -0.2) {
+    label = 'negative';
+  } else {
+    label = 'neutral';
+  }
+  
+  return { score, label };
+}
+
+/**
+ * Fetch and analyze customer feedback from the last week
+ */
+export async function fetchAndAnalyzeCustomerFeedback(
+  daysBack: number = 7,
+  showToast: boolean = false
+): Promise<ApiResponse<SentimentAnalysis>> {
+  if (!isSupabaseConfigured) {
+    return { 
+      data: null, 
+      error: 'Database not configured', 
+      loading: false 
+    };
+  }
+
+  try {
+    const lastWeek = new Date();
+    lastWeek.setDate(lastWeek.getDate() - daysBack);
+    
+    const { data: feedback, error } = await supabase
+      .from('customer_feedback')
+      .select('*')
+      .gte('created_at', lastWeek.toISOString())
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      if (showToast) {
+        toast.error('Failed to Fetch Feedback', { description: error.message });
+      }
+      return { data: null, error: error.message, loading: false };
+    }
+
+    if (!feedback || feedback.length === 0) {
+      return {
+        data: {
+          overall: 'neutral',
+          score: 0,
+          positiveCount: 0,
+          negativeCount: 0,
+          neutralCount: 0,
+          totalCount: 0,
+        },
+        error: null,
+        loading: false,
+      };
+    }
+
+    // Analyze sentiment for each feedback
+    const sentiments = feedback.map(f => {
+      const analysis = analyzeSentiment(f.feedback_text);
+      return {
+        ...f,
+        sentiment_score: analysis.score,
+        sentiment_label: analysis.label,
+      };
+    });
+
+    // Calculate aggregate sentiment
+    const positiveCount = sentiments.filter(s => s.sentiment_label === 'positive').length;
+    const negativeCount = sentiments.filter(s => s.sentiment_label === 'negative').length;
+    const neutralCount = sentiments.filter(s => s.sentiment_label === 'neutral').length;
+    const totalCount = sentiments.length;
+    
+    const avgScore = sentiments.reduce((sum, s) => sum + (s.sentiment_score || 0), 0) / totalCount;
+    
+    // Determine overall sentiment
+    let overall: 'positive' | 'neutral' | 'negative';
+    if (avgScore > 0.2) {
+      overall = 'positive';
+    } else if (avgScore < -0.2) {
+      overall = 'negative';
+    } else {
+      overall = 'neutral';
+    }
+
+    // Determine trend (compare first half vs second half of period)
+    const midPoint = Math.floor(sentiments.length / 2);
+    const firstHalf = sentiments.slice(0, midPoint);
+    const secondHalf = sentiments.slice(midPoint);
+    
+    const firstHalfAvg = firstHalf.reduce((sum, s) => sum + (s.sentiment_score || 0), 0) / Math.max(firstHalf.length, 1);
+    const secondHalfAvg = secondHalf.reduce((sum, s) => sum + (s.sentiment_score || 0), 0) / Math.max(secondHalf.length, 1);
+    
+    let recentTrend: 'improving' | 'stable' | 'declining';
+    if (secondHalfAvg > firstHalfAvg + 0.1) {
+      recentTrend = 'improving';
+    } else if (secondHalfAvg < firstHalfAvg - 0.1) {
+      recentTrend = 'declining';
+    } else {
+      recentTrend = 'stable';
+    }
+
+    const result: SentimentAnalysis = {
+      overall,
+      score: avgScore,
+      positiveCount,
+      negativeCount,
+      neutralCount,
+      totalCount,
+      recentTrend: totalCount >= 4 ? recentTrend : undefined, // Only show trend if enough data
+    };
+
+    return { data: result, error: null, loading: false };
+  } catch (err) {
+    const errorMsg = err instanceof Error ? err.message : 'An unexpected error occurred';
+    if (showToast) {
+      toast.error('Analysis Failed', { description: errorMsg });
+    }
+    return { data: null, error: errorMsg, loading: false };
+  }
+}
+
+/**
+ * Save customer feedback to the database
+ */
+export async function saveCustomerFeedback(
+  input: Omit<CustomerFeedback, 'id' | 'user_id' | 'created_at'>,
+  showToast: boolean = true
+): Promise<ApiResponse<CustomerFeedback>> {
+  if (!isSupabaseConfigured) {
+    const errorMsg = 'Database not configured. Feedback not saved.';
+    if (showToast) {
+      toast.warning('Offline Mode', { description: errorMsg });
+    }
+    return { data: null, error: errorMsg, loading: false };
+  }
+
+  try {
+    // Analyze sentiment
+    const sentiment = analyzeSentiment(input.feedback_text);
+    
+    const { data, error } = await supabase
+      .from('customer_feedback')
+      .insert({
+        user_id: (await supabase.auth.getUser()).data.user?.id || 'anonymous',
+        feedback_text: input.feedback_text,
+        source: input.source || 'support',
+        rating: input.rating,
+        sentiment_score: sentiment.score,
+        sentiment_label: sentiment.label,
+        metadata: input.metadata || {},
+      })
+      .select()
+      .maybeSingle();
+
+    if (error) {
+      if (showToast) {
+        toast.error('Failed to Save Feedback', { description: error.message });
+      }
+      return { data: null, error: error.message, loading: false };
+    }
+
+    if (showToast) {
+      toast.success('Feedback Saved', { description: 'Customer feedback recorded.' });
+    }
+    return { data: data as CustomerFeedback, error: null, loading: false };
+  } catch (err) {
+    const errorMsg = err instanceof Error ? err.message : 'An unexpected error occurred';
+    if (showToast) {
+      toast.error('Save Failed', { description: errorMsg });
+    }
+    return { data: null, error: errorMsg, loading: false };
+  }
+}
