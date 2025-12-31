@@ -144,47 +144,80 @@ export async function testConnection(): Promise<ConnectionStatus> {
   const startTime = Date.now();
 
   try {
+    // Use a simple, fast test message to avoid rate limits
     const response = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        message: 'Say "connected" in one word.',
+        message: 'Hi',
         context: null,
         conversationHistory: [],
       }),
+      // Add timeout to prevent hanging
+      signal: AbortSignal.timeout(15000), // 15 second timeout for test
     });
 
     const latency = Date.now() - startTime;
 
     if (!response.ok) {
-      const error = await response.json();
-      console.error('[AI] Connection failed:', error);
+      let errorData: any = {};
+      try {
+        errorData = await response.json();
+      } catch {
+        errorData = { error: `HTTP ${response.status}` };
+      }
+      
+      console.error('[AI] Connection failed:', errorData);
+      
+      // Provide helpful error messages
+      let errorMessage = errorData.error || `HTTP ${response.status}`;
+      if (response.status === 429) {
+        errorMessage = 'Rate limit exceeded - API is being used too frequently';
+      } else if (response.status === 504) {
+        errorMessage = 'Request timeout - server may be cold starting';
+      } else if (response.status === 500) {
+        errorMessage = errorData.hint || 'Server error - check Railway logs';
+      }
+      
       return {
         connected: false,
-        model: 'gemini-1.5-flash',
+        model: 'gemini-2.5-flash',
         latency,
-        error: error.error || `HTTP ${response.status}`,
+        error: errorMessage,
       };
     }
 
     const data = await response.json();
-    const text = data.text;
+    const text = data.text || data.response;
     
-    console.log('[AI] Connection successful!', { latency, response: text });
+    console.log('[AI] ✅ Connection successful!', { latency, response: text?.substring(0, 50) });
     
     return {
       connected: true,
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.5-flash',
       latency,
     };
   } catch (err) {
     const latency = Date.now() - startTime;
-    console.error('[AI] Connection error:', err);
+    const errorMessage = err instanceof Error ? err.message : 'Network error';
+    
+    console.error('[AI] Connection error:', errorMessage);
+    
+    // Check for timeout
+    if (errorMessage.includes('timeout') || errorMessage.includes('AbortError')) {
+      return {
+        connected: false,
+        model: 'gemini-2.5-flash',
+        latency,
+        error: 'Connection timeout - server may be cold starting. Try again in a moment.',
+      };
+    }
+    
     return {
       connected: false,
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.5-flash',
       latency,
-      error: err instanceof Error ? err.message : 'Network error',
+      error: errorMessage,
     };
   }
 }

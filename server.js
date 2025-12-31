@@ -119,6 +119,27 @@ function executeFunction(functionName, args, context) {
   }
 }
 
+// Helper function to retry API calls with exponential backoff
+async function retryWithBackoff(fn, maxRetries = 3, initialDelay = 1000) {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      const isLastAttempt = attempt === maxRetries - 1;
+      const isRateLimit = error.message?.includes('429') || error.message?.includes('rate limit') || error.message?.includes('quota');
+      
+      if (isLastAttempt) {
+        throw error;
+      }
+      
+      // Exponential backoff: 1s, 2s, 4s
+      const delay = initialDelay * Math.pow(2, attempt);
+      console.log(`[Chat API] Retry attempt ${attempt + 1}/${maxRetries} after ${delay}ms (${isRateLimit ? 'rate limit' : 'error'})`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+}
+
 app.post('/api/chat', async (req, res) => {
   try {
     const { message, prompt, context, conversationHistory } = req.body;
@@ -130,7 +151,11 @@ app.post('/api/chat', async (req, res) => {
 
     const apiKey = process.env.GOOGLE_AI_KEY || process.env.GOOGLE_API_KEY;
     if (!apiKey) {
-      return res.status(500).json({ error: 'API key not configured' });
+      console.error('[Chat API] ❌ API key not configured');
+      return res.status(500).json({ 
+        error: 'API key not configured',
+        hint: 'Add GOOGLE_AI_KEY to Railway environment variables'
+      });
     }
 
     // Enhanced system prompt with context
@@ -181,31 +206,89 @@ Provide strategic guidance as a trusted CFO would.`;
 
     const apiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
     
-    const geminiResponse = await fetch(apiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents,
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 2048,
-        }
-      })
-    });
+    console.log('[Chat API] Calling Gemini API...');
+    
+    // Retry logic for transient failures (cold starts, rate limits, network issues)
+    const geminiResponse = await retryWithBackoff(async () => {
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents,
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 2048,
+          }
+        }),
+        // Add timeout to prevent hanging
+        signal: AbortSignal.timeout(30000) // 30 second timeout
+      });
 
-    if (!geminiResponse.ok) {
-      const errorText = await geminiResponse.text();
-      console.error('Gemini error:', errorText);
-      return res.status(500).json({ error: 'AI request failed' });
-    }
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { error: errorText };
+        }
+        
+        // Check for rate limiting
+        if (response.status === 429) {
+          throw new Error(`Rate limit exceeded: ${errorData.error?.message || errorText}`);
+        }
+        
+        // Check for quota exceeded
+        if (response.status === 403 && (errorText.includes('quota') || errorText.includes('Quota'))) {
+          throw new Error(`API quota exceeded: ${errorData.error?.message || errorText}`);
+        }
+        
+        // For other errors, throw with status
+        const error = new Error(`Gemini API error (${response.status}): ${errorData.error?.message || errorText}`);
+        error.status = response.status;
+        throw error;
+      }
+      
+      return response;
+    }, 3, 1000); // 3 retries, starting with 1 second delay
 
     const data = await geminiResponse.json();
     const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response';
 
+    if (!responseText || responseText === 'No response') {
+      console.error('[Chat API] Empty response from Gemini:', data);
+      return res.status(500).json({ 
+        error: 'Empty response from AI',
+        details: 'Gemini API returned no text. Check Railway logs for details.'
+      });
+    }
+
+    console.log('[Chat API] ✅ Success, response length:', responseText.length);
     return res.json({ response: responseText, text: responseText });
   } catch (error) {
-    console.error('Error:', error);
-    return res.status(500).json({ error: error.message });
+    console.error('[Chat API] ❌ Error:', error.message);
+    console.error('[Chat API] Error stack:', error.stack);
+    
+    // Provide helpful error messages
+    if (error.message?.includes('rate limit') || error.message?.includes('quota')) {
+      return res.status(429).json({ 
+        error: 'API rate limit exceeded',
+        hint: 'Google Gemini API has rate limits. Please wait a moment and try again.',
+        retryAfter: 60
+      });
+    }
+    
+    if (error.name === 'AbortError' || error.message?.includes('timeout')) {
+      return res.status(504).json({ 
+        error: 'Request timeout',
+        hint: 'The AI request took too long. This can happen during cold starts. Please try again.',
+      });
+    }
+    
+    return res.status(500).json({ 
+      error: error.message || 'AI request failed',
+      hint: 'Check Railway logs for more details. This might be a temporary issue - try again in a moment.'
+    });
   }
 });
 
