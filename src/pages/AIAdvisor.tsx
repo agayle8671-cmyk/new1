@@ -31,6 +31,8 @@ import AIService, {
   type RiskAssessment,
   type AIContext,
   type ConnectionStatus,
+  type AnalysisType,
+  performAnalysis,
   getDebugInfo,
 } from '../lib/services/AIService';
 import { useAppStore } from '../lib/store';
@@ -287,6 +289,66 @@ export default function AIAdvisor() {
     }
   }, [getContext]);
 
+  // Analysis mode handler
+  const runAnalysis = useCallback(async (mode: AnalysisType) => {
+    if (isAnalysisRunning) return;
+    
+    setIsAnalysisRunning(true);
+    setActiveAnalysisMode(mode);
+    
+    // Add user message showing which analysis was triggered
+    const userMessage: AIMessage = {
+      id: `analysis-${Date.now()}`,
+      role: 'user',
+      content: `Run ${mode} analysis`,
+      timestamp: new Date(),
+    };
+    setMessages(prev => [...prev, userMessage]);
+
+    try {
+      const response = await performAnalysis(mode, getContext());
+      
+      const assistantMessage: AIMessage = {
+        id: `analysis-response-${Date.now()}`,
+        role: 'assistant',
+        content: response,
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, assistantMessage]);
+
+      // Save to conversation memory
+      try {
+        const insights: string[] = [];
+        const sentences = response.split(/[.!?]+/).filter(s => s.trim().length > 20);
+        if (sentences.length > 0) {
+          insights.push(...sentences.slice(0, 3).map(s => s.trim()).filter(s => s.length > 0));
+        }
+
+        await saveConversationMemory({
+          summary: `${mode} analysis: ${response.substring(0, 200)}${response.length > 200 ? '...' : ''}`,
+          key_insights: insights.length > 0 ? insights : [response.substring(0, 150)],
+        }, false);
+      } catch (memoryError) {
+        console.warn('[AIAdvisor] Failed to save analysis memory:', memoryError);
+      }
+
+      toast.success('Analysis Complete', { description: `${mode} analysis finished` });
+    } catch (error) {
+      toast.error('Analysis Failed', { description: error instanceof Error ? error.message : 'Unknown error' });
+      
+      const errorMessage: AIMessage = {
+        id: `analysis-error-${Date.now()}`,
+        role: 'assistant',
+        content: `Error: ${error instanceof Error ? error.message : 'Analysis failed'}`,
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsAnalysisRunning(false);
+      setActiveAnalysisMode(null);
+    }
+  }, [isAnalysisRunning, getContext]);
+
   const copyToClipboard = (text: string, section: string) => {
     navigator.clipboard.writeText(text);
     setCopiedSection(section);
@@ -482,6 +544,42 @@ export default function AIAdvisor() {
           {isBenchmarksLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <BarChart3 className="w-5 h-5" />}
           <span className="text-xs">Benchmarks</span>
         </MotionButton>
+      </div>
+
+      {/* Analysis Mode Buttons */}
+      <div className="glass-card p-4">
+        <h3 className="text-sm font-semibold mb-3 text-gray-300">Quick Analysis</h3>
+        <div className="flex flex-wrap gap-2">
+          {[
+            { mode: 'runway' as AnalysisType, label: '🛫 Runway Analysis', icon: '📊' },
+            { mode: 'fundraising' as AnalysisType, label: '💰 Fundraising Readiness', icon: '🎯' },
+            { mode: 'growth' as AnalysisType, label: '📈 Growth Assessment', icon: '🚀' },
+            { mode: 'risk' as AnalysisType, label: '⚠️ Risk Analysis', icon: '🔍' },
+            { mode: 'breakeven' as AnalysisType, label: '💚 Path to Profitability', icon: '✨' }
+          ].map(btn => (
+            <button
+              key={btn.mode}
+              onClick={() => runAnalysis(btn.mode)}
+              disabled={isAnalysisRunning}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                activeAnalysisMode === btn.mode
+                  ? 'bg-cyan-electric text-charcoal'
+                  : isAnalysisRunning
+                    ? 'bg-white/5 text-gray-500 cursor-not-allowed'
+                    : 'bg-white/10 text-gray-300 hover:bg-white/20 hover:text-cyan-electric'
+              }`}
+            >
+              {isAnalysisRunning && activeAnalysisMode === btn.mode ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Running...
+                </span>
+              ) : (
+                btn.label
+              )}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Main Content Grid */}
