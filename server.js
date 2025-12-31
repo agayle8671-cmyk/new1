@@ -129,6 +129,42 @@ function executeFunction(functionName, args, context) {
       };
     }
 
+    case 'perform_analysis': {
+      const analysisType = args?.analysis_type;
+      if (!analysisType) {
+        return { error: 'analysis_type is required' };
+      }
+
+      const analysisPrompts = {
+        runway: 'Analyze our cash runway and burn rate trajectory. Focus on: current runway, burn rate trends, cash consumption patterns, and runway extension strategies.',
+        fundraising: 'Assess our fundraising readiness and timing. Focus on: current metrics vs. typical Series A requirements, growth trajectory, unit economics, and optimal fundraising timeline.',
+        growth: 'Evaluate revenue growth and unit economics. Focus on: growth rate trends, customer acquisition costs, lifetime value, churn impact, and growth sustainability.',
+        risk: 'Identify top financial risks we should address. Focus on: cash runway risks, burn rate acceleration, revenue growth slowdown, churn increases, and market risks.',
+        breakeven: 'Calculate path to profitability. Focus on: current burn vs. revenue, growth rate needed, timeline to breakeven, and strategies to accelerate profitability.'
+      };
+
+      const prompt = analysisPrompts[analysisType];
+      if (!prompt) {
+        return { error: `Unknown analysis type: ${analysisType}. Valid types: runway, fundraising, growth, risk, breakeven` };
+      }
+
+      // Return the analysis prompt and context summary for the AI to use
+      return {
+        analysis_type: analysisType,
+        prompt: prompt,
+        context_summary: {
+          cashOnHand: context?.cashOnHand || 'N/A',
+          monthlyBurn: context?.monthlyBurn || 'N/A',
+          monthlyRevenue: context?.monthlyRevenue || 'N/A',
+          runway: context?.runway || 'N/A',
+          revenueGrowthRate: context?.revenueGrowthRate || 'N/A',
+          burnIncreasing: context?.burnIncreasing || false,
+          revenueGrowthSlowing: context?.revenueGrowthSlowing || false,
+          approachingBreakeven: context?.approachingBreakeven || false
+        }
+      };
+    }
+
     default:
       return { error: `Unknown function: ${functionName}` };
   }
