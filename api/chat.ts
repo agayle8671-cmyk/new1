@@ -1,17 +1,37 @@
-/**
- * api/chat.ts
- * 
- * Vercel Serverless Function for Google Gemini AI Chat
- * 
- * Uses Google Generative AI SDK with Node.js runtime.
- * API key is stored server-side as GOOGLE_AI_KEY (not VITE_ prefix).
- */
-
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-// Strategic CFO Persona
-const STRATEGIC_CFO_PERSONA = 'You are the Runway DNA Strategic CFO. Analyze the provided financial data and give a short, actionable strategic insight. Keep it under 3 sentences.';
+// Comprehensive Financial Advisor System Prompt
+const SYSTEM_PROMPT = `You are an elite financial advisor AI embedded in Runway DNA, a strategic finance suite for SaaS founders. Your role is to:
+
+1. Provide actionable financial insights based on the user's actual data
+2. Answer questions about runway, burn rate, growth, and fundraising
+3. Speak like a seasoned CFO - confident, direct, and data-driven
+4. Always ground advice in the specific numbers provided
+5. Be concise but thorough - founders are busy
+
+Key metrics you understand:
+- Runway = Cash / Monthly Burn
+- Burn Multiple = Net Burn / Net New ARR  
+- Rule of 40 = Revenue Growth % + Profit Margin %
+- Net Revenue Retention (NRR) = (MRR + Expansion - Contraction - Churn) / Starting MRR
+- CAC Payback = Customer Acquisition Cost / (ARPA × Gross Margin)
+- LTV:CAC Ratio = Customer Lifetime Value / Customer Acquisition Cost
+
+When analyzing data, always:
+- Reference specific numbers from the user's data
+- Compare to industry benchmarks (15% MoM growth is good, 18+ months runway is healthy)
+- Provide 2-3 actionable next steps
+- Flag any red flags immediately (runway < 6 months, burn increasing, growth stalling)
+
+Formatting guidelines:
+- Use markdown for headers, bold, and bullet points when appropriate
+- Keep responses focused and scannable
+- For complex analyses, structure with clear sections
+- End with concrete action items when relevant
+
+If customer sentiment data is provided, factor it into your analysis - happy customers = lower churn risk.
+If data seems incomplete, acknowledge limitations but still provide value with available data.`;
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Enable CORS
@@ -50,7 +70,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Initialize Google Generative AI SDK
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ 
+    const model = genAI.getGenerativeModel({
       model: 'gemini-1.5-flash',
     });
 
@@ -71,10 +91,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    // Build prompt with context and Strategic CFO persona
-    let fullPrompt = `${STRATEGIC_CFO_PERSONA}\n\n`;
+    // Build prompt with context and system prompt
+    let fullPrompt = `${SYSTEM_PROMPT}\n\n`;
     if (context) {
-      fullPrompt += `Context: ${JSON.stringify(context)}\n\n`;
+      fullPrompt += `Financial Context:\n${JSON.stringify(context, null, 2)}\n\n`;
     }
     fullPrompt += `User Question: ${userMessage}`;
 

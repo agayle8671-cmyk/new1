@@ -27,14 +27,14 @@ const QUICK_PROMPTS = [
 
 export function AIChat() {
   const { currentAnalysis, simulatorParams } = useAppStore();
-  
+
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [messages, setMessages] = useState<AIMessage[]>([INITIAL_MESSAGE]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isConfigured, setIsConfigured] = useState(false);
-  
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -133,10 +133,10 @@ export function AIChat() {
             >
               <div className="space-y-3">
                 <p className="text-sm text-gray-400">
-                  AI Advisor requires a Google AI API key configured server-side in Vercel.
+                  AI Advisor requires a Google AI API key configured server-side in Railway.
                 </p>
                 <p className="text-xs text-gray-500">
-                  Add <code className="text-cyan-electric">GOOGLE_AI_KEY</code> (not VITE_ prefix) in Vercel Settings → Environment Variables.
+                  Add <code className="text-cyan-electric">GOOGLE_AI_KEY</code> (not VITE_ prefix) in Railway Settings → Variables.
                 </p>
                 <a
                   href="/ai-advisor"
@@ -161,9 +161,8 @@ export function AIChat() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.9 }}
             transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-            className={`absolute bottom-16 right-0 glass-card-elevated overflow-hidden ${
-              isMinimized ? 'w-72 h-12' : 'w-96 h-[500px]'
-            }`}
+            className={`absolute bottom-16 right-0 glass-card-elevated overflow-hidden ${isMinimized ? 'w-72 h-12' : 'w-96 h-[500px]'
+              }`}
           >
             {/* Header */}
             <div className="flex items-center justify-between p-3 border-b border-white/10 bg-gradient-to-r from-cyan-electric/10 to-violet-vivid/10">
@@ -204,11 +203,10 @@ export function AIChat() {
                       className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
                     >
                       <div
-                        className={`max-w-[85%] rounded-2xl px-4 py-2 ${
-                          message.role === 'user'
+                        className={`max-w-[85%] rounded-2xl px-4 py-2 ${message.role === 'user'
                             ? 'bg-cyan-electric text-charcoal'
                             : 'bg-white/10 text-gray-100'
-                        }`}
+                          }`}
                       >
                         <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                       </div>
@@ -277,11 +275,10 @@ export function AIChat() {
       {/* Floating Button */}
       <motion.button
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all ${
-          isOpen
+        className={`w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all ${isOpen
             ? 'bg-white/10 hover:bg-white/20'
             : 'bg-gradient-to-r from-cyan-electric to-violet-vivid hover:scale-110'
-        }`}
+          }`}
         whileHover={{ scale: isOpen ? 1 : 1.1 }}
         whileTap={{ scale: 0.95 }}
         animate={isOpen ? {} : {

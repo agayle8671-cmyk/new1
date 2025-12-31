@@ -64,34 +64,34 @@ export interface AIContext {
   simulatorParams?: SimParams | null;
   projections?: ProjectionMonth[];
   additionalContext?: string;
-  
+
   // Enhanced financial context (Stage 1)
   cashOnHand?: number;
   monthlyBurn?: number;
   monthlyRevenue?: number;
   runway?: number; // months
-  
+
   // Growth metrics
   revenueGrowthRate?: number; // monthly growth rate (decimal)
   customerCount?: number;
   avgRevenuePerCustomer?: number;
   churnRate?: number; // monthly churn rate (decimal)
-  
+
   // Fundraising
   lastRoundAmount?: number;
   lastRoundDate?: string;
   investorsCount?: number;
   targetNextRound?: number;
-  
+
   // Team
   employeeCount?: number;
   monthlyPayroll?: number;
-  
+
   // Alerts
   burnIncreasing?: boolean;
   revenueGrowthSlowing?: boolean;
   approachingBreakeven?: boolean;
-  
+
   // Customer sentiment
   customerSentiment?: {
     overall: 'positive' | 'neutral' | 'negative';
@@ -239,9 +239,9 @@ export async function testConnection(force: boolean = false): Promise<Connection
       } catch {
         errorData = { error: `HTTP ${response.status}` };
       }
-      
+
       console.error('[AI] Connection failed:', errorData);
-      
+
       // Provide helpful error messages
       let errorMessage = errorData.error || `HTTP ${response.status}`;
       if (response.status === 429) {
@@ -251,10 +251,10 @@ export async function testConnection(force: boolean = false): Promise<Connection
       } else if (response.status === 500) {
         errorMessage = errorData.hint || 'Server error - check Railway logs';
       }
-      
+
       return {
         connected: false,
-        model: 'gemini-2.5-flash',
+        model: GEMINI_MODEL,
         latency,
         error: errorMessage,
       };
@@ -262,83 +262,58 @@ export async function testConnection(force: boolean = false): Promise<Connection
 
     const data = await response.json();
     const text = data.text || data.response;
-    
+
     console.log('[AI] ✅ Connection successful!', { latency, response: text?.substring(0, 50) });
-    
+
     const result: ConnectionStatus = {
       connected: true,
-      model: 'gemini-2.5-flash',
+      model: GEMINI_MODEL,
       latency,
     };
-    
+
     // Cache successful result
     lastConnectionTest = { timestamp: now, result };
-    
+
     return result;
   } catch (err) {
     const latency = Date.now() - startTime;
     const errorMessage = err instanceof Error ? err.message : 'Network error';
-    
+
     console.error('[AI] Connection error:', errorMessage);
-    
+
     // Check for rate limit errors
-    const isRateLimit = errorMessage.includes('rate limit') || 
-                       errorMessage.includes('429') || 
-                       errorMessage.includes('quota');
-    
+    const isRateLimit = errorMessage.includes('rate limit') ||
+      errorMessage.includes('429') ||
+      errorMessage.includes('quota');
+
     // Check for timeout
     const isTimeout = errorMessage.includes('timeout') || errorMessage.includes('AbortError');
-    
+
     let finalError = errorMessage;
     if (isRateLimit) {
       finalError = 'Rate limit exceeded. Please wait a moment before testing again.';
     } else if (isTimeout) {
       finalError = 'Connection timeout - server may be cold starting. Try again in a moment.';
     }
-    
+
     const result: ConnectionStatus = {
       connected: false,
-      model: 'gemini-2.5-flash',
+      model: GEMINI_MODEL,
       latency,
       error: finalError,
     };
-    
+
     // Cache failed result too (but with shorter cooldown for retries)
     lastConnectionTest = { timestamp: now, result };
-    
+
     return result;
   }
 }
 
 // ============================================================================
-// SYSTEM PROMPTS
-// ============================================================================
-
-const SYSTEM_PROMPT = `You are an elite financial advisor AI embedded in Runway DNA, a strategic finance suite for SaaS founders. Your role is to:
-
-1. Provide actionable financial insights based on the user's actual data
-2. Answer questions about runway, burn rate, growth, and fundraising
-3. Speak like a seasoned CFO - confident, direct, and data-driven
-4. Always ground advice in the specific numbers provided
-5. Be concise but thorough - founders are busy
-
-Key metrics you understand:
-- Runway = Cash / Monthly Burn
-- Burn Multiple = Net Burn / Net New ARR
-- Rule of 40 = Revenue Growth % + Profit Margin %
-- Net Revenue Retention (NRR) = (MRR + Expansion - Contraction - Churn) / Starting MRR
-
-When analyzing data, always:
-- Reference specific numbers
-- Compare to industry benchmarks
-- Provide 2-3 actionable next steps
-- Flag any red flags immediately
-
-Format responses in clear markdown with headers when appropriate.`;
-
-// ============================================================================
 // CORE API FUNCTION
 // ============================================================================
+// NOTE: System prompt is now defined server-side in api/chat.ts
 
 async function callGemini(
   prompt: string,
@@ -349,25 +324,25 @@ async function callGemini(
   // API key is stored server-side as GOOGLE_AI_KEY (not VITE_ prefix)
   // No SDK usage in browser - all AI logic is server-side
   const apiUrl = '/api/chat';
-  
+
   console.log('[AI] ========================================');
   console.log('[AI] Calling Express server endpoint:', apiUrl);
   console.log('[AI] Setup: Server-side API key (GOOGLE_AI_KEY in Railway)');
-  console.log('[AI] Request payload:', { 
-    prompt: prompt.substring(0, 50) + '...', 
-    hasContext: !!context, 
-    historyLength: conversationHistory?.length || 0 
+  console.log('[AI] Request payload:', {
+    prompt: prompt.substring(0, 50) + '...',
+    hasContext: !!context,
+    historyLength: conversationHistory?.length || 0
   });
 
   try {
     const startTime = Date.now();
-    
+
     const requestBody = {
       message: prompt, // Use 'message' for Edge function compatibility
       context,
       conversationHistory,
     };
-    
+
     console.log('[AI] Request body:', {
       message: prompt.substring(0, 50) + '...',
       hasContext: !!context,
@@ -390,18 +365,18 @@ async function callGemini(
       // Try to parse error response
       let errorData: any = {};
       let errorText = '';
-      
+
       try {
         errorText = await response.text();
         errorData = JSON.parse(errorText);
       } catch (parseError) {
         errorData = { error: errorText || `HTTP ${response.status}` };
       }
-      
+
       console.error('[AI] ❌ Error response:', errorData);
       console.error('[AI] Full error text:', errorText);
       console.error('[AI] Response status:', response.status, response.statusText);
-      
+
       // Provide helpful error messages based on status code
       if (response.status === 500) {
         if (errorData.error?.includes('API key not configured') || errorData.error?.includes('API key')) {
@@ -411,15 +386,15 @@ async function callGemini(
           throw new Error(`AI Service Error: ${errorData.error || 'Unknown error'}. Details: ${errorData.details}. ${errorData.hint || ''}`);
         }
       }
-      
+
       if (response.status === 404) {
         throw new Error('API endpoint not found. Check that /api/chat exists and is deployed.');
       }
-      
+
       if (response.status === 401 || response.status === 403) {
         throw new Error('API key authentication failed. Verify your GOOGLE_AI_KEY is valid at https://aistudio.google.com/');
       }
-      
+
       // Generic error with details
       const errorMessage = errorData.error || errorData.message || `HTTP ${response.status}: ${errorText}`;
       const hint = errorData.hint ? ` ${errorData.hint}` : '';
@@ -432,10 +407,10 @@ async function callGemini(
       hasText: !!data.text,
       responseLength: data.response?.length || data.text?.length || 0,
     });
-    
+
     // Support both 'response' and 'text' fields for compatibility
     const aiResponse = data.response || data.text;
-    
+
     if (!aiResponse) {
       console.error('[AI] ❌ No response text in data:', data);
       throw new Error('No response from AI - empty response. Check Railway logs for details.');
@@ -443,14 +418,14 @@ async function callGemini(
 
     console.log('[AI] ✅ Success, response length:', aiResponse.length);
     console.log('[AI] ========================================');
-    
+
     return aiResponse;
   } catch (err) {
     console.error('[AI] ❌ Fetch error:', err);
     console.error('[AI] Error type:', err instanceof Error ? err.constructor.name : typeof err);
     console.error('[AI] Error message:', err instanceof Error ? err.message : String(err));
     console.error('[AI] ========================================');
-    
+
     // Re-throw with better error message
     if (err instanceof Error) {
       throw err;
@@ -479,7 +454,7 @@ Format as JSON array:
 Only return the JSON array, no other text.`;
 
   const response = await callGemini(prompt, context);
-  
+
   try {
     // Extract JSON from response
     const jsonMatch = response.match(/\[[\s\S]*\]/);
@@ -539,11 +514,11 @@ export async function generateRunwayPlan(
   context: AIContext,
   targetRunway: number
 ): Promise<string> {
-  const currentRunway = context.runway || 
-    (context.cashOnHand && context.monthlyBurn 
-      ? context.cashOnHand / context.monthlyBurn 
+  const currentRunway = context.runway ||
+    (context.cashOnHand && context.monthlyBurn
+      ? context.cashOnHand / context.monthlyBurn
       : 0);
-  
+
   const planningPrompt = `Create a comprehensive 90-day action plan to improve our runway from ${currentRunway.toFixed(1)} to ${targetRunway} months.
 
 REQUIREMENTS:
@@ -606,7 +581,7 @@ Format as JSON array:
 Only return the JSON array.`;
 
   const response = await callGemini(prompt, context);
-  
+
   try {
     const jsonMatch = response.match(/\[[\s\S]*\]/);
     if (jsonMatch) {
@@ -649,7 +624,7 @@ Format as JSON:
 Only return JSON.`;
 
   const response = await callGemini(prompt, context);
-  
+
   try {
     const jsonMatch = response.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
@@ -701,7 +676,7 @@ Format as JSON:
 Only return JSON.`;
 
   const response = await callGemini(prompt, context);
-  
+
   try {
     const jsonMatch = response.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
@@ -757,7 +732,7 @@ Format as JSON:
 Only return JSON.`;
 
   const response = await callGemini(prompt, context);
-  
+
   try {
     const jsonMatch = response.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
@@ -785,7 +760,7 @@ export async function analyzeScenario(
   const currentCash = context.cashOnHand || 0;
   const currentGrowth = context.revenueGrowthRate || 0;
   const currentChurn = context.churnRate || 0;
-  
+
   const prompt = `The user is asking: "${question}"
 
 Analyze this scenario based on the current financial context:
@@ -823,7 +798,7 @@ export async function competitiveBenchmark(
   const currentCash = context.cashOnHand || 0;
   const currentRunway = context.runway || (currentCash && currentBurn ? currentCash / currentBurn : 0);
   const currentGrowth = context.revenueGrowthRate || 0;
-  
+
   const prompt = `Perform a competitive benchmarking analysis comparing this company to competitors and industry standards.
 
 COMPANY METRICS:
@@ -859,7 +834,7 @@ export async function narrateScenario(
   projections: ProjectionMonth[],
   context: AIContext
 ): Promise<string> {
-  const projectionSummary = projections.slice(0, 6).map(p => 
+  const projectionSummary = projections.slice(0, 6).map(p =>
     `Month ${p.month}: Revenue $${p.revenue?.toLocaleString()}, Expenses $${p.expenses?.toLocaleString()}, Cash $${p.cashBalance?.toLocaleString()}`
   ).join('\n');
 
@@ -883,7 +858,7 @@ Write conversationally but professionally.`;
  */
 export async function benchmarkAnalysis(context: AIContext): Promise<string> {
   const benchmarks = BENCHMARKS;
-  
+
   const prompt = `Compare this company's metrics to ${benchmarks.industry} industry benchmarks:
 
 INDUSTRY BENCHMARKS:
