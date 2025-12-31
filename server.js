@@ -272,8 +272,91 @@ When the user asks questions, analyze the data deeply and provide strategic guid
       return response;
     }, 3, 1000); // 3 retries, starting with 1 second delay
 
-    const data = await geminiResponse.json();
-    const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response';
+    let data = await geminiResponse.json();
+    let responseText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    const functionCalls = data.candidates?.[0]?.content?.parts?.filter(part => part.functionCall);
+
+    // Stage 4: Handle function calls
+    if (functionCalls && functionCalls.length > 0) {
+      console.log('[Chat API] Function calls detected:', functionCalls.map(fc => fc.functionCall.name));
+      
+      // Add the model's response with function calls to conversation
+      contents.push({
+        role: 'model',
+        parts: data.candidates[0].content.parts
+      });
+
+      // Execute functions and add results
+      for (const functionCall of functionCalls) {
+        const functionName = functionCall.functionCall.name;
+        const args = functionCall.functionCall.args; // args is already an object
+        
+        console.log(`[Chat API] Executing function: ${functionName} with args:`, args);
+        
+        const functionResult = executeFunction(functionName, args, context);
+        
+        console.log(`[Chat API] Function ${functionName} result:`, functionResult);
+        
+        // Add function result to conversation
+        contents.push({
+          role: 'function',
+          parts: [{
+            functionResponse: {
+              name: functionName,
+              response: functionResult
+            }
+          }]
+        });
+      }
+
+      // Second API call with function results
+      requestBody = {
+        contents,
+        tools: [{ functionDeclarations }],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 2048,
+        }
+      };
+
+      console.log('[Chat API] Making second API call with function results...');
+      geminiResponse = await retryWithBackoff(async () => {
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
+          signal: AbortSignal.timeout(30000)
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          let errorData;
+          try {
+            errorData = JSON.parse(errorText);
+          } catch {
+            errorData = { error: errorText };
+          }
+          
+          if (response.status === 429) {
+            throw new Error(`Rate limit exceeded: ${errorData.error?.message || errorText}`);
+          }
+          
+          if (response.status === 403 && (errorText.includes('quota') || errorText.includes('Quota'))) {
+            throw new Error(`API quota exceeded: ${errorData.error?.message || errorText}`);
+          }
+          
+          const error = new Error(`Gemini API error (${response.status}): ${errorData.error?.message || errorText}`);
+          error.status = response.status;
+          throw error;
+        }
+        
+        return response;
+      }, 3, 1000);
+
+      data = await geminiResponse.json();
+      responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response';
+      console.log('[Chat API] Final response after function calls:', responseText?.length || 0);
+    }
 
     if (!responseText || responseText === 'No response') {
       console.error('[Chat API] Empty response from Gemini:', data);
