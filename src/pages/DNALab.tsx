@@ -17,6 +17,8 @@ import { SequencingLoader } from '../components/ui/Skeleton';
 import { useAppStore } from '../lib/store';
 import { useFirstSnapshotCelebration } from '../components/ui/SuccessConfetti';
 import { performAnalysis, type AnalysisType, type AIContext } from '../lib/services/AIService';
+import SmartUpload from '../components/ui/SmartUpload';
+import type { ExtractedFinancials } from '../lib/universal-parser';
 
 const DEFAULT_CASH = 1200000;
 
@@ -110,6 +112,7 @@ export default function DNALab() {
   const [isAnalysisRunning, setIsAnalysisRunning] = useState(false);
   const [activeAnalysisMode, setActiveAnalysisMode] = useState<AnalysisType | null>(null);
   const [analysisResult, setAnalysisResult] = useState<string | null>(null);
+  const [uploadMode, setUploadMode] = useState<'basic' | 'smart'>('smart'); // Default to smart mode
 
   // Confetti celebration for first snapshot save
   const { celebrateFirstSnapshot, ConfettiComponent } = useFirstSnapshotCelebration();
@@ -160,6 +163,39 @@ export default function DNALab() {
   const handleUploadClick = () => {
     fileInputRef.current?.click();
   };
+
+  // Handler for AI-extracted financial data from SmartUpload
+  const handleAIExtracted = useCallback(async (data: ExtractedFinancials, confidence: number) => {
+    // Convert AI-extracted data to FinancialAnalysis format
+    const newAnalysis = sanitizeFinancialData({
+      monthlyBurn: data.monthlyBurn,
+      monthlyRevenue: data.monthlyRevenue,
+      cashOnHand: data.cashOnHand,
+      revenueGrowth: data.revenueGrowth,
+      expenseGrowth: data.expenseGrowth,
+      revenueTrend: data.revenueTrend || analysis.revenueTrend,
+    });
+
+    setAnalysis(newAnalysis);
+    setCashInput(data.cashOnHand);
+    setShowSuccessPulse(true);
+    setTimeout(() => setShowSuccessPulse(false), 600);
+
+    toast.success('AI Extraction Complete', {
+      description: `Confidence: ${Math.round(confidence * 100)}% • Grade ${newAnalysis.grade} • ${newAnalysis.runwayMonths.toFixed(1)} months runway`,
+    });
+
+    // Save to archive
+    setSyncStatus('syncing');
+    const saveResponse = await saveAnalysisSnapshot(newAnalysis);
+    if (saveResponse.error) {
+      setSyncStatus('error');
+    } else {
+      setSyncStatus('synced');
+      celebrateFirstSnapshot();
+    }
+    setTimeout(() => setSyncStatus('idle'), 3000);
+  }, [analysis.revenueTrend, celebrateFirstSnapshot]);
 
   // Quick Analysis handler
   const runAnalysis = useCallback(async (mode: AnalysisType) => {
@@ -319,6 +355,61 @@ export default function DNALab() {
           )}
         </AnimatePresence>
 
+        {/* Smart Upload Section */}
+        {!isProcessing && (
+          <MotionCard
+            variant="elevated"
+            className="p-6"
+            custom={-2}
+            initial="hidden"
+            animate="visible"
+            variants={cardVariants}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-violet-vivid" />
+                <h3 className="text-lg font-semibold text-white">Upload Financial Data</h3>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <button
+                  onClick={() => setUploadMode('smart')}
+                  className={`px-3 py-1.5 rounded-lg transition-all ${uploadMode === 'smart'
+                      ? 'bg-violet-vivid text-white'
+                      : 'bg-white/5 text-gray-400 hover:text-white'
+                    }`}
+                >
+                  Smart (AI)
+                </button>
+                <button
+                  onClick={() => setUploadMode('basic')}
+                  className={`px-3 py-1.5 rounded-lg transition-all ${uploadMode === 'basic'
+                      ? 'bg-cyan-electric text-charcoal'
+                      : 'bg-white/5 text-gray-400 hover:text-white'
+                    }`}
+                >
+                  Basic CSV
+                </button>
+              </div>
+            </div>
+
+            {uploadMode === 'smart' ? (
+              <SmartUpload
+                onExtracted={handleAIExtracted}
+                onError={(error) => toast.error('Extraction Error', { description: error })}
+              />
+            ) : (
+              <div
+                className="border-2 border-dashed border-white/20 rounded-2xl p-8 text-center cursor-pointer hover:border-cyan-electric/50 hover:bg-white/5 transition-all"
+                onClick={handleUploadClick}
+              >
+                <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-white font-medium mb-2">Click to upload CSV file</p>
+                <p className="text-gray-500 text-sm">Only .csv format supported in basic mode</p>
+              </div>
+            )}
+          </MotionCard>
+        )}
+
         {/* Quick Analysis Buttons */}
         {!isProcessing && (
           <MotionCard
@@ -377,10 +468,10 @@ export default function DNALab() {
                     disabled={isAnalysisRunning}
                     variant="secondary"
                     className={`flex items-center gap-2 px-4 py-2 text-sm transition-all ${isActive
-                        ? btn.activeColor
-                        : isAnalysisRunning
-                          ? 'opacity-50 cursor-not-allowed'
-                          : 'hover:bg-white/10'
+                      ? btn.activeColor
+                      : isAnalysisRunning
+                        ? 'opacity-50 cursor-not-allowed'
+                        : 'hover:bg-white/10'
                       }`}
                   >
                     {isAnalysisRunning && isActive ? (
