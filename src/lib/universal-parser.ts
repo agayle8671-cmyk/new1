@@ -9,7 +9,7 @@
  * - PDF text extraction
  */
 
-import * as XLSX from 'xlsx';
+// Note: xlsx is dynamically imported to avoid Rollup bundling issues
 
 // Supported file types
 export type SupportedFileType = 'csv' | 'excel' | 'json' | 'text' | 'pdf' | 'unknown';
@@ -101,9 +101,12 @@ function parseCSV(content: string): Record<string, unknown>[] {
 }
 
 /**
- * Parse Excel content
+ * Parse Excel content - uses dynamic import to avoid bundling issues
  */
 async function parseExcel(file: File): Promise<{ rawText: string; structuredData: Record<string, unknown>[] }> {
+    // Dynamic import of xlsx library
+    const XLSX = await import('xlsx');
+
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
 
