@@ -1,34 +1,34 @@
 import { Outlet, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import FloatingOrbs from './FloatingOrbs';
 import FloatingSidebar from './FloatingSidebar';
 import { OnboardingOverlay } from '../ui/OnboardingOverlay';
 import { AIChat } from '../ui/AIChat';
 import { ScreenshotControl } from '../dev/ScreenshotControl';
+import { AmbientGlow } from '../effects/AmbientGlow';
 
-// Page transition variants for mac-native feel
+// Page transition variants - Antigravity style (cubic-bezier 0.16, 1, 0.3, 1)
 const pageVariants = {
   initial: {
     opacity: 0,
-    y: 8,
-    scale: 0.995,
+    y: 20,
+    scale: 0.99,
   },
   animate: {
     opacity: 1,
     y: 0,
     scale: 1,
     transition: {
-      duration: 0.3,
-      ease: [0.25, 0.1, 0.25, 1], // Custom cubic-bezier
+      duration: 0.6,
+      ease: [0.16, 1, 0.3, 1], // Antigravity easeOutExpo
     },
   },
   exit: {
     opacity: 0,
-    y: -6,
-    scale: 0.995,
+    y: -10,
+    scale: 0.99,
     transition: {
-      duration: 0.2,
-      ease: [0.25, 0.1, 0.25, 1],
+      duration: 0.3,
+      ease: [0.16, 1, 0.3, 1],
     },
   },
 };
@@ -37,9 +37,9 @@ export default function AppLayout() {
   const location = useLocation();
 
   return (
-    <div className="min-h-screen bg-charcoal relative">
+    <div className="min-h-screen bg-[#F8F9FA] relative">
       <ScreenshotControl />
-      <FloatingOrbs />
+      <AmbientGlow />
       <FloatingSidebar />
 
       {/* First-time user onboarding - hide in screenshots */}

@@ -109,12 +109,12 @@ export default {
         },
       },
       // ============================================
-      // TYPOGRAPHY SYSTEM
+      // TYPOGRAPHY SYSTEM (Antigravity: Google Sans + Inter)
       // ============================================
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-        mono: ['JetBrains Mono', 'Menlo', 'monospace'],
-        display: ['Inter', 'system-ui', 'sans-serif'], // For large headlines
+        display: ['Google Sans', 'Inter', 'system-ui', 'sans-serif'],
+        mono: ['Roboto Mono', 'JetBrains Mono', 'Menlo', 'monospace'],
       },
       fontSize: {
         // Display sizes (for hero metrics)
@@ -137,26 +137,39 @@ export default {
         '30': '7.5rem',
       },
       borderRadius: {
-        '4xl': '2rem',
-        '5xl': '2.5rem',
+        '4xl': '2rem',      // 32px - Cards
+        '5xl': '2.5rem',    // 40px
+        'pill': '3rem',     // 48px - Buttons
+        'window': '1.5rem', // 24px - Editor windows
       },
       // ============================================
       // SHADOWS (Layered depth system)
       // ============================================
       boxShadow: {
-        // Ambient shadows (soft, large)
-        'ambient-sm': '0 2px 8px -2px rgba(0, 0, 0, 0.3)',
-        'ambient-md': '0 4px 16px -4px rgba(0, 0, 0, 0.4)',
-        'ambient-lg': '0 8px 32px -8px rgba(0, 0, 0, 0.5)',
-        'ambient-xl': '0 16px 48px -12px rgba(0, 0, 0, 0.6)',
-        // Glow shadows
+        // Antigravity exact shadows (extracted via JS)
+        'card-soft': '0 2px 12px rgba(0, 0, 0, 0.06)',
+        'card-hover': '0 8px 24px rgba(0, 0, 0, 0.08)',
+        'card-lg': '0 20px 50px rgba(0, 0, 0, 0.12)',
+        'hero': '0 40px 100px rgba(0, 0, 0, 0.1)',
+        'editor': '0 20px 80px rgba(0, 0, 0, 0.15)',
+        'pill': '0 4px 6px rgba(0, 0, 0, 0.05)',
+        'pill-hover': '0 8px 16px rgba(26, 115, 232, 0.3)',
+        // Glow shadows (for charts - keep vibrant)
         'glow-cyan': '0 0 20px rgba(0, 212, 255, 0.3), 0 0 40px rgba(0, 212, 255, 0.1)',
         'glow-violet': '0 0 20px rgba(139, 92, 246, 0.3), 0 0 40px rgba(139, 92, 246, 0.1)',
         'glow-success': '0 0 20px rgba(16, 185, 129, 0.3), 0 0 40px rgba(16, 185, 129, 0.1)',
-        // Card shadows
-        'card': '0 1px 3px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.2)',
-        'card-hover': '0 4px 12px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3)',
-        'card-elevated': '0 8px 24px rgba(0, 0, 0, 0.4), 0 16px 48px rgba(0, 0, 0, 0.3)',
+      },
+      // ============================================
+      // TRANSITION TIMING (Antigravity cubic-bezier)
+      // ============================================
+      transitionTimingFunction: {
+        'out-expo': 'cubic-bezier(0.16, 1, 0.3, 1)',
+        'snap': 'cubic-bezier(0.2, 0, 0, 1)',
+      },
+      transitionDuration: {
+        'entrance': '800ms',
+        'hover': '150ms',
+        'card': '600ms',
       },
       // ============================================
       // BACKDROP BLUR
