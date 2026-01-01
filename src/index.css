@@ -162,7 +162,7 @@
   /* ----- BUTTONS (Antigravity: 48px pill, 0.15s snap) ----- */
   .btn {
     @apply inline-flex items-center justify-center gap-2 font-medium;
-    @apply transition-all duration-hover ease-snap;
+    @apply transition-all duration-150 ease-out;
     @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2;
   }
 
